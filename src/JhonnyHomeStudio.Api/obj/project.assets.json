@@ -3112,23 +3112,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\KONG\\.nuget\\packages\\": {},
+    "C:\\Users\\FOLHA_USER\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
+      "projectUniqueName": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
       "projectName": "JhonnyHomeStudio.Api",
-      "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
-      "packagesPath": "C:\\Users\\KONG\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\obj\\",
+      "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
+      "packagesPath": "C:\\Users\\FOLHA_USER\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\KONG\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\FOLHA_USER\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3144,11 +3144,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
-              "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj"
+            "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
+              "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj"
             },
-            "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj": {
-              "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj"
+            "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj"
             }
           }
         }
@@ -3195,24 +3195,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.24, 8.0.24]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[8.0.24, 8.0.24]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.24, 8.0.24]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.24, 8.0.24]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
