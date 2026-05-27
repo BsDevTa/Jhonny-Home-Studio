@@ -1,0 +1,11 @@
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\bin\Debug\net8.0\JhonnyHomeStudio.Domain.deps.json
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\bin\Debug\net8.0\JhonnyHomeStudio.Domain.dll
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\bin\Debug\net8.0\JhonnyHomeStudio.Domain.pdb
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\JhonnyHomeStudio.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\JhonnyHomeStudio.Domain.AssemblyInfoInputs.cache
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\JhonnyHomeStudio.Domain.AssemblyInfo.cs
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\JhonnyHomeStudio.Domain.csproj.CoreCompileInputs.cache
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\JhonnyHomeStudio.Domain.dll
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\refint\JhonnyHomeStudio.Domain.dll
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\JhonnyHomeStudio.Domain.pdb
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Domain\obj\Debug\net8.0\ref\JhonnyHomeStudio.Domain.dll

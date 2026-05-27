@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "GI7ZSd6KbRc=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\KONG\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.24\\microsoft.netcore.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\KONG\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.24\\microsoft.windowsdesktop.app.ref.8.0.24.nupkg.sha512",
+    "C:\\Users\\KONG\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.24\\microsoft.aspnetcore.app.ref.8.0.24.nupkg.sha512"
+  ],
+  "logs": []
+}
