@@ -4,7 +4,6 @@ using JhonnyHomeStudio.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -16,18 +15,10 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.10")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
-
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Address", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -37,14 +28,8 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Neighborhood")
                         .IsRequired()
@@ -70,59 +55,39 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasMaxLength(220)
                         .HasColumnType("character varying(220)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ZipCode")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.ToTable("Addresses");
+                    b.ToTable("Address");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.AdminUser", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
-
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("AdminUsers");
+                    b.ToTable("AdminUser");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Appointment", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("AddressId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
@@ -130,12 +95,6 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.Property<string>("CustomerNotes")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
-
-                    b.Property<int>("EstimatedDurationMinutesSnapshot")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("ScheduledAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("ServiceId")
                         .HasColumnType("uuid");
@@ -149,37 +108,19 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("AddressId");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("ServiceId");
-
-                    b.ToTable("Appointments");
+                    b.ToTable("Appointment");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.AppointmentStatusHistory", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("AppointmentId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("ChangedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid?>("ChangedByUserId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Note")
                         .HasMaxLength(500)
@@ -190,71 +131,43 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AppointmentId");
-
-                    b.HasIndex("ChangedByUserId");
-
                     b.ToTable("AppointmentStatusHistory");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Customer", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("BirthDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("DocumentNumber")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TempId2")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TempId3")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("Id");
-
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customer");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Service", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int>("EstimatedDurationMinutes")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -268,54 +181,37 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ServiceCategoryId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.Property<Guid>("TempId2")
+                        .HasColumnType("uuid");
 
-                    b.HasIndex("ServiceCategoryId");
-
-                    b.ToTable("Services");
+                    b.ToTable("Service");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.ServiceCategory", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Description")
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
 
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("ServiceCategories");
+                    b.ToTable("ServiceCategory");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Story", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<string>("ActionButtonText")
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
@@ -329,21 +225,12 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasMaxLength(600)
                         .HasColumnType("character varying(600)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid>("CreatedByAdminUserId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("ServiceId")
                         .HasColumnType("uuid");
@@ -353,69 +240,33 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasMaxLength(280)
                         .HasColumnType("character varying(280)");
 
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("StartsAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByAdminUserId");
-
-                    b.HasIndex("ServiceId");
-
-                    b.ToTable("Stories");
+                    b.ToTable("Story");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.StoryView", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("StoryId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ViewedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
                     b.HasIndex("StoryId", "CustomerId")
                         .IsUnique();
 
-                    b.ToTable("StoryViews");
+                    b.ToTable("StoryView");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.User", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(180)
@@ -425,9 +276,6 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(180)
                         .HasColumnType("character varying(180)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -443,15 +291,19 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<Guid>("TempId1")
+                        .HasColumnType("uuid");
 
-                    b.HasKey("Id");
+                    b.Property<Guid>("TempId2")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TempId3")
+                        .HasColumnType("uuid");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Address", b =>
@@ -459,8 +311,8 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Customer", "Customer")
                         .WithMany("Addresses")
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId1")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Customer");
                 });
@@ -470,8 +322,8 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.User", "User")
                         .WithOne()
                         .HasForeignKey("JhonnyHomeStudio.Domain.Entities.AdminUser", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasPrincipalKey("JhonnyHomeStudio.Domain.Entities.User", "TempId2")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
@@ -481,20 +333,20 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Address", "Address")
                         .WithMany()
                         .HasForeignKey("AddressId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId1")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Customer", "Customer")
                         .WithMany("Appointments")
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId2")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Service", "Service")
                         .WithMany("Appointments")
                         .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId1")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Address");
 
@@ -508,12 +360,13 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Appointment", "Appointment")
                         .WithMany("StatusHistory")
                         .HasForeignKey("AppointmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId1")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.User", "ChangedByUser")
                         .WithMany()
                         .HasForeignKey("ChangedByUserId")
+                        .HasPrincipalKey("TempId3")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Appointment");
@@ -526,8 +379,8 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.User", "User")
                         .WithOne()
                         .HasForeignKey("JhonnyHomeStudio.Domain.Entities.Customer", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasPrincipalKey("JhonnyHomeStudio.Domain.Entities.User", "TempId1")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
@@ -537,8 +390,8 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.ServiceCategory", "ServiceCategory")
                         .WithMany("Services")
                         .HasForeignKey("ServiceCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId1")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ServiceCategory");
                 });
@@ -548,12 +401,13 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.AdminUser", "CreatedByAdminUser")
                         .WithMany()
                         .HasForeignKey("CreatedByAdminUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId1")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Service", "Service")
                         .WithMany("Stories")
                         .HasForeignKey("ServiceId")
+                        .HasPrincipalKey("TempId2")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CreatedByAdminUser");
@@ -566,14 +420,14 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Customer", "Customer")
                         .WithMany("StoryViews")
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId3")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Story", "Story")
                         .WithMany("Views")
                         .HasForeignKey("StoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasPrincipalKey("TempId1")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Customer");
 

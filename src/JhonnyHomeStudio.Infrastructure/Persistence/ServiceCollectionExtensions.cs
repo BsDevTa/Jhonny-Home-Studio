@@ -33,6 +33,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
+        services.AddScoped<IServiceService, ServiceService>();
+        services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<IAddressService, AddressService>();
+        services.AddScoped<IAppointmentService, AppointmentService>();
 
         return services;
     }

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JhonnyHomeStudio.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e55a78218333197cff129b30239b9119ec66f352")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e436d869b036cbc795d2c07ea758bf38b07fef9e")]
 [assembly: System.Reflection.AssemblyProductAttribute("JhonnyHomeStudio.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JhonnyHomeStudio.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
