@@ -57,6 +57,11 @@ class ApiClient {
     return _normalizeResponse(response);
   }
 
+  Future<Map<String, dynamic>> patchJson(String path, {Object? data}) async {
+    final response = await _dio.patch(path, data: data);
+    return _normalizeResponse(response);
+  }
+
   Future<Map<String, dynamic>> deleteJson(String path, {Object? data}) async {
     final response = await _dio.delete(path, data: data);
     return _normalizeResponse(response);
