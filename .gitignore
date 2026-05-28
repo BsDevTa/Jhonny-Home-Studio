@@ -1,0 +1,28 @@
+@"
+# .NET
+**/bin/
+**/obj/
+.vs/
+
+# Flutter / Dart
+.dart_tool/
+**/.dart_tool/
+build/
+**/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Segredos de produção
+appsettings.Production.json
+"@ | Out-File -Encoding utf8 .gitignore
