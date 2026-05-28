@@ -15,21 +15,36 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  bool _hasNavigated = false;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final authProvider = context.read<AuthProvider>();
-      final isLoggedIn = await authProvider.checkAuthStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resolveInitialRoute();
+    });
+  }
+
+  Future<void> _resolveInitialRoute() async {
+    if (_hasNavigated || !mounted) {
+      return;
+    }
+
+    final authProvider = context.read<AuthProvider>();
+    final isLoggedIn = await authProvider.checkAuthStatus();
+
+    if (!mounted || _hasNavigated) {
+      return;
+    }
+
+    _hasNavigated = true;
+
+    Future.microtask(() {
       if (!mounted) {
         return;
       }
 
-      if (isLoggedIn) {
-        context.go(AppRoutes.home);
-      } else {
-        context.go(AppRoutes.login);
-      }
+      context.go(isLoggedIn ? AppRoutes.home : AppRoutes.login);
     });
   }
 

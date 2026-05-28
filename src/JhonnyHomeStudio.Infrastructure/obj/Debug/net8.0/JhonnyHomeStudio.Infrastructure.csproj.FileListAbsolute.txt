@@ -37,3 +37,4 @@ C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Infrastruc
 C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Infrastructure\obj\Debug\net8.0\JhonnyHomeStudio.Infrastructure.pdb
 C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Infrastructure\obj\Debug\net8.0\JhonnyHomeStudio.Infrastructure.genruntimeconfig.cache
 C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Infrastructure\obj\Debug\net8.0\ref\JhonnyHomeStudio.Infrastructure.dll
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Infrastructure\obj\Debug\net8.0\JhonnyHomeStudio.Infrastructure.sourcelink.json

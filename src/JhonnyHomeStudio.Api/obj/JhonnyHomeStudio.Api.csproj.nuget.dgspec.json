@@ -1,43 +1,36 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj": {}
+    "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj": {
+    "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
+        "projectUniqueName": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
         "projectName": "JhonnyHomeStudio.Api",
-        "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
-        "packagesPath": "C:\\Users\\FOLHA_USER\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\obj\\",
+        "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\JhonnyHomeStudio.Api.csproj",
+        "packagesPath": "C:\\Users\\KONG\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Api\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\FOLHA_USER\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\KONG\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
-                "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj"
+              "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
+                "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj"
               },
-              "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj": {
-                "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj"
+              "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj"
               }
             }
           }
@@ -51,8 +44,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.100"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -92,41 +84,34 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
+    "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj",
+        "projectUniqueName": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj",
         "projectName": "JhonnyHomeStudio.Application",
-        "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj",
-        "packagesPath": "C:\\Users\\FOLHA_USER\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\obj\\",
+        "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj",
+        "packagesPath": "C:\\Users\\KONG\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\FOLHA_USER\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\KONG\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj": {
-                "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj"
+              "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj": {
+                "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj"
               }
             }
           }
@@ -140,8 +125,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.100"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -162,33 +146,26 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj": {
+    "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj",
         "projectName": "JhonnyHomeStudio.Domain",
-        "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj",
-        "packagesPath": "C:\\Users\\FOLHA_USER\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\obj\\",
+        "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj",
+        "packagesPath": "C:\\Users\\KONG\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\FOLHA_USER\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\KONG\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -206,8 +183,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.100"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -228,44 +204,37 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj": {
+    "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj",
         "projectName": "JhonnyHomeStudio.Infrastructure",
-        "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\FOLHA_USER\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\obj\\",
+        "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\JhonnyHomeStudio.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\KONG\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\FOLHA_USER\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\KONG\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
-                "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj"
+              "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj": {
+                "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Application\\JhonnyHomeStudio.Application.csproj"
               },
-              "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj": {
-                "projectPath": "C:\\Users\\FOLHA_USER\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj"
+              "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj": {
+                "projectPath": "C:\\Users\\KONG\\Documents\\Jhonny Home Studio\\src\\JhonnyHomeStudio.Domain\\JhonnyHomeStudio.Domain.csproj"
               }
             }
           }
@@ -279,8 +248,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.100"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -325,7 +293,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

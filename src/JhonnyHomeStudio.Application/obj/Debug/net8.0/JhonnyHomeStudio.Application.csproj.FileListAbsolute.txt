@@ -29,3 +29,4 @@ C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Applicatio
 C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Application\obj\Debug\net8.0\refint\JhonnyHomeStudio.Application.dll
 C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Application\obj\Debug\net8.0\JhonnyHomeStudio.Application.pdb
 C:\Users\FOLHA_USER\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Application\obj\Debug\net8.0\ref\JhonnyHomeStudio.Application.dll
+C:\Users\KONG\Documents\Jhonny Home Studio\src\JhonnyHomeStudio.Application\obj\Debug\net8.0\JhonnyHomeStudio.Application.sourcelink.json

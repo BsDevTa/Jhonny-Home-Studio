@@ -73,10 +73,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> checkAuthStatus() async {
-    _setLoading(true);
     _clearError();
     try {
-      final loggedIn = await _authService.isLoggedIn();
+      final loggedIn = await _authService.isLoggedIn().timeout(
+        const Duration(seconds: 1),
+      );
       _isAuthenticated = loggedIn;
       if (!loggedIn) {
         _user = null;
@@ -84,12 +85,15 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return loggedIn;
     } catch (_) {
+      try {
+        await _authService.logout();
+      } catch (_) {
+        // Best effort cleanup before falling back to login.
+      }
       _isAuthenticated = false;
       _user = null;
       notifyListeners();
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 

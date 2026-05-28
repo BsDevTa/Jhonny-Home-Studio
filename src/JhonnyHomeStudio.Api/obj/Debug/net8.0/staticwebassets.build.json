@@ -1,1 +1,11 @@
-{"Version":1,"Hash":"mP+WyV8ci2uI8hM9GSw9QOl/DP+eu4pxyDBcPS6axqo=","Source":"JhonnyHomeStudio.Api","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "CaiurKG4h3xL/Ztds37Y9sP3RmlXXWB2TGiCGWh5fZA=",
+  "Source": "JhonnyHomeStudio.Api",
+  "BasePath": "_content/JhonnyHomeStudio.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
