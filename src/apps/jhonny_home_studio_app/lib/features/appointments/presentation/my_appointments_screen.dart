@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/premium_card.dart';
+import '../../../shared/widgets/premium_empty_state.dart';
+import '../../../shared/widgets/premium_icon_tile.dart';
 import '../data/appointment_models.dart';
 import '../data/appointments_api.dart';
 import 'widgets/appointment_card.dart';
@@ -141,7 +144,6 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Meus agendamentos')),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -162,6 +164,40 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(24, 18, 24, 24),
               children: [
+                PremiumCard(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF18120B), Color(0xFF111111)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  child: Row(
+                    children: [
+                      const PremiumIconTile(icon: Icons.calendar_month_rounded),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Meus agendamentos',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Acompanhe seus atendimentos com uma visão mais refinada.',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 if (_isLoading)
                   const Padding(
                     padding: EdgeInsets.only(top: 60),
@@ -170,7 +206,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
                     ),
                   )
                 else if (_errorMessage != null)
-                  _StateMessage(
+                  PremiumEmptyState(
                     icon: Icons.error_outline,
                     title: 'Falha ao carregar',
                     message: _errorMessage!,
@@ -178,7 +214,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
                     onAction: _loadAppointments,
                   )
                 else if (_appointments.isEmpty)
-                  const _StateMessage(
+                  const PremiumEmptyState(
                     icon: Icons.event_busy_outlined,
                     title: 'Nenhum agendamento encontrado',
                     message: 'Você ainda não possui agendamentos.',
@@ -200,59 +236,6 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _StateMessage extends StatelessWidget {
-  const _StateMessage({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.gold, size: 40),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 14),
-            ElevatedButton(onPressed: onAction, child: Text(actionLabel!)),
-          ],
-        ],
       ),
     );
   }

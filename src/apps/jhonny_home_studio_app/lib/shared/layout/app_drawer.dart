@@ -1,0 +1,235 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/constants/app_colors.dart';
+import '../../core/routes/app_routes.dart';
+import '../../features/auth/presentation/auth_provider.dart';
+import '../widgets/premium_card.dart';
+
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key, required this.currentPath});
+
+  final String currentPath;
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: AppColors.background,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: PremiumCard(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF17110B), Color(0xFF0F0F0F)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.gold.withValues(alpha: 0.08),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.16),
+                          width: 0.6,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.spa_rounded,
+                        color: AppColors.gold,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Jhonny Home Studio',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Experiência premium',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _DrawerItem(
+                    icon: Icons.person_outline,
+                    title: 'Minha conta',
+                    selected: currentPath == '/profile',
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.profile);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.location_on_outlined,
+                    title: 'Meus endereços',
+                    selected: currentPath.startsWith('/addresses'),
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.addresses);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.event_note_outlined,
+                    title: 'Meus agendamentos',
+                    selected: currentPath.startsWith('/appointments/my'),
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.myAppointments);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.spa_outlined,
+                    title: 'Serviços',
+                    selected: currentPath.startsWith('/services'),
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.services);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.calendar_month_outlined,
+                    title: 'Agendar agora',
+                    selected: currentPath.startsWith('/appointments/create'),
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.createAppointment);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    title: 'Configurações',
+                    onTap: () {
+                      context.pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Configurações serão implementadas em breve.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.support_agent_outlined,
+                    title: 'Ajuda / WhatsApp',
+                    onTap: () {
+                      context.pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Atendimento será implementado em breve.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await context.read<AuthProvider>().logout();
+                    if (context.mounted) {
+                      context.go(AppRoutes.login);
+                    }
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sair'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: selected
+            ? AppColors.gold.withValues(alpha: 0.10)
+            : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          visualDensity: VisualDensity.compact,
+          dense: true,
+          leading: Icon(
+            icon,
+            color: selected ? AppColors.gold : AppColors.textSecondary,
+            size: 18,
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: selected ? AppColors.textPrimary : AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+          onTap: onTap,
+        ),
+      ),
+    );
+  }
+}

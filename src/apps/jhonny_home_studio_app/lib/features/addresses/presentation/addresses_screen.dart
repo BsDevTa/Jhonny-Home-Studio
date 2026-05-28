@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/premium_card.dart';
+import '../../../shared/widgets/premium_empty_state.dart';
+import '../../../shared/widgets/premium_icon_tile.dart';
 import '../data/address_models.dart';
 import '../data/addresses_api.dart';
 import 'widgets/address_card.dart';
@@ -158,7 +161,6 @@ class _AddressesScreenState extends State<AddressesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Endereços')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewAddress,
         backgroundColor: AppColors.gold,
@@ -186,6 +188,40 @@ class _AddressesScreenState extends State<AddressesScreen> {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 90),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
+                PremiumCard(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF18120B), Color(0xFF111111)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  child: Row(
+                    children: [
+                      const PremiumIconTile(icon: Icons.location_on_rounded),
+                      const SizedBox(width: 16),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Meus endereços',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Cadastre os locais onde você deseja receber atendimento.',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 if (_isLoading)
                   const Padding(
                     padding: EdgeInsets.only(top: 60),
@@ -194,7 +230,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     ),
                   )
                 else if (_errorMessage != null)
-                  _InfoState(
+                  PremiumEmptyState(
                     icon: Icons.error_outline,
                     title: 'Falha ao carregar',
                     message: _errorMessage!,
@@ -202,7 +238,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     onAction: _loadAddresses,
                   )
                 else if (_addresses.isEmpty)
-                  _InfoState(
+                  PremiumEmptyState(
                     icon: Icons.location_off_outlined,
                     title: 'Nenhum endereço cadastrado',
                     message: 'Cadastre seu primeiro endereço para agendar.',
@@ -225,66 +261,6 @@ class _AddressesScreenState extends State<AddressesScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _InfoState extends StatelessWidget {
-  const _InfoState({
-    required this.icon,
-    required this.title,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.gold, size: 40),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-          if (actionLabel != null && onAction != null) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }

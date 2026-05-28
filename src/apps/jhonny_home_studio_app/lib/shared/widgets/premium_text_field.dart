@@ -27,11 +27,12 @@ class PremiumTextField extends StatelessWidget {
       validator: validator,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         labelText: labelText,
-        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
+        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
         suffixIcon: suffixIcon,
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
       ),
     );
   }

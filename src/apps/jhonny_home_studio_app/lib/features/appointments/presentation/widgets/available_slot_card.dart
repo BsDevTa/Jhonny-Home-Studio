@@ -26,23 +26,24 @@ class AvailableSlotCard extends StatelessWidget {
         : '${_timeFormat.format(start.toLocal())} - ${_timeFormat.format(end.toLocal())}';
 
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       onTap: slot.isAvailable ? onTap : null,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
           color: selected
               ? AppColors.gold
               : slot.isAvailable
               ? AppColors.surfaceElevated
               : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? AppColors.goldSoft
                 : slot.isAvailable
                 ? AppColors.border
-                : AppColors.border.withValues(alpha: 0.5),
+                : AppColors.border.withValues(alpha: 0.45),
+            width: 0.6,
           ),
         ),
         child: Text(
@@ -54,7 +55,8 @@ class AvailableSlotCard extends StatelessWidget {
                 : slot.isAvailable
                 ? AppColors.textPrimary
                 : AppColors.textSecondary,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
           ),
         ),
       ),

@@ -13,6 +13,7 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/services_screen.dart';
+import '../../shared/layout/main_shell.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -62,58 +63,68 @@ class AppRoutes {
           path: register,
           builder: (context, state) => const RegisterScreen(),
         ),
-        GoRoute(path: home, builder: (context, state) => const HomeScreen()),
-        GoRoute(
-          path: services,
-          builder: (context, state) => const ServicesScreen(),
-        ),
-        GoRoute(
-          path: serviceDetail,
-          builder: (context, state) {
-            final serviceId = state.pathParameters['id'] ?? '';
-            return ServiceDetailScreen(serviceId: serviceId);
+        ShellRoute(
+          builder: (context, state, child) {
+            return MainShell(currentPath: state.uri.path, child: child);
           },
-        ),
-        GoRoute(
-          path: profile,
-          builder: (context, state) => const ProfileScreen(),
-        ),
-        GoRoute(
-          path: addresses,
-          builder: (context, state) => const AddressesScreen(),
-        ),
-        GoRoute(
-          path: newAddress,
-          builder: (context, state) => const AddressFormScreen(),
-        ),
-        GoRoute(
-          path: editAddress,
-          builder: (context, state) {
-            final addressId = state.pathParameters['id'] ?? '';
-            return AddressFormScreen(addressId: addressId);
-          },
-        ),
-        GoRoute(
-          path: createAppointment,
-          builder: (context, state) => const CreateAppointmentScreen(),
-        ),
-        GoRoute(
-          path: createAppointmentByService,
-          builder: (context, state) {
-            final serviceId = state.pathParameters['serviceId'];
-            return CreateAppointmentScreen(serviceId: serviceId);
-          },
-        ),
-        GoRoute(
-          path: myAppointments,
-          builder: (context, state) => const MyAppointmentsScreen(),
-        ),
-        GoRoute(
-          path: myAppointmentDetail,
-          builder: (context, state) {
-            final appointmentId = state.pathParameters['id'] ?? '';
-            return AppointmentDetailScreen(appointmentId: appointmentId);
-          },
+          routes: [
+            GoRoute(
+              path: home,
+              builder: (context, state) => const HomeScreen(),
+            ),
+            GoRoute(
+              path: services,
+              builder: (context, state) => const ServicesScreen(),
+            ),
+            GoRoute(
+              path: serviceDetail,
+              builder: (context, state) {
+                final serviceId = state.pathParameters['id'] ?? '';
+                return ServiceDetailScreen(serviceId: serviceId);
+              },
+            ),
+            GoRoute(
+              path: profile,
+              builder: (context, state) => const ProfileScreen(),
+            ),
+            GoRoute(
+              path: addresses,
+              builder: (context, state) => const AddressesScreen(),
+            ),
+            GoRoute(
+              path: newAddress,
+              builder: (context, state) => const AddressFormScreen(),
+            ),
+            GoRoute(
+              path: editAddress,
+              builder: (context, state) {
+                final addressId = state.pathParameters['id'] ?? '';
+                return AddressFormScreen(addressId: addressId);
+              },
+            ),
+            GoRoute(
+              path: createAppointment,
+              builder: (context, state) => const CreateAppointmentScreen(),
+            ),
+            GoRoute(
+              path: createAppointmentByService,
+              builder: (context, state) {
+                final serviceId = state.pathParameters['serviceId'];
+                return CreateAppointmentScreen(serviceId: serviceId);
+              },
+            ),
+            GoRoute(
+              path: myAppointments,
+              builder: (context, state) => const MyAppointmentsScreen(),
+            ),
+            GoRoute(
+              path: myAppointmentDetail,
+              builder: (context, state) {
+                final appointmentId = state.pathParameters['id'] ?? '';
+                return AppointmentDetailScreen(appointmentId: appointmentId);
+              },
+            ),
+          ],
         ),
       ],
     );

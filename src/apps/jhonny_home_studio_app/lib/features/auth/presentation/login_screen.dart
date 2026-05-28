@@ -7,6 +7,7 @@ import '../../../core/constants/app_texts.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../shared/widgets/error_message.dart';
 import '../../../shared/widgets/loading_overlay.dart';
+import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_text_field.dart';
 import 'auth_provider.dart';
@@ -72,78 +73,104 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 28),
-                    const _BrandHeader(),
-                    const SizedBox(height: 36),
-                    Text(
-                      AppTexts.loginTitle,
-                      style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(fontWeight: FontWeight.w800),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 18),
+                        const _BrandHeader(),
+                        const SizedBox(height: 24),
+                        PremiumCard(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF18120B), Color(0xFF111111)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                AppTexts.loginTitle,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Entre para continuar sua experiência premium.',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 22),
+                              if (authProvider.errorMessage != null) ...[
+                                ErrorMessage(
+                                  message: authProvider.errorMessage!,
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                              Form(
+                                key: _formKey,
+                                child: Column(
+                                  children: [
+                                    PremiumTextField(
+                                      controller: _emailController,
+                                      labelText: 'E-mail',
+                                      keyboardType: TextInputType.emailAddress,
+                                      prefixIcon: Icons.email_outlined,
+                                      validator: (value) {
+                                        final text = value?.trim() ?? '';
+                                        if (text.isEmpty) {
+                                          return AppTexts.validationRequired;
+                                        }
+                                        if (!text.contains('@')) {
+                                          return AppTexts.validationEmail;
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    PremiumTextField(
+                                      controller: _passwordController,
+                                      labelText: 'Senha',
+                                      obscureText: true,
+                                      prefixIcon: Icons.lock_outline,
+                                      validator: (value) {
+                                        if ((value ?? '').isEmpty) {
+                                          return AppTexts.validationRequired;
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 22),
+                                    PremiumButton(
+                                      text: AppTexts.signIn,
+                                      isLoading: authProvider.isLoading,
+                                      onPressed: _submit,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextButton(
+                                      onPressed: () =>
+                                          context.go(AppRoutes.register),
+                                      child: const Text(
+                                        AppTexts.createAccount,
+                                        style: TextStyle(
+                                          color: AppColors.goldSoft,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Entre para continuar sua experiência premium.',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 24),
-                    if (authProvider.errorMessage != null) ...[
-                      ErrorMessage(message: authProvider.errorMessage!),
-                      const SizedBox(height: 16),
-                    ],
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          PremiumTextField(
-                            controller: _emailController,
-                            labelText: 'E-mail',
-                            keyboardType: TextInputType.emailAddress,
-                            prefixIcon: Icons.email_outlined,
-                            validator: (value) {
-                              final text = value?.trim() ?? '';
-                              if (text.isEmpty) {
-                                return AppTexts.validationRequired;
-                              }
-                              if (!text.contains('@')) {
-                                return AppTexts.validationEmail;
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          PremiumTextField(
-                            controller: _passwordController,
-                            labelText: 'Senha',
-                            obscureText: true,
-                            prefixIcon: Icons.lock_outline,
-                            validator: (value) {
-                              if ((value ?? '').isEmpty) {
-                                return AppTexts.validationRequired;
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                          PremiumButton(
-                            text: AppTexts.signIn,
-                            isLoading: authProvider.isLoading,
-                            onPressed: _submit,
-                          ),
-                          const SizedBox(height: 14),
-                          TextButton(
-                            onPressed: () => context.go(AppRoutes.register),
-                            child: const Text(
-                              AppTexts.createAccount,
-                              style: TextStyle(color: AppColors.goldSoft),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -161,10 +188,29 @@ class _BrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: const [
-        Icon(Icons.spa_outlined, color: AppColors.gold, size: 60),
-        SizedBox(height: 16),
-        Text(
+      children: [
+        Container(
+          width: 108,
+          height: 108,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [AppColors.gold, AppColors.copper],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.gold.withValues(alpha: 0.18),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.spa_rounded, color: Colors.black, size: 52),
+        ),
+        const SizedBox(height: 18),
+        const Text(
           AppTexts.appName,
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -173,11 +219,14 @@ class _BrandHeader extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(height: 8),
-        Text(
-          AppTexts.slogan,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+        const SizedBox(height: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            AppTexts.slogan,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textSecondary, height: 1.45),
+          ),
         ),
       ],
     );

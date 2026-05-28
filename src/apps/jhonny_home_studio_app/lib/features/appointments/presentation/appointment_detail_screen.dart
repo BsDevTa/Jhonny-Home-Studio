@@ -5,6 +5,11 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/premium_button.dart';
+import '../../../shared/widgets/premium_card.dart';
+import '../../../shared/widgets/premium_empty_state.dart';
+import '../../../shared/widgets/premium_icon_tile.dart';
+import '../../../shared/widgets/premium_status_badge.dart';
 import '../data/appointment_models.dart';
 import '../data/appointments_api.dart';
 
@@ -149,7 +154,6 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     final canCancel = appointment != null && _canCancel(appointment.status);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalhes do agendamento')),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -173,59 +177,100 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               ? const _ErrorCard(message: 'Agendamento não encontrado.')
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _DetailRow(
-                        label: 'Serviço',
-                        value: appointment.serviceName,
-                      ),
-                      _DetailRow(label: 'Status', value: appointment.status),
-                      _DetailRow(
-                        label: 'Data e horário',
-                        value: appointment.scheduledAt == null
-                            ? 'Não informado'
-                            : _dateFormat.format(
-                                appointment.scheduledAt!.toLocal(),
-                              ),
-                      ),
-                      _DetailRow(
-                        label: 'Preço',
-                        value: _currencyFormat.format(
-                          appointment.servicePriceSnapshot,
-                        ),
-                      ),
-                      _DetailRow(
-                        label: 'Duração',
-                        value:
-                            '${appointment.estimatedDurationMinutesSnapshot} min',
-                      ),
-                      _DetailRow(
-                        label: 'Endereço',
-                        value: appointment.addressText,
-                      ),
-                      _DetailRow(
-                        label: 'Observações',
-                        value: appointment.customerNotes.trim().isEmpty
-                            ? 'Sem observações'
-                            : appointment.customerNotes,
-                      ),
-                      const SizedBox(height: 18),
-                      if (canCancel)
-                        ElevatedButton(
-                          onPressed: _isCancelling ? null : _cancelAppointment,
-                          child: _isCancelling
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.black,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 720),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          PremiumCard(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF18120B), Color(0xFF111111)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            child: Row(
+                              children: [
+                                const PremiumIconTile(
+                                  icon: Icons.calendar_month_rounded,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Detalhe do agendamento',
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        appointment.serviceName,
+                                        style: const TextStyle(
+                                          color: AppColors.goldSoft,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                )
-                              : const Text('Cancelar agendamento'),
-                        ),
-                    ],
+                                ),
+                                PremiumStatusBadge(status: appointment.status),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _DetailRow(
+                            label: 'Serviço',
+                            value: appointment.serviceName,
+                          ),
+                          _DetailRow(
+                            label: 'Status',
+                            value: appointment.status,
+                          ),
+                          _DetailRow(
+                            label: 'Data e horário',
+                            value: appointment.scheduledAt == null
+                                ? 'Não informado'
+                                : _dateFormat.format(
+                                    appointment.scheduledAt!.toLocal(),
+                                  ),
+                          ),
+                          _DetailRow(
+                            label: 'Preço',
+                            value: _currencyFormat.format(
+                              appointment.servicePriceSnapshot,
+                            ),
+                          ),
+                          _DetailRow(
+                            label: 'Duração',
+                            value:
+                                '${appointment.estimatedDurationMinutesSnapshot} min',
+                          ),
+                          _DetailRow(
+                            label: 'Endereço',
+                            value: appointment.addressText,
+                          ),
+                          _DetailRow(
+                            label: 'Observações',
+                            value: appointment.customerNotes.trim().isEmpty
+                                ? 'Sem observações'
+                                : appointment.customerNotes,
+                          ),
+                          const SizedBox(height: 18),
+                          if (canCancel)
+                            PremiumButton(
+                              text: 'Cancelar agendamento',
+                              isLoading: _isCancelling,
+                              onPressed: _cancelAppointment,
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
         ),
@@ -285,33 +330,12 @@ class _ErrorCard extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceElevated,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, color: AppColors.gold, size: 40),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-              if (onRetry != null) ...[
-                const SizedBox(height: 14),
-                ElevatedButton(
-                  onPressed: onRetry,
-                  child: const Text('Tentar novamente'),
-                ),
-              ],
-            ],
-          ),
+        child: PremiumEmptyState(
+          icon: Icons.error_outline,
+          title: 'Não foi possível carregar',
+          message: message,
+          actionLabel: onRetry == null ? null : 'Tentar novamente',
+          onAction: onRetry,
         ),
       ),
     );

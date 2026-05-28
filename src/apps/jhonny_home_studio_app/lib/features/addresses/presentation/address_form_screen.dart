@@ -187,9 +187,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.isEditing ? 'Editar endereço' : 'Novo endereço'),
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

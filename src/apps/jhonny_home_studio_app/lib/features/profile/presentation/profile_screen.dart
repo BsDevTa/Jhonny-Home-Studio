@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/premium_card.dart';
+import '../../../shared/widgets/premium_icon_tile.dart';
 import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_text_field.dart';
 import '../data/profile_api.dart';
@@ -173,7 +175,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Perfil')),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -197,75 +198,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (_errorMessage != null)
-                            _ErrorPanel(message: _errorMessage!),
-                          if (_errorMessage != null) const SizedBox(height: 14),
-                          if (_profile != null) ...[
-                            Text(
-                              _profile!.email,
-                              style: const TextStyle(
-                                color: AppColors.goldSoft,
-                                fontWeight: FontWeight.w600,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 720),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              PremiumCard(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF18120B),
+                                    Color(0xFF111111),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const PremiumIconTile(
+                                      icon: Icons.person_rounded,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Meu perfil',
+                                            style: TextStyle(
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _profile?.email ?? '',
+                                            style: const TextStyle(
+                                              color: AppColors.goldSoft,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                          ],
-                          PremiumTextField(
-                            controller: _fullNameController,
-                            labelText: 'Nome completo',
-                            prefixIcon: Icons.person_outline,
-                            validator: (value) {
-                              if ((value ?? '').trim().isEmpty) {
-                                return 'Nome é obrigatório';
-                              }
-                              return null;
-                            },
+                              const SizedBox(height: 14),
+                              if (_errorMessage != null) ...[
+                                _ErrorPanel(message: _errorMessage!),
+                                const SizedBox(height: 14),
+                              ],
+                              PremiumCard(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    PremiumTextField(
+                                      controller: _fullNameController,
+                                      labelText: 'Nome completo',
+                                      prefixIcon: Icons.person_outline,
+                                      validator: (value) {
+                                        if ((value ?? '').trim().isEmpty) {
+                                          return 'Nome é obrigatório';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 14),
+                                    PremiumTextField(
+                                      controller: _phoneController,
+                                      labelText: 'Telefone',
+                                      keyboardType: TextInputType.phone,
+                                      prefixIcon: Icons.phone_outlined,
+                                    ),
+                                    const SizedBox(height: 14),
+                                    PremiumTextField(
+                                      controller: _documentController,
+                                      labelText: 'Documento',
+                                      keyboardType: TextInputType.text,
+                                      prefixIcon: Icons.badge_outlined,
+                                    ),
+                                    const SizedBox(height: 14),
+                                    TextFormField(
+                                      controller: _birthDateController,
+                                      readOnly: true,
+                                      onTap: _pickBirthDate,
+                                      style: const TextStyle(
+                                        color: AppColors.textPrimary,
+                                      ),
+                                      decoration: const InputDecoration(
+                                        labelText: 'Data de nascimento',
+                                        prefixIcon: Icon(Icons.cake_outlined),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 22),
+                                    PremiumButton(
+                                      text: 'Salvar perfil',
+                                      isLoading: _isSaving,
+                                      onPressed: _submit,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    OutlinedButton.icon(
+                                      onPressed: () =>
+                                          context.push('/addresses'),
+                                      icon: const Icon(
+                                        Icons.location_on_outlined,
+                                      ),
+                                      label: const Text('Gerenciar endereços'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 14),
-                          PremiumTextField(
-                            controller: _phoneController,
-                            labelText: 'Telefone',
-                            keyboardType: TextInputType.phone,
-                            prefixIcon: Icons.phone_outlined,
-                          ),
-                          const SizedBox(height: 14),
-                          PremiumTextField(
-                            controller: _documentController,
-                            labelText: 'Documento',
-                            keyboardType: TextInputType.text,
-                            prefixIcon: Icons.badge_outlined,
-                          ),
-                          const SizedBox(height: 14),
-                          TextFormField(
-                            controller: _birthDateController,
-                            readOnly: true,
-                            onTap: _pickBirthDate,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'Data de nascimento',
-                              prefixIcon: Icon(Icons.cake_outlined),
-                            ),
-                          ),
-                          const SizedBox(height: 22),
-                          PremiumButton(
-                            text: 'Salvar perfil',
-                            isLoading: _isSaving,
-                            onPressed: _submit,
-                          ),
-                          const SizedBox(height: 12),
-                          OutlinedButton.icon(
-                            onPressed: () => context.push('/addresses'),
-                            icon: const Icon(Icons.location_on_outlined),
-                            label: const Text('Gerenciar endereços'),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),

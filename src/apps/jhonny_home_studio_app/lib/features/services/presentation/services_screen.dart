@@ -125,7 +125,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Serviços')),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
