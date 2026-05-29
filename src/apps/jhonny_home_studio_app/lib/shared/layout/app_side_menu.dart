@@ -15,7 +15,7 @@ class AppSideMenu extends StatelessWidget {
     return Container(
       width: 92,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.surface,
         border: Border(
           right: BorderSide(color: AppColors.border.withValues(alpha: 0.8)),
         ),
@@ -96,7 +96,7 @@ class _SideIconButton extends StatelessWidget {
         children: [
           Material(
             color: active
-                ? AppColors.gold.withValues(alpha: 0.16)
+                ? AppColors.gold.withValues(alpha: 0.12)
                 : Colors.transparent,
             shape: const CircleBorder(),
             child: IconButton(

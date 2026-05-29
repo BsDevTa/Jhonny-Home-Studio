@@ -96,7 +96,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           gradient: LinearGradient(
             colors: [
               AppColors.background,
-              Color(0xFF111111),
+              AppColors.surfaceElevated,
               AppColors.background,
             ],
             begin: Alignment.topCenter,
@@ -148,7 +148,10 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                           PremiumCard(
                             padding: const EdgeInsets.all(14),
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF18120B), Color(0xFF111111)],
+                              colors: [
+                                AppColors.surface,
+                                AppColors.surfaceElevated,
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),

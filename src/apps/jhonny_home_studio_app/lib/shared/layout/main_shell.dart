@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_texts.dart';
 import '../../core/routes/app_routes.dart';
 import 'app_bottom_nav.dart';
 import 'app_drawer.dart';
@@ -39,8 +40,12 @@ class MainShell extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Jhonny Home Studio',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  AppTexts.appName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 SizedBox(height: 2),
                 Text(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
+
 class PremiumTextField extends StatelessWidget {
   const PremiumTextField({
     super.key,
@@ -27,7 +29,10 @@ class PremiumTextField extends StatelessWidget {
       validator: validator,
       keyboardType: keyboardType,
       obscureText: obscureText,
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+      style: const TextStyle(
+        color: AppColors.textPrimary,
+        fontWeight: FontWeight.w500,
+      ),
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),

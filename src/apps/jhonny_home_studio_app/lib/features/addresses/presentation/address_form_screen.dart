@@ -192,7 +192,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           gradient: LinearGradient(
             colors: [
               AppColors.background,
-              Color(0xFF101010),
+              AppColors.surfaceElevated,
               AppColors.background,
             ],
             begin: Alignment.topCenter,

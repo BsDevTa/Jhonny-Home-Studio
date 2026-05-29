@@ -130,7 +130,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
           gradient: LinearGradient(
             colors: [
               AppColors.background,
-              Color(0xFF111111),
+              AppColors.surfaceElevated,
               AppColors.background,
             ],
             begin: Alignment.topCenter,

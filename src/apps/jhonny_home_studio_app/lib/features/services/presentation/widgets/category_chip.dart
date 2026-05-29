@@ -21,8 +21,8 @@ class CategoryChip extends StatelessWidget {
       curve: Curves.easeOut,
       child: Material(
         color: selected
-            ? AppColors.gold.withValues(alpha: 0.10)
-            : AppColors.surface,
+            ? AppColors.buttonSecondaryBackground.withValues(alpha: 0.72)
+            : AppColors.surface.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(999),
         child: InkWell(
           borderRadius: BorderRadius.circular(999),
@@ -33,7 +33,7 @@ class CategoryChip extends StatelessWidget {
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
                 color: selected
-                    ? AppColors.gold.withValues(alpha: 0.20)
+                    ? AppColors.copper.withValues(alpha: 0.36)
                     : AppColors.border.withValues(alpha: 0.75),
                 width: 0.6,
               ),
@@ -41,7 +41,9 @@ class CategoryChip extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? AppColors.goldSoft : AppColors.textPrimary,
+                color: selected
+                    ? AppColors.buttonSecondaryText
+                    : AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),

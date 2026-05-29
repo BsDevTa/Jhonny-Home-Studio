@@ -164,7 +164,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openNewAddress,
         backgroundColor: AppColors.gold,
-        foregroundColor: Colors.black,
+        foregroundColor: AppColors.textPrimary,
         icon: const Icon(Icons.add),
         label: const Text('Novo endereço'),
       ),
@@ -173,7 +173,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
           gradient: LinearGradient(
             colors: [
               AppColors.background,
-              Color(0xFF101010),
+              AppColors.surfaceElevated,
               AppColors.background,
             ],
             begin: Alignment.topCenter,
@@ -190,7 +190,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
               children: [
                 PremiumCard(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF18120B), Color(0xFF111111)],
+                    colors: [AppColors.surface, AppColors.surfaceElevated],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

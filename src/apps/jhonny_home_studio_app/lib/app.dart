@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'core/constants/app_texts.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_provider.dart';
@@ -14,8 +15,8 @@ class JhonnyHomeStudioApp extends StatelessWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Jhonny Home Studio',
-      theme: AppTheme.darkTheme,
+      title: AppTexts.appName,
+      theme: AppTheme.premiumTheme,
       routerConfig: AppRoutes.createRouter(authProvider),
     );
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
+
 class PremiumButton extends StatelessWidget {
   const PremiumButton({
     super.key,
@@ -27,7 +29,7 @@ class PremiumButton extends StatelessWidget {
                   width: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.2,
-                    color: Colors.black,
+                    color: AppColors.textPrimary,
                   ),
                 )
               : Text(text, key: const ValueKey('text')),

@@ -35,9 +35,9 @@ class PremiumActionCard extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.gold.withValues(alpha: 0.08),
+              color: AppColors.copper.withValues(alpha: 0.08),
               border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.16),
+                color: AppColors.copper.withValues(alpha: 0.16),
                 width: 0.6,
               ),
             ),

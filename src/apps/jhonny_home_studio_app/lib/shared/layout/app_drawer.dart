@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_texts.dart';
 import '../../core/routes/app_routes.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../widgets/premium_card.dart';
@@ -23,7 +24,7 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               child: PremiumCard(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF17110B), Color(0xFF0F0F0F)],
+                  colors: [AppColors.surface, AppColors.surfaceElevated],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -42,7 +43,9 @@ class AppDrawer extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.06,
+                            ),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -60,7 +63,7 @@ class AppDrawer extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Jhonny Home Studio',
+                            AppTexts.appName,
                             style: TextStyle(
                               color: AppColors.textPrimary,
                               fontWeight: FontWeight.w600,
@@ -222,7 +225,7 @@ class _DrawerItem extends StatelessWidget {
           title: Text(
             title,
             style: TextStyle(
-              color: selected ? AppColors.textPrimary : AppColors.textPrimary,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w500,
               fontSize: 14,
             ),

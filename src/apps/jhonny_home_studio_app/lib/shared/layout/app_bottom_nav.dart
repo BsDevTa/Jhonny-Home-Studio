@@ -48,7 +48,7 @@ class AppBottomNav extends StatelessWidget {
                 border: Border.all(color: AppColors.border, width: 0.6),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.10),
+                    color: AppColors.textPrimary.withValues(alpha: 0.08),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -178,7 +178,7 @@ class _CenterActionButton extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.10),
+              color: AppColors.textPrimary.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),

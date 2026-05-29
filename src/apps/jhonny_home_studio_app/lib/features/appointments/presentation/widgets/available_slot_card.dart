@@ -51,7 +51,7 @@ class AvailableSlotCard extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             color: selected
-                ? Colors.black
+                ? AppColors.textPrimary
                 : slot.isAvailable
                 ? AppColors.textPrimary
                 : AppColors.textSecondary,

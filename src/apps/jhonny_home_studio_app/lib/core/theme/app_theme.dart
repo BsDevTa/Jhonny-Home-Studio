@@ -3,20 +3,20 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
-  static ThemeData get darkTheme {
-    final baseTheme = ThemeData.dark(useMaterial3: true);
+  static ThemeData get premiumTheme {
+    final baseTheme = ThemeData.light(useMaterial3: true);
 
     return baseTheme.copyWith(
       scaffoldBackgroundColor: AppColors.background,
       canvasColor: AppColors.background,
       colorScheme: baseTheme.colorScheme.copyWith(
-        brightness: Brightness.dark,
+        brightness: Brightness.light,
         primary: AppColors.gold,
         secondary: AppColors.copper,
         tertiary: AppColors.champagne,
         surface: AppColors.surface,
         error: AppColors.error,
-        onPrimary: Colors.black,
+        onPrimary: AppColors.textPrimary,
         onSecondary: AppColors.textPrimary,
         onSurface: AppColors.textPrimary,
       ),
@@ -35,7 +35,7 @@ class AppTheme {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.surfaceElevated,
+        backgroundColor: AppColors.surface,
         behavior: SnackBarBehavior.floating,
         actionTextColor: AppColors.gold,
         contentTextStyle: const TextStyle(
@@ -48,10 +48,10 @@ class AppTheme {
         bodyColor: AppColors.textPrimary,
         displayColor: AppColors.textPrimary,
       ),
-      iconTheme: const IconThemeData(color: AppColors.goldSoft),
+      iconTheme: const IconThemeData(color: AppColors.textSecondary),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceElevated,
+        fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 18,
           vertical: 18,
@@ -66,7 +66,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppColors.gold, width: 1.4),
+          borderSide: const BorderSide(color: AppColors.copper, width: 1.4),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
@@ -78,11 +78,11 @@ class AppTheme {
         ),
         labelStyle: const TextStyle(color: AppColors.textSecondary),
         hintStyle: const TextStyle(color: AppColors.textSecondary),
-        prefixIconColor: AppColors.goldSoft,
-        suffixIconColor: AppColors.goldSoft,
+        prefixIconColor: AppColors.textSecondary,
+        suffixIconColor: AppColors.textSecondary,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surfaceElevated,
+        color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
@@ -92,13 +92,13 @@ class AppTheme {
       ),
       dividerTheme: const DividerThemeData(color: AppColors.border),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceElevated,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.gold,
-          foregroundColor: Colors.black,
+          foregroundColor: AppColors.textPrimary,
           minimumSize: const Size.fromHeight(48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
@@ -112,7 +112,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: AppColors.buttonSecondaryText,
+          backgroundColor: AppColors.buttonSecondaryBackground,
           side: const BorderSide(color: AppColors.border, width: 0.6),
           minimumSize: const Size.fromHeight(48),
           shape: RoundedRectangleBorder(
@@ -121,7 +122,7 @@ class AppTheme {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.goldSoft),
+        style: TextButton.styleFrom(foregroundColor: AppColors.copper),
       ),
     );
   }

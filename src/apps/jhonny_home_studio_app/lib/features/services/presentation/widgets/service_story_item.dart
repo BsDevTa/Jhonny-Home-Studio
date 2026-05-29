@@ -26,32 +26,21 @@ class ServiceStoryItem extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       onTap: onTap,
       child: SizedBox(
-        width: 72,
+        width: 70,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 60,
               height: 60,
-              padding: const EdgeInsets.all(1),
+              padding: const EdgeInsets.all(1.2),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFF7E6642),
-                    Color(0xFFB89A62),
-                    Color(0xFF4A3A23),
-                  ],
+                  colors: [AppColors.copper, AppColors.copper, AppColors.gold],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
               ),
               child: Container(
                 decoration: BoxDecoration(
@@ -88,7 +77,7 @@ class ServiceStoryItem extends StatelessWidget {
                 color: AppColors.textPrimary,
                 fontSize: 11,
                 height: 1.15,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -132,7 +121,7 @@ class _PlaceholderContent extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF17110B), Color(0xFF1E1A16), Color(0xFF0F0F0F)],
+          colors: [AppColors.textPrimary, AppColors.copper, AppColors.gold],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -142,12 +131,12 @@ class _PlaceholderContent extends StatelessWidget {
             ? Text(
                 initials,
                 style: const TextStyle(
-                  color: AppColors.goldSoft,
-                  fontSize: 14,
+                  color: AppColors.surface,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
               )
-            : Icon(icon, size: 18, color: AppColors.goldSoft),
+            : Icon(icon, size: 18, color: AppColors.surface),
       ),
     );
   }
@@ -159,7 +148,7 @@ class ServiceStorySkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 72,
+      width: 70,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_texts.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../shared/widgets/app_logo.dart';
 import 'auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -50,13 +50,18 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final logoHeight = size.width >= 700
+        ? 160.0
+        : (size.height < 700 ? 120.0 : 145.0);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
               AppColors.background,
-              Color(0xFF121212),
+              AppColors.surfaceElevated,
               AppColors.background,
             ],
             begin: Alignment.topCenter,
@@ -71,49 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 132,
-                    height: 132,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const RadialGradient(
-                        colors: [Color(0x33D6A354), Color(0x00D6A354)],
-                        radius: 0.9,
-                      ),
-                      border: Border.all(
-                        color: AppColors.gold.withValues(alpha: 0.35),
-                        width: 1.2,
-                      ),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.spa_rounded,
-                        color: AppColors.gold,
-                        size: 64,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    AppTexts.appName,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    AppTexts.slogan,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: AppColors.textSecondary,
-                      height: 1.45,
-                    ),
-                  ),
+                  AppLogo(height: logoHeight, fit: BoxFit.contain),
                   const SizedBox(height: 24),
                   Container(
                     width: double.infinity,
