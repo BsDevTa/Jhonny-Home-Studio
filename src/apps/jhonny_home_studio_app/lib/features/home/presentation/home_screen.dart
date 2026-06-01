@@ -7,6 +7,8 @@ import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../shared/widgets/premium_section_header.dart';
+import '../../loyalty/data/loyalty_api.dart';
+import '../../loyalty/data/loyalty_model.dart';
 import '../../services/data/service_models.dart';
 import '../../services/data/services_api.dart';
 import '../../services/presentation/widgets/category_chip.dart';
@@ -16,6 +18,7 @@ import '../../stories/data/story_model.dart';
 import '../../stories/presentation/story_viewer_screen.dart';
 import '../../stories/presentation/widgets/story_circle_item.dart';
 import '../../settings/presentation/app_settings_provider.dart';
+import 'widgets/premium_experience_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,12 +30,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late final ServicesApi _servicesApi;
   late final StoriesApi _storiesApi;
+  late final LoyaltyApi _loyaltyApi;
 
   List<ServiceCategoryModel> _categories = const [];
   List<ServiceModel> _services = const [];
   List<StoryModel> _editorialStories = const [];
-  bool _isLoading = true;
+  LoyaltyModel _loyalty = LoyaltyModel.empty;
   bool _isLoadingStories = true;
+  bool _isLoadingServices = true;
+  bool _isLoadingCategories = true;
+  bool _isLoadingHomeData = false;
   String? _errorMessage;
   String? _selectedCategoryId;
 
@@ -41,30 +48,63 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _servicesApi = ServicesApi(apiClient: context.read<ApiClient>());
     _storiesApi = StoriesApi(apiClient: context.read<ApiClient>());
-    _loadInitialData();
+    _loyaltyApi = LoyaltyApi(apiClient: context.read<ApiClient>());
+    _loadHomeData();
   }
 
-  Future<void> _loadInitialData() async {
-    setState(() {
-      _isLoading = true;
-      _isLoadingStories = true;
-      _errorMessage = null;
-    });
-
-    await Future.wait([
-      _loadCategories(),
-      _loadServices(updateSelectedCategory: false),
-      _loadEditorialStories(),
-      context.read<AppSettingsProvider>().loadSettings(),
-    ]);
-
-    if (!mounted) {
+  Future<void> _loadHomeData({bool refreshSettings = false}) async {
+    if (_isLoadingHomeData) {
       return;
     }
 
+    debugPrint('Carregando Home...');
     setState(() {
-      _isLoading = false;
+      _isLoadingHomeData = true;
+      _isLoadingStories = true;
+      _isLoadingServices = true;
+      _isLoadingCategories = true;
+      _errorMessage = null;
     });
+
+    try {
+      await Future.wait([
+        _loadCategories(),
+        _loadServices(updateSelectedCategory: false),
+        _loadEditorialStories(),
+        _loadLoyalty(),
+        if (refreshSettings) context.read<AppSettingsProvider>().loadSettings(),
+      ]);
+
+      debugPrint('Home carregada com sucesso');
+    } catch (error) {
+      debugPrint('Erro ao carregar Home: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingHomeData = false;
+          _isLoadingStories = false;
+          _isLoadingServices = false;
+          _isLoadingCategories = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadLoyalty() async {
+    try {
+      final loyalty = await _loyaltyApi.getMyLoyalty();
+      if (mounted) {
+        setState(() {
+          _loyalty = loyalty;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loyalty = LoyaltyModel.empty;
+        });
+      }
+    }
   }
 
   Future<void> _loadEditorialStories() async {
@@ -74,10 +114,12 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
+      debugPrint('Stories carregados: ${stories.length}');
       setState(() {
         _editorialStories = stories.take(8).toList(growable: false);
       });
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Erro ao carregar Home: $error');
       if (!mounted) {
         return;
       }
@@ -105,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _categories = categories;
       });
     } on ApiException catch (error) {
+      debugPrint('Erro ao carregar Home: ${error.message}');
       if (!mounted) {
         return;
       }
@@ -112,7 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _errorMessage = error.message;
       });
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Erro ao carregar Home: $error');
       if (!mounted) {
         return;
       }
@@ -120,6 +164,12 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _errorMessage = 'Não foi possível carregar as categorias agora.';
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+        });
+      }
     }
   }
 
@@ -136,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
+      debugPrint('Serviços carregados: ${services.length}');
       setState(() {
         _services = services;
         if (updateSelectedCategory) {
@@ -143,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       });
     } on ApiException catch (error) {
+      debugPrint('Erro ao carregar Home: ${error.message}');
       if (!mounted) {
         return;
       }
@@ -150,7 +202,8 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _errorMessage = error.message;
       });
-    } catch (_) {
+    } catch (error) {
+      debugPrint('Erro ao carregar Home: $error');
       if (!mounted) {
         return;
       }
@@ -158,25 +211,23 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _errorMessage = 'Não foi possível carregar os serviços agora.';
       });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingServices = false;
+        });
+      }
     }
   }
 
   Future<void> _selectCategory(String? categoryId) async {
     setState(() {
-      _isLoading = true;
+      _isLoadingServices = true;
       _errorMessage = null;
       _selectedCategoryId = categoryId;
     });
 
     await _loadServices(categoryId: categoryId, updateSelectedCategory: false);
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   void _openServiceDetails(ServiceModel service) {
@@ -217,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SafeArea(
           child: RefreshIndicator(
             color: AppColors.gold,
-            onRefresh: _loadInitialData,
+            onRefresh: () => _loadHomeData(refreshSettings: true),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
@@ -295,6 +346,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 10),
                       SizedBox(height: 34, child: _buildCategories()),
+                      const SizedBox(height: 22),
+                      PremiumExperienceCard(
+                        loyalty: _loyalty,
+                        onVip: () => context.push(AppRoutes.vip),
+                        onLoyalty: () => context.push(AppRoutes.loyalty),
+                        onSos: () => context.push(AppRoutes.sosLoiro),
+                      ),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -334,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStories(List<ServiceModel> visibleServices, bool hasServices) {
-    if (_isLoading && _services.isEmpty) {
+    if (_isLoadingServices && _services.isEmpty) {
       return ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),
@@ -347,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_errorMessage != null && !hasServices) {
       return _ServiceStoriesMessage(
         message: _errorMessage!,
-        onRetry: _loadInitialData,
+        onRetry: _loadHomeData,
       );
     }
 
@@ -374,7 +432,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategories() {
-    if (_isLoading && _categories.isEmpty) {
+    if (_isLoadingCategories && _categories.isEmpty) {
       return ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const NeverScrollableScrollPhysics(),

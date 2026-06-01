@@ -1,0 +1,60 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ editing ? 'Editar bloqueio' : 'Bloquear data' }}</h1>
+      <p class="page-subtitle">Reserve um dia inteiro ou apenas um período da agenda.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <form class="surface form-card" [formGroup]="form" (ngSubmit)="submit()">
+      @if (error()) {
+        <p class="error-banner">{{ error() }}</p>
+      }
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="date">Data</label>
+          <input id="date" type="date" formControlName="date" />
+          @if (form.controls.date.touched && form.controls.date.invalid) {
+            <span class="field-error">Informe a data que deve ser bloqueada.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="reason">Motivo</label>
+          <input id="reason" type="text" formControlName="reason" placeholder="Ex.: Folga, feriado ou compromisso" />
+          @if (form.controls.reason.touched && form.controls.reason.invalid) {
+            <span class="field-error">Informe um motivo com até 180 caracteres.</span>
+          }
+        </div>
+
+        <label class="checkbox-field span-2">
+          <input type="checkbox" formControlName="isFullDay" />
+          Bloquear o dia inteiro
+        </label>
+
+        @if (!form.controls.isFullDay.value) {
+          <div class="field">
+            <label for="startTime">Hora inicial</label>
+            <input id="startTime" type="time" formControlName="startTime" />
+          </div>
+
+          <div class="field">
+            <label for="endTime">Hora final</label>
+            <input id="endTime" type="time" formControlName="endTime" />
+          </div>
+        }
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/availability" class="secondary-button">Cancelar</a>
+        <button type="submit" class="primary-button" [disabled]="saving()">
+          {{ saving() ? 'Salvando...' : 'Salvar bloqueio' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

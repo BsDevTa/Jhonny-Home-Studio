@@ -5,11 +5,14 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/appointment_status_helper.dart';
+import '../../../core/utils/whatsapp_helper.dart';
 import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_empty_state.dart';
 import '../../../shared/widgets/premium_icon_tile.dart';
 import '../../../shared/widgets/premium_status_badge.dart';
+import '../../settings/presentation/app_settings_provider.dart';
 import '../data/appointment_models.dart';
 import '../data/appointments_api.dart';
 
@@ -31,6 +34,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   AppointmentModel? _appointment;
   bool _isLoading = true;
   bool _isCancelling = false;
+  bool _isOpeningWhatsApp = false;
   String? _errorMessage;
 
   @override
@@ -148,10 +152,63 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     }
   }
 
+  Future<void> _openWhatsAppConfirmation() async {
+    final appointment = _appointment;
+    if (appointment == null) {
+      return;
+    }
+
+    final settings = context.read<AppSettingsProvider>().settings;
+    if (settings.whatsAppNumber.trim().isEmpty) {
+      _showMessage('WhatsApp do estúdio ainda não configurado.');
+      return;
+    }
+
+    setState(() {
+      _isOpeningWhatsApp = true;
+    });
+
+    final date = appointment.scheduledAt?.toLocal();
+    final opened = await openWhatsApp(
+      phoneNumber: settings.whatsAppNumber,
+      message:
+          '''
+Olá, quero confirmar meu agendamento no ${settings.studioName}.
+
+Cliente: ${appointment.customerName}
+Serviço: ${appointment.serviceName}
+Data: ${date == null ? 'Não informada' : DateFormat('dd/MM/yyyy').format(date)}
+Horário: ${date == null ? 'Não informado' : DateFormat('HH:mm').format(date)}
+Status: ${appointmentStatusLabel(appointment.status)}
+
+Pode me orientar sobre a confirmação/sinal?''',
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isOpeningWhatsApp = false;
+    });
+
+    if (!opened) {
+      _showMessage('Não foi possível abrir o WhatsApp agora.');
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final appointment = _appointment;
     final canCancel = appointment != null && _canCancel(appointment.status);
+    final showWhatsApp =
+        appointment != null && needsWhatsAppConfirmation(appointment.status);
 
     return Scaffold(
       body: Container(
@@ -233,7 +290,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                           ),
                           _DetailRow(
                             label: 'Status',
-                            value: appointment.status,
+                            value: appointmentStatusLabel(appointment.status),
                           ),
                           _DetailRow(
                             label: 'Data e horário',
@@ -265,6 +322,16 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                                 : appointment.customerNotes,
                           ),
                           const SizedBox(height: 18),
+                          _StatusGuidanceCard(status: appointment.status),
+                          if (showWhatsApp) ...[
+                            const SizedBox(height: 12),
+                            PremiumButton(
+                              text: 'Confirmar pelo WhatsApp',
+                              isLoading: _isOpeningWhatsApp,
+                              onPressed: _openWhatsAppConfirmation,
+                            ),
+                          ],
+                          const SizedBox(height: 12),
                           if (canCancel)
                             PremiumButton(
                               text: 'Cancelar agendamento',
@@ -277,6 +344,40 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                   ),
                 ),
         ),
+      ),
+    );
+  }
+}
+
+class _StatusGuidanceCard extends StatelessWidget {
+  const _StatusGuidanceCard({required this.status});
+
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    return PremiumCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: AppColors.gold,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              appointmentStatusGuidance(status),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

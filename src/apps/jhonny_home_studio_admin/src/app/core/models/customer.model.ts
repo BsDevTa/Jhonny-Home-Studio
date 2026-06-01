@@ -1,4 +1,5 @@
 import { AppointmentListModel } from './appointment.model';
+import { LoyaltyModel } from './loyalty.model';
 
 export interface CustomerListModel {
   customerId: string;
@@ -37,4 +38,5 @@ export type CustomerAppointmentModel = AppointmentListModel;
 export interface CustomerDetailModel extends CustomerProfileModel {
   addresses: CustomerAddressModel[];
   appointments: CustomerAppointmentModel[];
+  loyalty: LoyaltyModel;
 }

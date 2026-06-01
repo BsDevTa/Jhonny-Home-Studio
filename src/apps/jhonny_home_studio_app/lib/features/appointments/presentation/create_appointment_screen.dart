@@ -247,7 +247,11 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Agendamento criado com sucesso.')),
+        const SnackBar(
+          content: Text(
+            'Seu horário foi solicitado. Aguarde a confirmação do estúdio.',
+          ),
+        ),
       );
       context.go('/appointments/my');
     } on ApiException catch (error) {
@@ -518,9 +522,10 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                                     : _slots.isEmpty
                                     ? PremiumEmptyState(
                                         icon: Icons.hourglass_empty,
-                                        title: 'Sem horários disponíveis',
+                                        title:
+                                            'Não há atendimento disponível nesta data',
                                         message:
-                                            'Tente outra data para encontrar disponibilidade.',
+                                            'Nenhum horário disponível para esta data. Tente escolher outro dia.',
                                       )
                                     : Wrap(
                                         spacing: 8,

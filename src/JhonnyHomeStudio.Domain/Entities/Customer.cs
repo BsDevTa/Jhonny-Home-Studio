@@ -12,4 +12,6 @@ public sealed class Customer : Entity
     public ICollection<Address> Addresses { get; set; } = new List<Address>();
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public ICollection<StoryView> StoryViews { get; set; } = new List<StoryView>();
+    public CustomerLoyalty? Loyalty { get; set; }
+    public ICollection<LoyaltyTransaction> LoyaltyTransactions { get; set; } = new List<LoyaltyTransaction>();
 }

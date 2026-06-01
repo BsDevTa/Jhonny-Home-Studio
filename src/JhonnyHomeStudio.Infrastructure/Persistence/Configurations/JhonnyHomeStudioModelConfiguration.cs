@@ -159,5 +159,43 @@ public static class JhonnyHomeStudioModelConfiguration
             entity.Property(x => x.WelcomeMessage).HasMaxLength(500);
             entity.Property(x => x.SupportMessage).HasMaxLength(500);
         });
+
+        modelBuilder.Entity<BusinessHour>(entity =>
+        {
+            entity.HasIndex(x => x.DayOfWeek).IsUnique();
+        });
+
+        modelBuilder.Entity<BlockedDate>(entity =>
+        {
+            entity.HasIndex(x => x.Date);
+            entity.Property(x => x.Reason).HasMaxLength(180).IsRequired();
+        });
+
+        modelBuilder.Entity<CustomerLoyalty>(entity =>
+        {
+            entity.HasIndex(x => x.CustomerId).IsUnique();
+            entity.HasOne(x => x.Customer)
+                .WithOne(x => x.Loyalty)
+                .HasForeignKey<CustomerLoyalty>(x => x.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(x => x.Level).HasConversion<string>().HasMaxLength(30);
+        });
+
+        modelBuilder.Entity<LoyaltyTransaction>(entity =>
+        {
+            entity.HasIndex(x => x.AppointmentId).IsUnique();
+            entity.HasOne(x => x.Customer)
+                .WithMany(x => x.LoyaltyTransactions)
+                .HasForeignKey(x => x.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.Appointment)
+                .WithMany()
+                .HasForeignKey(x => x.AppointmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(x => x.Description).HasMaxLength(220).IsRequired();
+        });
     }
 }

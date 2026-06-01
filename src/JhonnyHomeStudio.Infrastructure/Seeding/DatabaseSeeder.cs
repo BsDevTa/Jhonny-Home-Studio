@@ -50,6 +50,12 @@ public static class DatabaseSeeder
             dbContext.StudioSettings.Add(StudioSettingsService.CreateDefault());
         }
 
+        var businessHoursExist = await dbContext.BusinessHours.AnyAsync();
+        if (!businessHoursExist)
+        {
+            dbContext.BusinessHours.AddRange(AvailabilityService.CreateDefaultBusinessHours());
+        }
+
         await dbContext.SaveChangesAsync();
     }
 }

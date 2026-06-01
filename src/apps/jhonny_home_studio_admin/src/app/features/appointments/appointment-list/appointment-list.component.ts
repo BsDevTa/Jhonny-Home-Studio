@@ -5,7 +5,8 @@ import { RouterLink } from '@angular/router';
 import {
   AppointmentListModel,
   appointmentStatusOptions,
-  canCancelAppointment
+  AppointmentStatusAction,
+  getAppointmentStatusActions
 } from '../../../core/models/appointment.model';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -94,7 +95,7 @@ export class AppointmentListComponent implements OnInit {
     });
   }
 
-  canCancel(status: string): boolean {
-    return canCancelAppointment(status);
+  actionsFor(status: string): AppointmentStatusAction[] {
+    return getAppointmentStatusActions(status);
   }
 }

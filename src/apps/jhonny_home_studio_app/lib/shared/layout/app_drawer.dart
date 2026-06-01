@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/utils/whatsapp_helper.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/settings/presentation/app_settings_provider.dart';
 import '../widgets/premium_card.dart';
@@ -135,6 +136,33 @@ class AppDrawer extends StatelessWidget {
                     },
                   ),
                   _DrawerItem(
+                    icon: Icons.workspace_premium_outlined,
+                    title: 'Clube VIP',
+                    selected: currentPath == AppRoutes.vip,
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.vip);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.loyalty_outlined,
+                    title: 'Cartão fidelidade',
+                    selected: currentPath == AppRoutes.loyalty,
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.loyalty);
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.auto_awesome_outlined,
+                    title: 'SOS Loiro',
+                    selected: currentPath == AppRoutes.sosLoiro,
+                    onTap: () {
+                      context.pop();
+                      context.go(AppRoutes.sosLoiro);
+                    },
+                  ),
+                  _DrawerItem(
                     icon: Icons.settings_outlined,
                     title: 'Configurações',
                     onTap: () {
@@ -151,15 +179,37 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.support_agent_outlined,
                     title: 'Ajuda / WhatsApp',
-                    onTap: () {
+                    onTap: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final settings = context
+                          .read<AppSettingsProvider>()
+                          .settings;
                       context.pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Atendimento será implementado em breve.',
+                      if (settings.whatsAppNumber.trim().isEmpty) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'WhatsApp do estúdio ainda não configurado.',
+                            ),
                           ),
-                        ),
+                        );
+                        return;
+                      }
+
+                      final opened = await openWhatsApp(
+                        phoneNumber: settings.whatsAppNumber,
+                        message:
+                            'Olá, preciso de ajuda com meu atendimento no ${settings.studioName}.',
                       );
+                      if (!opened) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Não foi possível abrir o WhatsApp agora.',
+                            ),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ],

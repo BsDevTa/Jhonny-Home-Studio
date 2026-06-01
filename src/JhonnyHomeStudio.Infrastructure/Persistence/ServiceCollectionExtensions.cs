@@ -40,6 +40,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IStoryService, StoryService>();
         services.AddScoped<IStudioSettingsService, StudioSettingsService>();
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<ILoyaltyService, LoyaltyService>();
 
         return services;
     }

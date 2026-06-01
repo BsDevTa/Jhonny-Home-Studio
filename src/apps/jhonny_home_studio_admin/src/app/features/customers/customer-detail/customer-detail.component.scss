@@ -114,6 +114,76 @@ dd {
   gap: 9px;
 }
 
+.loyalty-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(200px, 1fr) minmax(240px, 1.3fr);
+  gap: 20px;
+  padding: 18px;
+}
+
+.loyalty-card__summary,
+.loyalty-history,
+.loyalty-history div {
+  display: grid;
+  gap: 5px;
+}
+
+.loyalty-card__level {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.loyalty-card__summary strong {
+  color: var(--gold-light);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.loyalty-card small,
+.loyalty-card p {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.loyalty-card h3 {
+  margin: 0 0 9px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.loyalty-card ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 17px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.loyalty-history {
+  gap: 8px;
+}
+
+.loyalty-history > div {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.loyalty-history > div:last-child {
+  border-bottom: 0;
+}
+
+.loyalty-history strong {
+  color: var(--gold-light);
+  font-size: 12px;
+}
+
 .history-card {
   display: grid;
   grid-template-columns: minmax(180px, 1fr) auto minmax(58px, auto) minmax(78px, auto) auto;
@@ -138,7 +208,8 @@ dd {
 
 @media (max-width: 780px) {
   dl,
-  .address-grid {
+  .address-grid,
+  .loyalty-card {
     grid-template-columns: 1fr;
   }
 

@@ -1,29 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/appointment_status_helper.dart';
 
 class PremiumStatusBadge extends StatelessWidget {
   const PremiumStatusBadge({super.key, required this.status});
 
   final String status;
-
-  String _statusLabel(String status) {
-    final normalized = status.trim().toLowerCase();
-
-    return switch (normalized) {
-      'pending' => 'Pendente',
-      'waitingpayment' => 'Aguardando sinal',
-      'confirmed' => 'Confirmado',
-      'rejected' => 'Recusado',
-      'canceled' => 'Cancelado',
-      'rescheduled' => 'Remarcado',
-      'ontheway' => 'A caminho',
-      'inprogress' => 'Em atendimento',
-      'completed' => 'Concluído',
-      'noshow' => 'Não compareceu',
-      _ => status,
-    };
-  }
 
   Color _statusColor(String status) {
     final normalized = status.trim().toLowerCase();
@@ -46,7 +29,7 @@ class PremiumStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _statusColor(status);
-    final label = _statusLabel(status);
+    final label = appointmentStatusLabel(status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

@@ -9,12 +9,14 @@ import {
 } from '../models/customer.model';
 import { ApiService } from './api.service';
 import { AppointmentService } from './appointment.service';
+import { LoyaltyService } from './loyalty.service';
 
 @Injectable({ providedIn: 'root' })
 export class CustomerService {
   constructor(
     private readonly api: ApiService,
-    private readonly appointments: AppointmentService
+    private readonly appointments: AppointmentService,
+    private readonly loyalty: LoyaltyService
   ) {}
 
   getAll(): Observable<CustomerListModel[]> {
@@ -25,12 +27,14 @@ export class CustomerService {
     return forkJoin({
       profile: this.api.get<CustomerProfileModel>(`/admin/customers/${id}`),
       addresses: this.api.get<CustomerAddressModel[]>(`/admin/customers/${id}/addresses`),
-      appointments: this.appointments.getAll(undefined, id)
+      appointments: this.appointments.getAll(undefined, id),
+      loyalty: this.loyalty.getForCustomer(id)
     }).pipe(
-      map(({ profile, addresses, appointments }) => ({
+      map(({ profile, addresses, appointments, loyalty }) => ({
         ...profile,
         addresses: addresses ?? [],
-        appointments: appointments ?? []
+        appointments: appointments ?? [],
+        loyalty
       }))
     );
   }

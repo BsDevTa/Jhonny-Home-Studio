@@ -97,6 +97,27 @@ export const routes: Routes = [
             (component) => component.SettingsFormComponent
           )
       },
+      {
+        path: 'availability',
+        loadComponent: () =>
+          import('./features/availability/availability-settings/availability-settings.component').then(
+            (component) => component.AvailabilitySettingsComponent
+          )
+      },
+      {
+        path: 'availability/blocked-dates/new',
+        loadComponent: () =>
+          import('./features/availability/blocked-date-form/blocked-date-form.component').then(
+            (component) => component.BlockedDateFormComponent
+          )
+      },
+      {
+        path: 'availability/blocked-dates/:id/edit',
+        loadComponent: () =>
+          import('./features/availability/blocked-date-form/blocked-date-form.component').then(
+            (component) => component.BlockedDateFormComponent
+          )
+      },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },

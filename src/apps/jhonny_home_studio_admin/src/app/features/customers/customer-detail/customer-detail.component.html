@@ -48,6 +48,55 @@
     <section class="detail-section">
       <header class="section-header">
         <div>
+          <h2>Clube Premium</h2>
+          <p>Pontos e benefícios conquistados em atendimentos concluídos.</p>
+        </div>
+      </header>
+
+      <section class="loyalty-card surface">
+        <div class="loyalty-card__summary">
+          <span class="loyalty-card__level">{{ item.loyalty.level }}</span>
+          <strong>{{ item.loyalty.points }} pontos</strong>
+          <small>
+            @if (item.loyalty.nextLevel) {
+              Faltam {{ item.loyalty.pointsToNextLevel }} pontos para {{ item.loyalty.nextLevel }}.
+            } @else {
+              Nível máximo conquistado.
+            }
+          </small>
+        </div>
+
+        <div>
+          <h3>Benefícios atuais</h3>
+          <ul>
+            @for (benefit of item.loyalty.benefits; track benefit) {
+              <li>{{ benefit }}</li>
+            }
+          </ul>
+        </div>
+
+        <div>
+          <h3>Histórico recente</h3>
+          @if (!item.loyalty.recentTransactions.length) {
+            <p>Nenhuma pontuação registrada ainda.</p>
+          } @else {
+            <div class="loyalty-history">
+              @for (transaction of item.loyalty.recentTransactions; track transaction.id) {
+                <div>
+                  <span>{{ transaction.description }}</span>
+                  <small>{{ transaction.createdAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+                </div>
+                <strong>+{{ transaction.points }}</strong>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </section>
+
+    <section class="detail-section">
+      <header class="section-header">
+        <div>
           <h2>Endereços</h2>
           <p>Locais cadastrados para atendimento.</p>
         </div>

@@ -10,9 +10,12 @@ import '../../features/appointments/presentation/appointment_detail_screen.dart'
 import '../../features/appointments/presentation/create_appointment_screen.dart';
 import '../../features/appointments/presentation/my_appointments_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/loyalty/presentation/loyalty_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/services_screen.dart';
+import '../../features/sos/presentation/sos_loiro_screen.dart';
+import '../../features/vip/presentation/vip_club_screen.dart';
 import '../../shared/layout/main_shell.dart';
 
 class AppRoutes {
@@ -31,6 +34,9 @@ class AppRoutes {
       '/appointments/create/:serviceId';
   static const String myAppointments = '/appointments/my';
   static const String myAppointmentDetail = '/appointments/my/:id';
+  static const String vip = '/vip';
+  static const String loyalty = '/loyalty';
+  static const String sosLoiro = '/sos-loiro';
 
   static GoRouter createRouter(AuthProvider authProvider) {
     return GoRouter(
@@ -123,6 +129,18 @@ class AppRoutes {
                 final appointmentId = state.pathParameters['id'] ?? '';
                 return AppointmentDetailScreen(appointmentId: appointmentId);
               },
+            ),
+            GoRoute(
+              path: vip,
+              builder: (context, state) => const VipClubScreen(),
+            ),
+            GoRoute(
+              path: loyalty,
+              builder: (context, state) => const LoyaltyScreen(),
+            ),
+            GoRoute(
+              path: sosLoiro,
+              builder: (context, state) => const SosLoiroScreen(),
             ),
           ],
         ),

@@ -61,32 +61,14 @@
 
             <div class="appointment-card__actions">
               <a class="secondary-button compact-button" [routerLink]="['/appointments', appointment.id]">Ver detalhes</a>
-              @if (appointment.status === 'Pending') {
+              @for (action of actionsFor(appointment.status); track action.status) {
                 <button
                   type="button"
-                  class="primary-button compact-button"
+                  [class]="action.buttonClass + ' compact-button'"
                   [disabled]="actionLoadingId() === appointment.id"
-                  (click)="updateStatus(appointment, 'Confirmed', 'Horário confirmado pelo administrador.')"
+                  (click)="updateStatus(appointment, action.status, action.note)"
                 >
-                  Confirmar
-                </button>
-                <button
-                  type="button"
-                  class="danger-button compact-button"
-                  [disabled]="actionLoadingId() === appointment.id"
-                  (click)="updateStatus(appointment, 'Rejected', 'Agendamento recusado pelo administrador.')"
-                >
-                  Recusar
-                </button>
-              }
-              @if (canCancel(appointment.status)) {
-                <button
-                  type="button"
-                  class="danger-button compact-button"
-                  [disabled]="actionLoadingId() === appointment.id"
-                  (click)="updateStatus(appointment, 'Canceled', 'Agendamento cancelado pelo administrador.')"
-                >
-                  Cancelar
+                  {{ action.label }}
                 </button>
               }
             </div>

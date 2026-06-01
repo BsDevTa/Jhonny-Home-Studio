@@ -5,7 +5,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import {
   AppointmentModel,
-  appointmentStatusOptions
+  appointmentStatusOptions,
+  AppointmentStatusAction,
+  getAppointmentStatusActions
 } from '../../../core/models/appointment.model';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
@@ -59,10 +61,23 @@ export class AppointmentDetailComponent implements OnInit {
       return;
     }
 
+    this.saveStatus(this.selectedStatus, this.note);
+  }
+
+  applyQuickAction(action: AppointmentStatusAction): void {
+    this.selectedStatus = action.status;
+    this.saveStatus(action.status, this.note.trim() || action.note);
+  }
+
+  actionsFor(status: string): AppointmentStatusAction[] {
+    return getAppointmentStatusActions(status);
+  }
+
+  private saveStatus(status: string, note: string): void {
     this.saving.set(true);
     this.error.set('');
 
-    this.appointmentService.updateStatus(this.appointmentId, this.selectedStatus, this.note).subscribe({
+    this.appointmentService.updateStatus(this.appointmentId, status, note).subscribe({
       next: (appointment) => {
         this.appointment.set(appointment);
         this.selectedStatus = appointment.status;

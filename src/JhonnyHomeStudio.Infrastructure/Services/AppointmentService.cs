@@ -12,24 +12,23 @@ namespace JhonnyHomeStudio.Infrastructure.Services;
 
 public sealed class AppointmentService : IAppointmentService
 {
-    private static readonly TimeSpan OpeningTime = TimeSpan.FromHours(8);
-    private static readonly TimeSpan ClosingTime = TimeSpan.FromHours(18);
-    private static readonly TimeSpan SlotStep = TimeSpan.FromMinutes(30);
     private static readonly HashSet<AppointmentStatus> BlockingStatuses = new()
     {
         AppointmentStatus.Pending,
         AppointmentStatus.WaitingPayment,
         AppointmentStatus.Confirmed,
+        AppointmentStatus.Rescheduled,
         AppointmentStatus.OnTheWay,
-        AppointmentStatus.InProgress,
-        AppointmentStatus.Completed
+        AppointmentStatus.InProgress
     };
 
     private readonly JhonnyHomeStudioDbContext _dbContext;
+    private readonly ILoyaltyService _loyaltyService;
 
-    public AppointmentService(JhonnyHomeStudioDbContext dbContext)
+    public AppointmentService(JhonnyHomeStudioDbContext dbContext, ILoyaltyService loyaltyService)
     {
         _dbContext = dbContext;
+        _loyaltyService = loyaltyService;
     }
 
     public async Task<AppointmentResponse> CreateMyAppointmentAsync(Guid userId, CreateAppointmentRequest request)
@@ -41,7 +40,7 @@ public sealed class AppointmentService : IAppointmentService
         var address = await GetOwnedAddressAsync(customer.Id, request.AddressId);
         var scheduledLocal = NormalizeLocalDateTime(request.ScheduledAt);
 
-        ValidateScheduledDate(scheduledLocal, service.EstimatedDurationMinutes);
+        await ValidateScheduledAvailabilityAsync(scheduledLocal, service.EstimatedDurationMinutes);
 
         var scheduledStartUtc = ToUtc(scheduledLocal);
         var scheduledEndUtc = ToUtc(scheduledLocal.AddMinutes(service.EstimatedDurationMinutes));
@@ -219,6 +218,14 @@ public sealed class AppointmentService : IAppointmentService
             ChangedAtUtc = DateTime.UtcNow
         });
 
+        if (status == AppointmentStatus.Completed)
+        {
+            await _loyaltyService.AwardForCompletedAppointmentAsync(
+                appointment.CustomerId,
+                appointment.Id,
+                appointment.ServicePriceSnapshot);
+        }
+
         await _dbContext.SaveChangesAsync();
         return await BuildAppointmentResponseAsync(appointment.Id);
     }
@@ -234,29 +241,41 @@ public sealed class AppointmentService : IAppointmentService
         }
 
         var slots = new List<AvailableSlotResponse>();
-        var start = localDate.Add(OpeningTime);
-        var latestStart = localDate.Add(ClosingTime).AddMinutes(-service.EstimatedDurationMinutes);
-
-        if (localDate.DayOfWeek == DayOfWeek.Sunday)
+        var businessHour = await GetBusinessHourAsync(localDate);
+        if (businessHour is null || !businessHour.IsOpen)
         {
             return slots;
         }
 
+        var blockedDates = await GetBlockedDatesAsync(localDate);
+        if (blockedDates.Any(x => x.IsFullDay))
+        {
+            return slots;
+        }
+
+        var start = localDate.Add(businessHour.StartTime.ToTimeSpan());
+        var latestStart = localDate.Add(businessHour.EndTime.ToTimeSpan()).AddMinutes(-service.EstimatedDurationMinutes);
+        var slotStep = TimeSpan.FromMinutes(businessHour.SlotIntervalMinutes);
         var existingAppointments = await GetBlockingAppointmentsInUtcRangeAsync(localDate);
 
-        for (var slotStart = start; slotStart <= latestStart; slotStart = slotStart.Add(SlotStep))
+        for (var slotStart = start; slotStart <= latestStart; slotStart = slotStart.Add(slotStep))
         {
             var slotEnd = slotStart.AddMinutes(service.EstimatedDurationMinutes);
             var slotStartUtc = ToUtc(slotStart);
             var slotEndUtc = ToUtc(slotEnd);
             var blockedByStatus = existingAppointments.Any(x => IsBlockingStatus(x.Status) && Overlaps(slotStartUtc, slotEndUtc, x.ScheduledAtUtc, x.ScheduledAtUtc.AddMinutes(x.EstimatedDurationMinutesSnapshot)));
-            var isAvailable = slotStart >= DateTime.Now && !blockedByStatus;
+            var blockedByDate = IsBlockedByDate(slotStart, slotEnd, blockedDates);
+
+            if (slotStart < DateTime.Now || blockedByStatus || blockedByDate)
+            {
+                continue;
+            }
 
             slots.Add(new AvailableSlotResponse
             {
                 StartAt = slotStart,
                 EndAt = slotEnd,
-                IsAvailable = isAvailable
+                IsAvailable = true
             });
         }
 
@@ -363,13 +382,25 @@ public sealed class AppointmentService : IAppointmentService
 
     private static void ValidateUpdateStatusRequest(UpdateAppointmentStatusRequest request)
     {
+        var errors = new List<string>();
+
         if (string.IsNullOrWhiteSpace(request.Status))
         {
-            throw new ValidationAppException("Status obrigatório.", new[] { "O status do agendamento é obrigatório." });
+            errors.Add("O status do agendamento é obrigatório.");
+        }
+
+        if (request.Note?.Trim().Length > 500)
+        {
+            errors.Add("A nota administrativa deve ter no máximo 500 caracteres.");
+        }
+
+        if (errors.Count > 0)
+        {
+            throw new ValidationAppException("Não foi possível atualizar o status.", errors);
         }
     }
 
-    private static void ValidateScheduledDate(DateTime scheduledLocal, int serviceDurationMinutes)
+    private async Task ValidateScheduledAvailabilityAsync(DateTime scheduledLocal, int serviceDurationMinutes)
     {
         var nowLocal = DateTime.Now;
 
@@ -378,22 +409,36 @@ public sealed class AppointmentService : IAppointmentService
             throw new ValidationAppException("Data inválida.", new[] { "A data e hora do agendamento não podem estar no passado." });
         }
 
-        if (scheduledLocal.DayOfWeek == DayOfWeek.Sunday)
+        var businessHour = await GetBusinessHourAsync(scheduledLocal.Date);
+        if (businessHour is null || !businessHour.IsOpen)
         {
-            throw new ValidationAppException("Horário indisponível.", new[] { "Domingo está fechado para agendamentos." });
+            throw new ValidationAppException("Horário indisponível.", new[] { "Não há atendimento disponível nesta data." });
         }
 
         var slotStart = scheduledLocal.TimeOfDay;
         var slotEnd = scheduledLocal.AddMinutes(serviceDurationMinutes).TimeOfDay;
+        var openingTime = businessHour.StartTime.ToTimeSpan();
+        var closingTime = businessHour.EndTime.ToTimeSpan();
 
-        if (slotStart < OpeningTime || slotStart > ClosingTime)
+        if (slotStart < openingTime || slotStart > closingTime)
         {
             throw new ValidationAppException("Horário indisponível.", new[] { "O horário informado está fora do horário comercial." });
         }
 
-        if (slotEnd > ClosingTime)
+        if (slotEnd > closingTime)
         {
             throw new ValidationAppException("Horário indisponível.", new[] { "O serviço informado termina após o horário comercial." });
+        }
+
+        if ((slotStart - openingTime).Ticks % TimeSpan.FromMinutes(businessHour.SlotIntervalMinutes).Ticks != 0)
+        {
+            throw new ValidationAppException("Horário indisponível.", new[] { "Selecione um dos horários disponíveis para atendimento." });
+        }
+
+        var blockedDates = await GetBlockedDatesAsync(scheduledLocal.Date);
+        if (IsBlockedByDate(scheduledLocal, scheduledLocal.AddMinutes(serviceDurationMinutes), blockedDates))
+        {
+            throw new ValidationAppException("Horário indisponível.", new[] { "Este período está bloqueado para atendimento." });
         }
     }
 
@@ -418,6 +463,47 @@ public sealed class AppointmentService : IAppointmentService
 
         // Futuramente, aqui é o ponto ideal para consultar bloqueios externos, como Google Calendar.
         return appointments.Where(x => IsBlockingStatus(x.Status)).ToList();
+    }
+
+    private async Task<BusinessHour?> GetBusinessHourAsync(DateTime localDate)
+    {
+        return await _dbContext.BusinessHours
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.DayOfWeek == (int)localDate.DayOfWeek);
+    }
+
+    private async Task<List<BlockedDate>> GetBlockedDatesAsync(DateTime localDate)
+    {
+        var date = DateOnly.FromDateTime(localDate);
+        return await _dbContext.BlockedDates
+            .AsNoTracking()
+            .Where(x => x.Date == date)
+            .ToListAsync();
+    }
+
+    private static bool IsBlockedByDate(DateTime slotStart, DateTime slotEnd, IEnumerable<BlockedDate> blockedDates)
+    {
+        foreach (var blockedDate in blockedDates)
+        {
+            if (blockedDate.IsFullDay)
+            {
+                return true;
+            }
+
+            if (blockedDate.StartTime is null || blockedDate.EndTime is null)
+            {
+                continue;
+            }
+
+            var blockedStart = slotStart.Date.Add(blockedDate.StartTime.Value.ToTimeSpan());
+            var blockedEnd = slotStart.Date.Add(blockedDate.EndTime.Value.ToTimeSpan());
+            if (Overlaps(slotStart, slotEnd, blockedStart, blockedEnd))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsBlockingStatus(AppointmentStatus status)

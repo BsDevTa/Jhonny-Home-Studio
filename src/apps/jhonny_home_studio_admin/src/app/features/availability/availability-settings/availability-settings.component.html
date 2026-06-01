@@ -1,0 +1,133 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Disponibilidade</h1>
+      <p class="page-subtitle">Defina os dias e horários em que o estúdio atende.</p>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (success()) {
+    <p class="success-banner">{{ success() }}</p>
+  }
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <section class="surface availability-card">
+      <div class="section-header">
+        <div>
+          <h2>Horários da semana</h2>
+          <p>Configure a janela de atendimento e o intervalo entre as opções exibidas no app.</p>
+        </div>
+        <button type="button" class="primary-button" [disabled]="saving()" (click)="saveHours()">
+          {{ saving() ? 'Salvando...' : 'Salvar horários' }}
+        </button>
+      </div>
+
+      <div class="hours-list">
+        @for (hour of hours(); track hour.dayOfWeek) {
+          <div class="hour-row" [class.hour-row--closed]="!hour.isOpen">
+            <label class="day-toggle">
+              <input type="checkbox" [(ngModel)]="hour.isOpen" />
+              <span>
+                <strong>{{ hour.dayName }}</strong>
+                <small>{{ hour.isOpen ? 'Aberto' : 'Fechado' }}</small>
+              </span>
+            </label>
+
+            <label class="compact-field">
+              <span>Início</span>
+              <input type="time" [(ngModel)]="hour.startTime" [disabled]="!hour.isOpen" />
+            </label>
+
+            <label class="compact-field">
+              <span>Fim</span>
+              <input type="time" [(ngModel)]="hour.endTime" [disabled]="!hour.isOpen" />
+            </label>
+
+            <label class="compact-field compact-field--interval">
+              <span>Intervalo</span>
+              <select [(ngModel)]="hour.slotIntervalMinutes" [disabled]="!hour.isOpen">
+                <option [ngValue]="15">15 min</option>
+                <option [ngValue]="30">30 min</option>
+                <option [ngValue]="45">45 min</option>
+                <option [ngValue]="60">60 min</option>
+                <option [ngValue]="90">90 min</option>
+                <option [ngValue]="120">120 min</option>
+              </select>
+            </label>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="surface availability-card">
+      <div class="section-header">
+        <div>
+          <h2>Datas bloqueadas</h2>
+          <p>Registre folgas, feriados e compromissos que não devem receber agendamentos.</p>
+        </div>
+        <a routerLink="/availability/blocked-dates/new" class="primary-button">Bloquear data</a>
+      </div>
+
+      @if (!blockedDates().length) {
+        <app-empty-state
+          title="Nenhuma data bloqueada"
+          description="O calendário está livre. Cadastre um bloqueio quando precisar reservar um período."
+        />
+      } @else {
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Motivo</th>
+                <th>Período</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (blockedDate of blockedDates(); track blockedDate.id) {
+                <tr>
+                  <td><strong>{{ formatDate(blockedDate.date) }}</strong></td>
+                  <td>{{ blockedDate.reason }}</td>
+                  <td>{{ formatBlockedPeriod(blockedDate) }}</td>
+                  <td>
+                    <div class="table-actions">
+                      <a
+                        class="secondary-button table-button"
+                        [routerLink]="['/availability/blocked-dates', blockedDate.id, 'edit']"
+                      >
+                        Editar
+                      </a>
+                      <button
+                        type="button"
+                        class="danger-button table-button"
+                        (click)="blockedDateToDelete.set(blockedDate)"
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</section>
+
+<app-confirm-dialog
+  [open]="!!blockedDateToDelete()"
+  title="Excluir bloqueio?"
+  [description]="'O bloqueio de ' + formatDate(blockedDateToDelete()?.date ?? '') + ' será removido da agenda.'"
+  confirmLabel="Excluir"
+  (canceled)="blockedDateToDelete.set(null)"
+  (confirmed)="confirmDelete()"
+/>

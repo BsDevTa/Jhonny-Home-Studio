@@ -1,0 +1,140 @@
+:host {
+  display: block;
+}
+
+.availability-card {
+  padding: 20px;
+}
+
+.availability-card + .availability-card {
+  margin-top: 18px;
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.section-header p {
+  max-width: 640px;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.success-banner {
+  border: 1px solid rgb(76 175 122 / 34%);
+  border-radius: 12px;
+  background: rgb(76 175 122 / 9%);
+  color: var(--success);
+  padding: 12px 14px;
+  font-size: 12px;
+}
+
+.hours-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.hour-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) 132px 132px 132px;
+  gap: 12px;
+  align-items: end;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--background-soft);
+  padding: 12px;
+  transition: opacity 160ms ease;
+}
+
+.hour-row--closed {
+  opacity: 0.7;
+}
+
+.day-toggle {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.day-toggle span,
+.day-toggle small {
+  display: block;
+}
+
+.day-toggle small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.compact-field {
+  display: grid;
+  gap: 6px;
+}
+
+.compact-field span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.compact-field input,
+.compact-field select {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  padding: 0 10px;
+}
+
+.compact-field input:focus,
+.compact-field select:focus {
+  border-color: var(--gold);
+}
+
+.table-wrap {
+  margin: 18px -20px -20px;
+}
+
+.table-button {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hour-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .day-toggle {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .hour-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .compact-field--interval {
+    grid-column: 1 / -1;
+  }
+}
