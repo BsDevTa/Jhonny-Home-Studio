@@ -1,0 +1,82 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Stories</h1>
+      <p class="page-subtitle">Organize destaques editoriais para a tela inicial do aplicativo.</p>
+    </div>
+    <a routerLink="/stories/new" class="primary-button">Novo story</a>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="surface">
+    @if (loading()) {
+      <app-loading />
+    } @else if (!stories().length) {
+      <app-empty-state title="Nenhum story cadastrado" description="Cadastre um destaque para apresentá-lo às clientes no aplicativo." />
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Story</th>
+              <th>Serviço vinculado</th>
+              <th>Ordem</th>
+              <th>Período</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (story of stories(); track story.id) {
+              <tr>
+                <td>
+                  <div class="story-summary">
+                    <div class="story-thumb">
+                      @if (story.imageUrl) {
+                        <img [src]="story.imageUrl" alt="" />
+                      } @else {
+                        <span>{{ story.title.slice(0, 1).toUpperCase() }}</span>
+                      }
+                    </div>
+                    <div>
+                      <strong>{{ story.title }}</strong>
+                      <small>{{ story.subtitle || 'Sem subtítulo' }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>{{ story.serviceName || 'Sem vínculo' }}</td>
+                <td>{{ story.displayOrder }}</td>
+                <td>
+                  <span class="period">{{ story.startsAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  <small>até {{ story.endsAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+                </td>
+                <td><app-status-badge [active]="story.isActive" /></td>
+                <td>
+                  <div class="table-actions">
+                    <a class="secondary-button table-button" [routerLink]="['/stories', story.id, 'edit']">Editar</a>
+                    <button type="button" class="secondary-button table-button" (click)="toggle(story)">
+                      {{ story.isActive ? 'Desativar' : 'Ativar' }}
+                    </button>
+                    <button type="button" class="danger-button table-button" (click)="storyToDelete.set(story)">Excluir</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>
+
+<app-confirm-dialog
+  [open]="!!storyToDelete()"
+  title="Excluir story?"
+  [description]="'O story ' + (storyToDelete()?.title ?? '') + ' será removido do aplicativo.'"
+  confirmLabel="Excluir"
+  (canceled)="storyToDelete.set(null)"
+  (confirmed)="confirmDelete()"
+/>

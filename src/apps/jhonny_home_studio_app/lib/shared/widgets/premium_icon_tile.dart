@@ -28,7 +28,7 @@ class PremiumIconTile extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.06),
+            color: AppColors.background.withValues(alpha: 0.45),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

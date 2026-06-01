@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.settings-section {
+  display: grid;
+  gap: 16px;
+  padding: 0 0 20px;
+}
+
+.settings-section + .settings-section {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings-section p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.success-banner {
+  margin: 0 0 18px;
+  border: 1px solid rgb(76 175 122 / 34%);
+  border-radius: 12px;
+  background: rgb(76 175 122 / 9%);
+  color: var(--success);
+  padding: 12px 14px;
+  font-size: 12px;
+}

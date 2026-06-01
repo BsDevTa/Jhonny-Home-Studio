@@ -48,7 +48,7 @@ class AppBottomNav extends StatelessWidget {
                 border: Border.all(color: AppColors.border, width: 0.6),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.08),
+                    color: AppColors.background.withValues(alpha: 0.55),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -171,23 +171,35 @@ class _CenterActionButton extends StatelessWidget {
         height: 54,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.surface,
-          border: Border.all(
-            color: AppColors.gold.withValues(alpha: 0.20),
-            width: 0.8,
+          gradient: const LinearGradient(
+            colors: [
+              AppColors.goldLight,
+              AppColors.gold,
+              AppColors.copper,
+              AppColors.goldDark,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.textPrimary.withValues(alpha: 0.08),
+              color: AppColors.background.withValues(alpha: 0.55),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
           ],
         ),
-        child: Icon(
-          Icons.calendar_month_rounded,
-          color: AppColors.gold,
-          size: 24,
+        padding: const EdgeInsets.all(1),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: selected ? AppColors.surfaceSoft : AppColors.surface,
+          ),
+          child: const Icon(
+            Icons.calendar_month_rounded,
+            color: AppColors.gold,
+            size: 24,
+          ),
         ),
       ),
     );

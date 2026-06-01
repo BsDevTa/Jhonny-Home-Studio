@@ -38,6 +38,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IAddressService, AddressService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
+        services.AddScoped<IStoryService, StoryService>();
+        services.AddScoped<IStudioSettingsService, StudioSettingsService>();
 
         return services;
     }

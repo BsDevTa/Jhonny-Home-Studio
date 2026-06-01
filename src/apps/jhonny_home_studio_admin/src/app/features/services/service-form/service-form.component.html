@@ -1,0 +1,84 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ editing ? 'Editar serviço' : 'Novo serviço' }}</h1>
+      <p class="page-subtitle">Configure uma experiência clara e pronta para agendamento.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <form class="surface form-card" [formGroup]="form" (ngSubmit)="submit()">
+      @if (error()) {
+        <p class="error-banner">{{ error() }}</p>
+      }
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="category">Categoria</label>
+          <select id="category" formControlName="serviceCategoryId">
+            <option value="">Selecione</option>
+            @for (category of categories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+          @if (form.controls.serviceCategoryId.touched && form.controls.serviceCategoryId.invalid) {
+            <span class="field-error">Selecione uma categoria.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="name">Nome</label>
+          <input id="name" type="text" formControlName="name" placeholder="Ex.: Escova premium" />
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <span class="field-error">Informe o nome do serviço.</span>
+          }
+        </div>
+
+        <div class="field span-2">
+          <label for="description">Descrição</label>
+          <textarea id="description" formControlName="description" placeholder="Descreva a experiência oferecida."></textarea>
+          @if (form.controls.description.touched && form.controls.description.invalid) {
+            <span class="field-error">Informe a descrição do serviço.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="price">Preço</label>
+          <input id="price" type="number" min="0.01" step="0.01" formControlName="price" />
+          @if (form.controls.price.touched && form.controls.price.invalid) {
+            <span class="field-error">Informe um preço válido.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="duration">Duração estimada em minutos</label>
+          <input id="duration" type="number" min="1" step="1" formControlName="estimatedDurationMinutes" />
+          @if (form.controls.estimatedDurationMinutes.touched && form.controls.estimatedDurationMinutes.invalid) {
+            <span class="field-error">Informe a duração estimada.</span>
+          }
+        </div>
+
+        <div class="field span-2">
+          <label for="imageUrl">URL da imagem <span class="muted">(opcional)</span></label>
+          <input id="imageUrl" type="url" formControlName="imageUrl" placeholder="https://..." />
+        </div>
+
+        @if (editing) {
+          <label class="checkbox-field span-2">
+            <input type="checkbox" formControlName="isActive" />
+            Serviço ativo
+          </label>
+        }
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/services" class="secondary-button">Cancelar</a>
+        <button type="submit" class="primary-button" [disabled]="saving()">
+          {{ saving() ? 'Salvando...' : 'Salvar serviço' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

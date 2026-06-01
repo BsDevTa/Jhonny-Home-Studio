@@ -1,0 +1,102 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ editing ? 'Editar story' : 'Novo story' }}</h1>
+      <p class="page-subtitle">Configure um destaque editorial leve para a tela inicial.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <form class="surface form-card" [formGroup]="form" (ngSubmit)="submit()">
+      @if (error()) {
+        <p class="error-banner">{{ error() }}</p>
+      }
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="title">Título</label>
+          <input id="title" type="text" formControlName="title" placeholder="Ex.: Ritual de brilho" />
+          @if (form.controls.title.touched && form.controls.title.invalid) {
+            <span class="field-error">Informe um título com até 160 caracteres.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label for="serviceId">Serviço vinculado <span class="muted">(opcional)</span></label>
+          <select id="serviceId" formControlName="serviceId">
+            <option value="">Sem vínculo</option>
+            @for (service of services(); track service.id) {
+              <option [value]="service.id">{{ service.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field span-2">
+          <label for="subtitle">Subtítulo <span class="muted">(opcional)</span></label>
+          <textarea id="subtitle" formControlName="subtitle" placeholder="Uma frase breve para apresentar o destaque."></textarea>
+          @if (form.controls.subtitle.touched && form.controls.subtitle.invalid) {
+            <span class="field-error">Use até 280 caracteres.</span>
+          }
+        </div>
+
+        <div class="upload-field span-2">
+          <div>
+            <span class="upload-label">Imagem do story <span class="muted">(opcional)</span></span>
+            <p>Selecione uma imagem JPG, PNG ou WebP com até 5MB.</p>
+          </div>
+
+          <label class="secondary-button upload-button">
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              [disabled]="uploadingImage()"
+              (change)="selectImage($event)"
+            />
+            {{ uploadingImage() ? 'Enviando imagem...' : imagePreviewUrl() ? 'Trocar imagem' : 'Selecionar imagem' }}
+          </label>
+
+          @if (selectedFileName()) {
+            <small class="upload-file-name">{{ selectedFileName() }}</small>
+          }
+
+          @if (imagePreviewUrl()) {
+            <div class="image-preview">
+              <img [src]="imagePreviewUrl()" alt="Prévia da imagem do story" />
+            </div>
+          }
+        </div>
+
+        <div class="field">
+          <label for="displayOrder">Ordem de exibição</label>
+          <input id="displayOrder" type="number" min="0" step="1" formControlName="displayOrder" />
+        </div>
+
+        <div class="field">
+          <label for="startsAt">Exibir a partir de <span class="muted">(opcional)</span></label>
+          <input id="startsAt" type="datetime-local" formControlName="startsAt" />
+        </div>
+
+        <div class="field">
+          <label for="endsAt">Exibir até <span class="muted">(opcional)</span></label>
+          <input id="endsAt" type="datetime-local" formControlName="endsAt" />
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="isActive" />
+          Story ativo
+        </label>
+      </div>
+
+      <p class="form-note">Sem imagem, o aplicativo usa um placeholder premium automaticamente.</p>
+
+      <div class="form-actions">
+        <a routerLink="/stories" class="secondary-button">Cancelar</a>
+        <button type="submit" class="primary-button" [disabled]="saving() || uploadingImage()">
+          {{ saving() ? 'Salvando...' : 'Salvar story' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

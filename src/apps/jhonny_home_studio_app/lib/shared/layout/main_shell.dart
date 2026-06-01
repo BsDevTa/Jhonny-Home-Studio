@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_texts.dart';
 import '../../core/routes/app_routes.dart';
 import 'app_bottom_nav.dart';
 import 'app_drawer.dart';
 import 'app_side_menu.dart';
+import '../../features/settings/presentation/app_settings_provider.dart';
+import 'package:provider/provider.dart';
 
 class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.currentPath, required this.child});
@@ -16,6 +17,8 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettingsProvider>().settings;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 900;
@@ -35,22 +38,22 @@ class MainShell extends StatelessWidget {
           appBar: AppBar(
             toolbarHeight: 64,
             titleSpacing: 0,
-            title: const Column(
+            title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  AppTexts.appName,
-                  style: TextStyle(
+                  settings.studioName,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
-                  'Experiência premium',
-                  style: TextStyle(
+                  settings.subtitle,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w400,

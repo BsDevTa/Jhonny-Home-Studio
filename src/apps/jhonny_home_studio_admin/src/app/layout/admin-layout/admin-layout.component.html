@@ -1,0 +1,9 @@
+<div class="admin-shell">
+  <app-sidebar [open]="sidebarOpen()" (closed)="sidebarOpen.set(false)" />
+  <div class="admin-shell__content">
+    <app-topbar (menuOpened)="sidebarOpen.set(true)" />
+    <main>
+      <router-outlet />
+    </main>
+  </div>
+</div>

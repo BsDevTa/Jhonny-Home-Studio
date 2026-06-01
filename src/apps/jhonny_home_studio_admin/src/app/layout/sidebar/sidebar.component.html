@@ -1,0 +1,39 @@
+@if (open()) {
+  <button type="button" class="sidebar-backdrop" aria-label="Fechar menu" (click)="close()"></button>
+}
+
+<aside class="sidebar" [class.sidebar--open]="open()">
+  <div class="sidebar__brand">
+    <span class="sidebar__brand-mark">J</span>
+    <span>
+      <strong>Jhonny Home Studio</strong>
+      <small>Admin premium</small>
+    </span>
+  </div>
+
+  <nav class="sidebar__nav" aria-label="Menu administrativo">
+    <a routerLink="/dashboard" routerLinkActive="sidebar__item--active" class="sidebar__item" (click)="close()">
+      <span class="sidebar__icon">D</span><span>Dashboard</span>
+    </a>
+    <a routerLink="/categories" routerLinkActive="sidebar__item--active" class="sidebar__item" (click)="close()">
+      <span class="sidebar__icon">C</span><span>Categorias</span>
+    </a>
+    <a routerLink="/services" routerLinkActive="sidebar__item--active" class="sidebar__item" (click)="close()">
+      <span class="sidebar__icon">S</span><span>Serviços</span>
+    </a>
+    <a routerLink="/appointments" routerLinkActive="sidebar__item--active" class="sidebar__item" (click)="close()">
+      <span class="sidebar__icon">A</span><span>Agenda</span>
+    </a>
+    <a routerLink="/customers" routerLinkActive="sidebar__item--active" class="sidebar__item" (click)="close()">
+      <span class="sidebar__icon">P</span><span>Clientes</span>
+    </a>
+    <a routerLink="/stories" routerLinkActive="sidebar__item--active" class="sidebar__item" (click)="close()">
+      <span class="sidebar__icon">T</span><span>Stories</span>
+    </a>
+    <a routerLink="/settings" routerLinkActive="sidebar__item--active" class="sidebar__item" (click)="close()">
+      <span class="sidebar__icon">G</span><span>Configurações</span>
+    </a>
+  </nav>
+
+  <button type="button" class="sidebar__logout" (click)="logout()">Sair</button>
+</aside>

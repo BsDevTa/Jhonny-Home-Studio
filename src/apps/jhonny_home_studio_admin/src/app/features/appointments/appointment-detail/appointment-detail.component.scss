@@ -1,0 +1,91 @@
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 14px;
+}
+
+.detail-card,
+.status-card {
+  padding: 20px;
+}
+
+.detail-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detail-card__eyebrow {
+  color: var(--gold);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+h2,
+p,
+dl,
+dd {
+  margin: 0;
+}
+
+h2 {
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+p {
+  margin: 7px 0 18px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 22px;
+}
+
+dt {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+dd {
+  margin-top: 5px;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.status-card {
+  align-self: start;
+}
+
+.status-card .field + .field {
+  margin-top: 13px;
+}
+
+.status-card .primary-button {
+  width: 100%;
+  margin-top: 16px;
+}
+
+@media (max-width: 920px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 540px) {
+  dl {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: auto;
+  }
+}

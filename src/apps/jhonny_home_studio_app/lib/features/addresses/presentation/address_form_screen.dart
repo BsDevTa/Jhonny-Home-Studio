@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -8,6 +11,7 @@ import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_text_field.dart';
 import '../data/address_models.dart';
 import '../data/addresses_api.dart';
+import '../data/cep_api.dart';
 
 class AddressFormScreen extends StatefulWidget {
   const AddressFormScreen({super.key, this.addressId});
@@ -30,18 +34,28 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   final _zipCodeController = TextEditingController();
   final _complementController = TextEditingController();
   final _referenceController = TextEditingController();
+  final _zipCodeFocusNode = FocusNode();
 
   late final AddressesApi _addressesApi;
+  late final CepApi _cepApi;
 
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isSearchingCep = false;
   String? _errorMessage;
+  String? _cepMessage;
+  bool _cepLookupSucceeded = false;
   bool _isDefault = false;
+  Timer? _cepDebounce;
+  String? _lastQueriedCep;
+  int _cepRequestId = 0;
 
   @override
   void initState() {
     super.initState();
     _addressesApi = AddressesApi(apiClient: context.read<ApiClient>());
+    _cepApi = CepApi();
+    _zipCodeFocusNode.addListener(_handleZipCodeFocusChange);
     if (widget.isEditing) {
       _loadAddress();
     }
@@ -57,6 +71,10 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
     _zipCodeController.dispose();
     _complementController.dispose();
     _referenceController.dispose();
+    _zipCodeFocusNode
+      ..removeListener(_handleZipCodeFocusChange)
+      ..dispose();
+    _cepDebounce?.cancel();
     super.dispose();
   }
 
@@ -78,10 +96,11 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
         _neighborhoodController.text = address.neighborhood;
         _cityController.text = address.city;
         _stateController.text = address.state;
-        _zipCodeController.text = address.zipCode;
+        _zipCodeController.text = _formatCep(address.zipCode);
         _complementController.text = address.complement;
         _referenceController.text = address.referencePoint;
         _isDefault = address.isDefault;
+        _lastQueriedCep = _onlyDigits(address.zipCode);
       });
     } on ApiException catch (error) {
       if (!mounted) {
@@ -101,6 +120,110 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _handleZipCodeFocusChange() {
+    if (!_zipCodeFocusNode.hasFocus) {
+      _lookupCep(_zipCodeController.text, showInvalidMessage: true);
+    }
+  }
+
+  void _handleZipCodeChanged(String value) {
+    _cepDebounce?.cancel();
+    final cep = _onlyDigits(value);
+
+    if (cep.length != 8) {
+      _cepRequestId++;
+      if (mounted) {
+        setState(() {
+          _isSearchingCep = false;
+          _cepMessage = null;
+          _cepLookupSucceeded = false;
+        });
+      }
+      return;
+    }
+
+    _cepDebounce = Timer(
+      const Duration(milliseconds: 450),
+      () => _lookupCep(cep),
+    );
+  }
+
+  Future<void> _lookupCep(
+    String value, {
+    bool showInvalidMessage = false,
+  }) async {
+    final cep = _onlyDigits(value);
+    if (cep.length != 8) {
+      if (showInvalidMessage && cep.isNotEmpty && mounted) {
+        setState(() {
+          _cepMessage = 'Informe um CEP válido com 8 números.';
+          _cepLookupSucceeded = false;
+        });
+      }
+      return;
+    }
+
+    if (_lastQueriedCep == cep) {
+      return;
+    }
+
+    _cepDebounce?.cancel();
+    _lastQueriedCep = cep;
+    final requestId = ++_cepRequestId;
+
+    setState(() {
+      _isSearchingCep = true;
+      _cepMessage = 'Buscando CEP...';
+      _cepLookupSucceeded = false;
+    });
+
+    try {
+      final address = await _cepApi.getAddressByCep(cep);
+      if (!mounted ||
+          requestId != _cepRequestId ||
+          _onlyDigits(_zipCodeController.text) != cep) {
+        return;
+      }
+
+      setState(() {
+        _streetController.text = address.logradouro;
+        _neighborhoodController.text = address.bairro;
+        _cityController.text = address.localidade;
+        _stateController.text = address.uf;
+        if (_complementController.text.trim().isEmpty &&
+            address.complemento.trim().isNotEmpty) {
+          _complementController.text = address.complemento;
+        }
+        _cepMessage = 'Endereço encontrado.';
+        _cepLookupSucceeded = true;
+      });
+    } on ApiException catch (error) {
+      if (!mounted || requestId != _cepRequestId) {
+        return;
+      }
+      setState(() {
+        _cepMessage = error.message == 'CEP não encontrado.'
+            ? 'CEP não encontrado. Preencha manualmente.'
+            : error.message;
+        _cepLookupSucceeded = false;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _cepRequestId) {
+        return;
+      }
+      setState(() {
+        _cepMessage = 'Não foi possível consultar o CEP agora.';
+        _cepLookupSucceeded = false;
+      });
+    } finally {
+      if (mounted && requestId == _cepRequestId) {
+        setState(() {
+          _isSearchingCep = false;
         });
       }
     }
@@ -232,6 +355,42 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                           const SizedBox(height: 14),
                         ],
                         PremiumTextField(
+                          controller: _zipCodeController,
+                          labelText: 'CEP',
+                          keyboardType: TextInputType.number,
+                          prefixIcon: Icons.markunread_mailbox_outlined,
+                          suffixIcon: _isSearchingCep
+                              ? const Padding(
+                                  padding: EdgeInsets.all(14),
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.gold,
+                                      strokeWidth: 1.8,
+                                    ),
+                                  ),
+                                )
+                              : null,
+                          focusNode: _zipCodeFocusNode,
+                          inputFormatters: const [CepInputFormatter()],
+                          onChanged: _handleZipCodeChanged,
+                          validator: _zipCodeValidator,
+                        ),
+                        if (_cepMessage != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            _cepMessage!,
+                            style: TextStyle(
+                              color: _cepLookupSucceeded
+                                  ? AppColors.success
+                                  : AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+                        PremiumTextField(
                           controller: _streetController,
                           labelText: 'Rua',
                           prefixIcon: Icons.map_outlined,
@@ -263,14 +422,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                           controller: _stateController,
                           labelText: 'Estado',
                           prefixIcon: Icons.flag_outlined,
-                          validator: _requiredField,
-                        ),
-                        const SizedBox(height: 14),
-                        PremiumTextField(
-                          controller: _zipCodeController,
-                          labelText: 'CEP',
-                          keyboardType: TextInputType.number,
-                          prefixIcon: Icons.markunread_mailbox_outlined,
                           validator: _requiredField,
                         ),
                         const SizedBox(height: 14),
@@ -321,5 +472,46 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       return 'Campo obrigatório';
     }
     return null;
+  }
+
+  String? _zipCodeValidator(String? value) {
+    if (_onlyDigits(value ?? '').length != 8) {
+      return 'Informe um CEP válido com 8 números';
+    }
+    return null;
+  }
+
+  String _onlyDigits(String value) {
+    return value.replaceAll(RegExp(r'\D'), '');
+  }
+
+  String _formatCep(String value) {
+    final digits = _onlyDigits(value);
+    final limitedDigits = digits.length > 8 ? digits.substring(0, 8) : digits;
+    if (limitedDigits.length <= 5) {
+      return limitedDigits;
+    }
+    return '${limitedDigits.substring(0, 5)}-${limitedDigits.substring(5)}';
+  }
+}
+
+class CepInputFormatter extends TextInputFormatter {
+  const CepInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final limitedDigits = digits.length > 8 ? digits.substring(0, 8) : digits;
+    final formatted = limitedDigits.length <= 5
+        ? limitedDigits
+        : '${limitedDigits.substring(0, 5)}-${limitedDigits.substring(5)}';
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
   }
 }

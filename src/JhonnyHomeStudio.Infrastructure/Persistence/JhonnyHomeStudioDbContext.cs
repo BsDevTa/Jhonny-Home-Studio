@@ -21,6 +21,7 @@ public sealed class JhonnyHomeStudioDbContext : DbContext
     public DbSet<AppointmentStatusHistory> AppointmentStatusHistory => Set<AppointmentStatusHistory>();
     public DbSet<Story> Stories => Set<Story>();
     public DbSet<StoryView> StoryViews => Set<StoryView>();
+    public DbSet<StudioSettings> StudioSettings => Set<StudioSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

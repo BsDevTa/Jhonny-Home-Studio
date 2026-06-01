@@ -1,0 +1,65 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Serviços</h1>
+      <p class="page-subtitle">Gerencie preços, duração e disponibilidade.</p>
+    </div>
+    <a routerLink="/services/new" class="primary-button">Novo serviço</a>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="surface">
+    @if (loading()) {
+      <app-loading />
+    } @else if (!services().length) {
+      <app-empty-state title="Nenhum serviço cadastrado" description="Cadastre o primeiro serviço para disponibilizá-lo no aplicativo." />
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Serviço</th>
+              <th>Categoria</th>
+              <th>Preço</th>
+              <th>Duração</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (service of services(); track service.id) {
+              <tr>
+                <td><strong>{{ service.name }}</strong></td>
+                <td>{{ service.serviceCategoryName }}</td>
+                <td>{{ service.price | currency: 'BRL' }}</td>
+                <td>{{ service.estimatedDurationMinutes }} min</td>
+                <td><app-status-badge [active]="service.isActive" /></td>
+                <td>
+                  <div class="table-actions">
+                    <a class="secondary-button table-button" [routerLink]="['/services', service.id, 'edit']">Editar</a>
+                    <button type="button" class="secondary-button table-button" (click)="toggle(service)">
+                      {{ service.isActive ? 'Desativar' : 'Ativar' }}
+                    </button>
+                    <button type="button" class="danger-button table-button" (click)="serviceToDelete.set(service)">Excluir</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>
+
+<app-confirm-dialog
+  [open]="!!serviceToDelete()"
+  title="Excluir serviço?"
+  [description]="'O serviço ' + (serviceToDelete()?.name ?? '') + ' será removido do catálogo.'"
+  confirmLabel="Excluir"
+  (canceled)="serviceToDelete.set(null)"
+  (confirmed)="confirmDelete()"
+/>

@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_texts.dart';
 import '../../core/routes/app_routes.dart';
 import '../../features/auth/presentation/auth_provider.dart';
+import '../../features/settings/presentation/app_settings_provider.dart';
 import '../widgets/premium_card.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -15,6 +15,8 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettingsProvider>().settings;
+
     return Drawer(
       backgroundColor: AppColors.background,
       child: SafeArea(
@@ -43,9 +45,7 @@ class AppDrawer extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.textPrimary.withValues(
-                              alpha: 0.06,
-                            ),
+                            color: AppColors.background.withValues(alpha: 0.5),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -58,22 +58,22 @@ class AppDrawer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            AppTexts.appName,
-                            style: TextStyle(
+                            settings.studioName,
+                            style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            'Experiência premium',
-                            style: TextStyle(
+                            settings.subtitle,
+                            style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),

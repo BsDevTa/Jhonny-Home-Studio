@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
 
@@ -12,6 +13,9 @@ class PremiumTextField extends StatelessWidget {
     this.obscureText = false,
     this.prefixIcon,
     this.suffixIcon,
+    this.focusNode,
+    this.inputFormatters,
+    this.onChanged,
   });
 
   final TextEditingController controller;
@@ -21,14 +25,21 @@ class PremiumTextField extends StatelessWidget {
   final bool obscureText;
   final IconData? prefixIcon;
   final Widget? suffixIcon;
+  final FocusNode? focusNode;
+  final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       validator: validator,
       keyboardType: keyboardType,
       obscureText: obscureText,
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
+      cursorColor: AppColors.gold,
       style: const TextStyle(
         color: AppColors.textPrimary,
         fontWeight: FontWeight.w500,

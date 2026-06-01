@@ -1,0 +1,50 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Visão rápida do seu catálogo premium.</p>
+    </div>
+    <button type="button" class="secondary-button" (click)="load()">Atualizar</button>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <div class="stats-grid">
+      <article class="stat-card surface">
+        <span>Categorias</span>
+        <strong>{{ totalCategories() }}</strong>
+        <small>Total cadastrado</small>
+      </article>
+      <article class="stat-card surface">
+        <span>Serviços</span>
+        <strong>{{ totalServices() }}</strong>
+        <small>Total cadastrado</small>
+      </article>
+      <article class="stat-card surface">
+        <span>Serviços ativos</span>
+        <strong>{{ activeServices() }}</strong>
+        <small>Disponíveis para clientes</small>
+      </article>
+      <article class="stat-card surface">
+        <span>Agendamentos</span>
+        <strong>{{ totalAppointments() }}</strong>
+        <small>Agenda operacional</small>
+      </article>
+      <article class="stat-card surface">
+        <span>Clientes</span>
+        <strong>{{ totalCustomers() }}</strong>
+        <small>Cadastros no aplicativo</small>
+      </article>
+      <article class="stat-card surface">
+        <span>Stories ativos</span>
+        <strong>{{ activeStories() }}</strong>
+        <small>Destaques na tela inicial</small>
+      </article>
+    </div>
+  }
+</section>

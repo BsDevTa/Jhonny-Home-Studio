@@ -11,6 +11,11 @@ import '../../services/data/service_models.dart';
 import '../../services/data/services_api.dart';
 import '../../services/presentation/widgets/category_chip.dart';
 import '../../services/presentation/widgets/service_story_item.dart';
+import '../../stories/data/stories_api.dart';
+import '../../stories/data/story_model.dart';
+import '../../stories/presentation/story_viewer_screen.dart';
+import '../../stories/presentation/widgets/story_circle_item.dart';
+import '../../settings/presentation/app_settings_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,10 +26,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final ServicesApi _servicesApi;
+  late final StoriesApi _storiesApi;
 
   List<ServiceCategoryModel> _categories = const [];
   List<ServiceModel> _services = const [];
+  List<StoryModel> _editorialStories = const [];
   bool _isLoading = true;
+  bool _isLoadingStories = true;
   String? _errorMessage;
   String? _selectedCategoryId;
 
@@ -32,18 +40,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _servicesApi = ServicesApi(apiClient: context.read<ApiClient>());
+    _storiesApi = StoriesApi(apiClient: context.read<ApiClient>());
     _loadInitialData();
   }
 
   Future<void> _loadInitialData() async {
     setState(() {
       _isLoading = true;
+      _isLoadingStories = true;
       _errorMessage = null;
     });
 
     await Future.wait([
       _loadCategories(),
       _loadServices(updateSelectedCategory: false),
+      _loadEditorialStories(),
+      context.read<AppSettingsProvider>().loadSettings(),
     ]);
 
     if (!mounted) {
@@ -53,6 +65,33 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isLoading = false;
     });
+  }
+
+  Future<void> _loadEditorialStories() async {
+    try {
+      final stories = await _storiesApi.getActiveStories();
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _editorialStories = stories.take(8).toList(growable: false);
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _editorialStories = const [];
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingStories = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadCategories() async {
@@ -148,8 +187,17 @@ class _HomeScreenState extends State<HomeScreen> {
     context.go(AppRoutes.services);
   }
 
+  void _openEditorialStory(StoryModel story) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => StoryViewerScreen(story: story),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettingsProvider>().settings;
     final visibleServices = _services.take(8).toList(growable: false);
     final hasServices = visibleServices.isNotEmpty;
 
@@ -179,6 +227,47 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Text(
+                        settings.welcomeTitle,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        settings.welcomeMessage,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      if (_isLoadingStories ||
+                          _editorialStories.isNotEmpty) ...[
+                        const Text(
+                          'Destaques',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text(
+                          'Novidades escolhidas para você.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(height: 88, child: _buildEditorialStories()),
+                        const SizedBox(height: 24),
+                      ],
                       PremiumSectionHeader(
                         title: 'Serviços',
                         subtitle:
@@ -215,6 +304,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEditorialStories() {
+    if (_isLoadingStories && _editorialStories.isEmpty) {
+      return ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        itemBuilder: (context, index) => const StoryCircleSkeleton(),
+        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        itemCount: 6,
+      );
+    }
+
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemBuilder: (context, index) {
+        final story = _editorialStories[index];
+        return StoryCircleItem(
+          title: story.title,
+          imageUrl: story.imageUrl,
+          onTap: () => _openEditorialStory(story),
+        );
+      },
+      separatorBuilder: (context, index) => const SizedBox(width: 12),
+      itemCount: _editorialStories.length,
     );
   }
 

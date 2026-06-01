@@ -1,0 +1,64 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Detalhe do agendamento</h1>
+      <p class="page-subtitle">Acompanhe o atendimento e atualize o status.</p>
+    </div>
+    <a routerLink="/appointments" class="secondary-button">Voltar para agenda</a>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <app-loading />
+  } @else if (appointment(); as item) {
+    <div class="detail-grid">
+      <section class="detail-card surface">
+        <div class="detail-card__header">
+          <div>
+            <span class="detail-card__eyebrow">Atendimento</span>
+            <h2>{{ item.serviceName }}</h2>
+          </div>
+          <app-appointment-status-badge [status]="item.status" />
+        </div>
+
+        <dl>
+          <div><dt>Cliente</dt><dd>{{ item.customerName }}</dd></div>
+          <div><dt>Data</dt><dd>{{ item.scheduledAt | date: 'dd/MM/yyyy' }}</dd></div>
+          <div><dt>Horário</dt><dd>{{ item.scheduledAt | date: 'HH:mm' }}</dd></div>
+          <div><dt>Duração</dt><dd>{{ item.estimatedDurationMinutesSnapshot }} min</dd></div>
+          <div><dt>Preço</dt><dd>{{ item.servicePriceSnapshot | currency: 'BRL' }}</dd></div>
+          <div class="span-2"><dt>Endereço</dt><dd>{{ item.addressText }}</dd></div>
+          <div class="span-2"><dt>Observação do cliente</dt><dd>{{ item.customerNotes || 'Nenhuma observação informada.' }}</dd></div>
+          <div><dt>Criado em</dt><dd>{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+          <div><dt>Atualizado em</dt><dd>{{ item.updatedAt ? (item.updatedAt | date: 'dd/MM/yyyy HH:mm') : 'Ainda não atualizado' }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="status-card surface">
+        <h2>Atualizar status</h2>
+        <p>Registre a etapa atual do atendimento.</p>
+
+        <div class="field">
+          <label for="status">Novo status</label>
+          <select id="status" [(ngModel)]="selectedStatus">
+            @for (option of statusOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="note">Nota administrativa <span class="muted">(opcional)</span></label>
+          <textarea id="note" [(ngModel)]="note" placeholder="Ex.: Cliente confirmou o horário por WhatsApp."></textarea>
+        </div>
+
+        <button type="button" class="primary-button" [disabled]="saving()" (click)="updateStatus()">
+          {{ saving() ? 'Salvando...' : 'Salvar status' }}
+        </button>
+      </section>
+    </div>
+  }
+</section>

@@ -12,6 +12,7 @@ import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_text_field.dart';
 import 'auth_provider.dart';
+import '../../settings/presentation/app_settings_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,6 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final settings = context.watch<AppSettingsProvider>().settings;
     final isWide = MediaQuery.sizeOf(context).width >= 700;
     final logoWidth = isWide ? 240.0 : 180.0;
     final logoHeight = isWide ? 135.0 : 105.0;
@@ -95,6 +97,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               _BrandHeader(
                                 width: logoWidth,
                                 height: logoHeight,
+                                logoUrl: settings.logoUrl,
+                                fallbackName: settings.studioName,
                               ),
                               SizedBox(height: logoCardSpacing),
                               PremiumCard(
@@ -231,15 +235,28 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class _BrandHeader extends StatelessWidget {
-  const _BrandHeader({required this.width, required this.height});
+  const _BrandHeader({
+    required this.width,
+    required this.height,
+    required this.logoUrl,
+    required this.fallbackName,
+  });
 
   final double width;
   final double height;
+  final String logoUrl;
+  final String fallbackName;
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: AppLogo(width: width, height: height, fit: BoxFit.contain),
+      child: AppLogo(
+        width: width,
+        height: height,
+        fit: BoxFit.contain,
+        logoUrl: logoUrl,
+        fallbackName: fallbackName,
+      ),
     );
   }
 }

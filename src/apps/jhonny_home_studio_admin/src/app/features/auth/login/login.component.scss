@@ -1,0 +1,63 @@
+.login-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 20px;
+  background: var(--background);
+}
+
+.login-card {
+  width: min(100%, 410px);
+  padding: 28px;
+}
+
+header {
+  text-align: center;
+}
+
+.login-card__mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 14px;
+  place-items: center;
+  border: 1px solid rgb(214 163 84 / 42%);
+  border-radius: 50%;
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 20px;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  margin-top: 7px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+p {
+  color: var(--gold-light);
+  font-size: 13px;
+}
+
+small {
+  display: block;
+  margin-top: 7px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+form {
+  display: grid;
+  gap: 15px;
+  margin-top: 24px;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 4px;
+}

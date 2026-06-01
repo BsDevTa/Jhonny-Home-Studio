@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../shared/widgets/app_logo.dart';
 import 'auth_provider.dart';
+import '../../settings/presentation/app_settings_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -50,6 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettingsProvider>().settings;
     final size = MediaQuery.sizeOf(context);
     final logoHeight = size.width >= 700
         ? 160.0
@@ -76,7 +78,12 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppLogo(height: logoHeight, fit: BoxFit.contain),
+                  AppLogo(
+                    height: logoHeight,
+                    fit: BoxFit.contain,
+                    logoUrl: settings.logoUrl,
+                    fallbackName: settings.studioName,
+                  ),
                   const SizedBox(height: 24),
                   Container(
                     width: double.infinity,

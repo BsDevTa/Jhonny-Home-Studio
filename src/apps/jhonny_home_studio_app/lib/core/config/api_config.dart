@@ -1,3 +1,4 @@
 class ApiConfig {
-  static const String baseUrl = 'http://localhost:5299/api';
+  static const String apiOrigin = 'http://localhost:5299';
+  static const String baseUrl = '$apiOrigin/api';
 }

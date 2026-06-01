@@ -146,5 +146,18 @@ public static class JhonnyHomeStudioModelConfiguration
                 .HasForeignKey(x => x.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<StudioSettings>(entity =>
+        {
+            entity.Property(x => x.StudioName).HasMaxLength(160).IsRequired();
+            entity.Property(x => x.Subtitle).HasMaxLength(180).IsRequired();
+            entity.Property(x => x.Slogan).HasMaxLength(280).IsRequired();
+            entity.Property(x => x.LogoUrl).HasMaxLength(500);
+            entity.Property(x => x.WhatsAppNumber).HasMaxLength(40);
+            entity.Property(x => x.InstagramUrl).HasMaxLength(500);
+            entity.Property(x => x.WelcomeTitle).HasMaxLength(180);
+            entity.Property(x => x.WelcomeMessage).HasMaxLength(500);
+            entity.Property(x => x.SupportMessage).HasMaxLength(500);
+        });
     }
 }

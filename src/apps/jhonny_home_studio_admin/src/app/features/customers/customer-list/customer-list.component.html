@@ -1,0 +1,79 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Clientes</h1>
+      <p class="page-subtitle">Acompanhe os clientes cadastrados no app.</p>
+    </div>
+    <button type="button" class="secondary-button" (click)="load()">Atualizar</button>
+  </header>
+
+  <section class="customer-search surface">
+    <div class="field">
+      <label for="customer-search">Buscar cliente</label>
+      <input
+        id="customer-search"
+        type="search"
+        [value]="search()"
+        (input)="onSearch($event)"
+        placeholder="Nome, e-mail ou telefone"
+      />
+    </div>
+  </section>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="surface">
+    @if (loading()) {
+      <app-loading />
+    } @else if (!filteredCustomers().length) {
+      <app-empty-state title="Nenhum cliente encontrado." description="Ajuste a busca ou aguarde um novo cadastro no aplicativo." />
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table customer-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Contato</th>
+              <th>Status</th>
+              <th>Cadastro</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (customer of filteredCustomers(); track customer.customerId) {
+              <tr>
+                <td data-label="Cliente">
+                  <strong>{{ customer.fullName }}</strong>
+                  <small>{{ customer.documentNumber || 'Documento não informado' }}</small>
+                </td>
+                <td data-label="Contato">
+                  <span>{{ customer.email }}</span>
+                  <small>{{ customer.phone || 'Telefone não informado' }}</small>
+                </td>
+                <td data-label="Status"><app-status-badge [active]="customer.isActive" /></td>
+                <td data-label="Cadastro">{{ customer.createdAt | date: 'dd/MM/yyyy' }}</td>
+                <td data-label="Ações">
+                  <div class="table-actions">
+                    <a class="secondary-button table-button" [routerLink]="['/customers', customer.customerId]">Ver detalhes</a>
+                    <button
+                      type="button"
+                      class="table-button"
+                      [class.secondary-button]="!customer.isActive"
+                      [class.danger-button]="customer.isActive"
+                      [disabled]="actionLoadingId() === customer.customerId"
+                      (click)="toggleActive(customer)"
+                    >
+                      {{ customer.isActive ? 'Desativar' : 'Ativar' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>

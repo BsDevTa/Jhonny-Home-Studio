@@ -4,21 +4,22 @@ import '../constants/app_colors.dart';
 
 class AppTheme {
   static ThemeData get premiumTheme {
-    final baseTheme = ThemeData.light(useMaterial3: true);
+    final baseTheme = ThemeData.dark(useMaterial3: true);
 
     return baseTheme.copyWith(
       scaffoldBackgroundColor: AppColors.background,
       canvasColor: AppColors.background,
       colorScheme: baseTheme.colorScheme.copyWith(
-        brightness: Brightness.light,
+        brightness: Brightness.dark,
         primary: AppColors.gold,
         secondary: AppColors.copper,
         tertiary: AppColors.champagne,
         surface: AppColors.surface,
         error: AppColors.error,
-        onPrimary: AppColors.textPrimary,
-        onSecondary: AppColors.textPrimary,
+        onPrimary: AppColors.background,
+        onSecondary: AppColors.background,
         onSurface: AppColors.textPrimary,
+        onError: AppColors.background,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -49,6 +50,11 @@ class AppTheme {
         displayColor: AppColors.textPrimary,
       ),
       iconTheme: const IconThemeData(color: AppColors.textSecondary),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.gold,
+        selectionColor: AppColors.borderGold,
+        selectionHandleColor: AppColors.gold,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
@@ -57,24 +63,24 @@ class AppTheme {
           vertical: 18,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppColors.border, width: 1),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.border, width: 0.7),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppColors.copper, width: 1.4),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.gold, width: 0.9),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.4),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.error, width: 0.9),
         ),
         labelStyle: const TextStyle(color: AppColors.textSecondary),
         hintStyle: const TextStyle(color: AppColors.textSecondary),
@@ -85,7 +91,7 @@ class AppTheme {
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(18),
           side: const BorderSide(color: AppColors.border, width: 0.6),
         ),
         margin: EdgeInsets.zero,
@@ -93,36 +99,32 @@ class AppTheme {
       dividerTheme: const DividerThemeData(color: AppColors.border),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.gold,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: AppColors.background,
           minimumSize: const Size.fromHeight(48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
-          ),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.buttonSecondaryText,
           backgroundColor: AppColors.buttonSecondaryBackground,
-          side: const BorderSide(color: AppColors.border, width: 0.6),
+          side: const BorderSide(color: AppColors.borderGold, width: 0.6),
           minimumSize: const Size.fromHeight(48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.copper),
+        style: TextButton.styleFrom(foregroundColor: AppColors.gold),
       ),
     );
   }

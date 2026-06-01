@@ -1,0 +1,14 @@
+<header class="topbar">
+  <button type="button" class="topbar__menu" aria-label="Abrir menu" (click)="menuOpened.emit()">&#9776;</button>
+  <div>
+    <strong>Painel administrativo</strong>
+    <small>Gestão do studio</small>
+  </div>
+  <div class="topbar__profile">
+    <span>
+      <strong>{{ user?.fullName ?? 'Administrador' }}</strong>
+      <small>{{ user?.email ?? 'Acesso administrativo' }}</small>
+    </span>
+    <b>{{ initials() }}</b>
+  </div>
+</header>

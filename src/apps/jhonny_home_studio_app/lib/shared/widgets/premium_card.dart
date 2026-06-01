@@ -29,7 +29,7 @@ class PremiumCard extends StatelessWidget {
         border: Border.all(color: AppColors.border, width: 0.6),
         boxShadow: [
           BoxShadow(
-            color: AppColors.textPrimary.withValues(alpha: 0.08),
+            color: AppColors.background.withValues(alpha: 0.55),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),

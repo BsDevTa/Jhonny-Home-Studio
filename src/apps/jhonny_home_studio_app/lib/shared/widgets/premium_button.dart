@@ -18,21 +18,50 @@ class PremiumButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 180),
-          child: isLoading
-              ? const SizedBox(
-                  key: ValueKey('loading'),
-                  height: 22,
-                  width: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    color: AppColors.textPrimary,
-                  ),
-                )
-              : Text(text, key: const ValueKey('text')),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 180),
+        opacity: onPressed == null ? 0.62 : 1,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [
+                AppColors.goldLight,
+                AppColors.gold,
+                AppColors.copper,
+                AppColors.goldDark,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(1),
+          child: ElevatedButton(
+            onPressed: isLoading ? null : onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.gold,
+              disabledBackgroundColor: AppColors.gold,
+              foregroundColor: AppColors.background,
+              disabledForegroundColor: AppColors.background,
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: isLoading
+                  ? const SizedBox(
+                      key: ValueKey('loading'),
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: AppColors.background,
+                      ),
+                    )
+                  : Text(text, key: const ValueKey('text')),
+            ),
+          ),
         ),
       ),
     );

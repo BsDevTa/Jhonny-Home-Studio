@@ -1,0 +1,98 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Agenda</h1>
+      <p class="page-subtitle">Gerencie os agendamentos do estúdio.</p>
+    </div>
+    <button type="button" class="secondary-button" (click)="load()">Atualizar</button>
+  </header>
+
+  <section class="filters surface">
+    <div class="field">
+      <label for="appointment-date">Data</label>
+      <input id="appointment-date" type="date" [value]="selectedDate()" (change)="onDateChange($event)" />
+    </div>
+    <div class="field">
+      <label for="appointment-status">Status</label>
+      <select id="appointment-status" [value]="selectedStatus()" (change)="onStatusChange($event)">
+        <option value="">Todos</option>
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+    <button type="button" class="secondary-button filters__clear" (click)="clearFilters()">Limpar filtros</button>
+  </section>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <app-loading />
+  } @else if (!filteredAppointments().length) {
+    <section class="surface">
+      <app-empty-state title="Nenhum agendamento encontrado." description="Ajuste os filtros ou aguarde um novo agendamento." />
+    </section>
+  } @else {
+    <div class="appointment-list">
+      @for (appointment of filteredAppointments(); track appointment.id) {
+        <article class="appointment-card surface">
+          <div class="appointment-card__date">
+            <strong>{{ appointment.scheduledAt | date: 'dd' }}</strong>
+            <span>{{ appointment.scheduledAt | date: 'MMM' }}</span>
+          </div>
+
+          <div class="appointment-card__content">
+            <div class="appointment-card__header">
+              <div>
+                <h2>{{ appointment.customerName }}</h2>
+                <p>{{ appointment.serviceName }}</p>
+              </div>
+              <app-appointment-status-badge [status]="appointment.status" />
+            </div>
+
+            <div class="appointment-card__meta">
+              <span>{{ appointment.scheduledAt | date: 'dd/MM/yyyy' }}</span>
+              <span>{{ appointment.scheduledAt | date: 'HH:mm' }}</span>
+              <span>{{ appointment.estimatedDurationMinutesSnapshot }} min</span>
+              <span>{{ appointment.servicePriceSnapshot | currency: 'BRL' }}</span>
+            </div>
+
+            <div class="appointment-card__actions">
+              <a class="secondary-button compact-button" [routerLink]="['/appointments', appointment.id]">Ver detalhes</a>
+              @if (appointment.status === 'Pending') {
+                <button
+                  type="button"
+                  class="primary-button compact-button"
+                  [disabled]="actionLoadingId() === appointment.id"
+                  (click)="updateStatus(appointment, 'Confirmed', 'Horário confirmado pelo administrador.')"
+                >
+                  Confirmar
+                </button>
+                <button
+                  type="button"
+                  class="danger-button compact-button"
+                  [disabled]="actionLoadingId() === appointment.id"
+                  (click)="updateStatus(appointment, 'Rejected', 'Agendamento recusado pelo administrador.')"
+                >
+                  Recusar
+                </button>
+              }
+              @if (canCancel(appointment.status)) {
+                <button
+                  type="button"
+                  class="danger-button compact-button"
+                  [disabled]="actionLoadingId() === appointment.id"
+                  (click)="updateStatus(appointment, 'Canceled', 'Agendamento cancelado pelo administrador.')"
+                >
+                  Cancelar
+                </button>
+              }
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

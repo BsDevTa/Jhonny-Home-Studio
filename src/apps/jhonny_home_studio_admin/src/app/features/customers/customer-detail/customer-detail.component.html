@@ -1,0 +1,114 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Detalhe do cliente</h1>
+      <p class="page-subtitle">Consulte dados, endereços e histórico de atendimentos.</p>
+    </div>
+    <a routerLink="/customers" class="secondary-button">Voltar para clientes</a>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <app-loading />
+  } @else if (customer(); as item) {
+    <section class="profile-card surface">
+      <div class="profile-card__header">
+        <div class="profile-card__identity">
+          <span class="profile-card__avatar">{{ item.fullName.charAt(0).toUpperCase() }}</span>
+          <div>
+            <h2>{{ item.fullName }}</h2>
+            <p>{{ item.email }}</p>
+          </div>
+        </div>
+        <app-status-badge [active]="item.isActive" />
+      </div>
+
+      <dl>
+        <div><dt>Telefone</dt><dd>{{ item.phone || 'Não informado' }}</dd></div>
+        <div><dt>Documento</dt><dd>{{ item.documentNumber || 'Não informado' }}</dd></div>
+        <div><dt>Nascimento</dt><dd>{{ item.birthDate ? (item.birthDate | date: 'dd/MM/yyyy') : 'Não informado' }}</dd></div>
+        <div><dt>Cadastro</dt><dd>{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        <div><dt>Atualização</dt><dd>{{ item.updatedAt ? (item.updatedAt | date: 'dd/MM/yyyy HH:mm') : 'Ainda não atualizado' }}</dd></div>
+      </dl>
+
+      <button
+        type="button"
+        [class.secondary-button]="!item.isActive"
+        [class.danger-button]="item.isActive"
+        [disabled]="actionLoading()"
+        (click)="toggleActive()"
+      >
+        {{ item.isActive ? 'Desativar cliente' : 'Ativar cliente' }}
+      </button>
+    </section>
+
+    <section class="detail-section">
+      <header class="section-header">
+        <div>
+          <h2>Endereços</h2>
+          <p>Locais cadastrados para atendimento.</p>
+        </div>
+      </header>
+
+      @if (!item.addresses.length) {
+        <section class="surface">
+          <app-empty-state title="Nenhum endereço cadastrado." description="Este cliente ainda não cadastrou um endereço de atendimento." />
+        </section>
+      } @else {
+        <div class="address-grid">
+          @for (address of item.addresses; track address.id) {
+            <article class="address-card surface" [class.address-card--default]="address.isDefault">
+              <div class="address-card__header">
+                <strong>{{ address.street }}, {{ address.number }}</strong>
+                @if (address.isDefault) {
+                  <span>Padrão</span>
+                }
+              </div>
+              <p>{{ address.neighborhood }} · {{ address.city }}/{{ address.state }}</p>
+              <p>CEP {{ address.zipCode }}</p>
+              @if (address.complement) {
+                <small>Complemento: {{ address.complement }}</small>
+              }
+              @if (address.referencePoint) {
+                <small>Referência: {{ address.referencePoint }}</small>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="detail-section">
+      <header class="section-header">
+        <div>
+          <h2>Histórico de agendamentos</h2>
+          <p>Atendimentos vinculados ao cliente.</p>
+        </div>
+      </header>
+
+      @if (!item.appointments.length) {
+        <section class="surface">
+          <app-empty-state title="Nenhum agendamento encontrado." description="Este cliente ainda não possui histórico de atendimentos." />
+        </section>
+      } @else {
+        <div class="appointment-history">
+          @for (appointment of item.appointments; track appointment.id) {
+            <article class="history-card surface">
+              <div>
+                <strong>{{ appointment.serviceName }}</strong>
+                <p>{{ appointment.scheduledAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+              <app-appointment-status-badge [status]="appointment.status" />
+              <span>{{ appointment.estimatedDurationMinutesSnapshot }} min</span>
+              <span>{{ appointment.servicePriceSnapshot | currency: 'BRL' }}</span>
+              <a class="secondary-button history-card__link" [routerLink]="['/appointments', appointment.id]">Abrir</a>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</section>

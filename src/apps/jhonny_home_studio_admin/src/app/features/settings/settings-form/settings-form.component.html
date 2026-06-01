@@ -1,0 +1,105 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Configurações</h1>
+      <p class="page-subtitle">Personalize as informações exibidas no app.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <form class="surface form-card" [formGroup]="form" (ngSubmit)="submit()">
+      @if (error()) {
+        <p class="error-banner">{{ error() }}</p>
+      }
+
+      @if (success()) {
+        <p class="success-banner">{{ success() }}</p>
+      }
+
+      <div class="settings-section">
+        <div>
+          <h2>Identidade</h2>
+          <p>Informações principais da marca exibidas no aplicativo.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="studioName">Nome do estúdio</label>
+            <input id="studioName" type="text" formControlName="studioName" />
+          </div>
+
+          <div class="field">
+            <label for="subtitle">Subtítulo</label>
+            <input id="subtitle" type="text" formControlName="subtitle" />
+          </div>
+
+          <div class="field span-2">
+            <label for="slogan">Slogan</label>
+            <textarea id="slogan" formControlName="slogan"></textarea>
+          </div>
+
+          <div class="field span-2">
+            <label for="logoUrl">URL da logo <span class="muted">(opcional)</span></label>
+            <input id="logoUrl" type="url" formControlName="logoUrl" placeholder="https://..." />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div>
+          <h2>Contato</h2>
+          <p>Canais que serão usados nos pontos de atendimento do app.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="whatsAppNumber">WhatsApp</label>
+            <input id="whatsAppNumber" type="text" formControlName="whatsAppNumber" placeholder="5511999999999" />
+          </div>
+
+          <div class="field">
+            <label for="instagramUrl">Instagram</label>
+            <input id="instagramUrl" type="url" formControlName="instagramUrl" placeholder="https://instagram.com/..." />
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div>
+          <h2>Boas-vindas e suporte</h2>
+          <p>Textos curtos para acolher a cliente sem poluir a experiência.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field span-2">
+            <label for="welcomeTitle">Título de boas-vindas</label>
+            <input id="welcomeTitle" type="text" formControlName="welcomeTitle" />
+          </div>
+
+          <div class="field span-2">
+            <label for="welcomeMessage">Mensagem de boas-vindas</label>
+            <textarea id="welcomeMessage" formControlName="welcomeMessage"></textarea>
+          </div>
+
+          <div class="field span-2">
+            <label for="supportMessage">Mensagem de suporte</label>
+            <textarea id="supportMessage" formControlName="supportMessage"></textarea>
+          </div>
+
+          <label class="checkbox-field span-2">
+            <input type="checkbox" formControlName="isActive" />
+            Configuração ativa no aplicativo
+          </label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="primary-button" [disabled]="saving()">
+          {{ saving() ? 'Salvando...' : 'Salvar configurações' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>
