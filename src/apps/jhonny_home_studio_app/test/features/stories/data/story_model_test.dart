@@ -28,4 +28,15 @@ void main() {
     expect(story.imageUrl, isEmpty);
     expect(story.hasImage, isFalse);
   });
+
+  test('identifica video preservando fallback pelo imageUrl', () {
+    final story = StoryModel.fromJson({
+      'id': 'story-4',
+      'title': 'Video',
+      'imageUrl': '/uploads/stories/story.mp4',
+    });
+
+    expect(story.isVideo, isTrue);
+    expect(story.mediaUrl, 'http://localhost:5299/uploads/stories/story.mp4');
+  });
 }

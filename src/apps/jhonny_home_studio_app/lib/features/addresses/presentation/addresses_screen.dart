@@ -24,6 +24,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
   List<AddressModel> _addresses = const [];
   bool _isLoading = true;
+  final Set<String> _deletingAddressIds = {};
   String? _errorMessage;
 
   @override
@@ -84,7 +85,10 @@ class _AddressesScreenState extends State<AddressesScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Excluir endereço'),
-          content: const Text('Deseja excluir este endereço?'),
+          content: const Text(
+            'Deseja excluir este endereço?\n\n'
+            'Esta ação não poderá ser desfeita.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -104,14 +108,17 @@ class _AddressesScreenState extends State<AddressesScreen> {
     }
 
     try {
+      setState(() {
+        _deletingAddressIds.add(address.id);
+      });
       await _addressesApi.deleteAddress(address.id);
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Endereço removido com sucesso.')),
+        const SnackBar(content: Text('Endereço excluído com sucesso.')),
       );
-      _loadAddresses();
+      await _loadAddresses();
     } on ApiException catch (error) {
       if (!mounted) {
         return;
@@ -119,6 +126,19 @@ class _AddressesScreenState extends State<AddressesScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível excluir o endereço.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _deletingAddressIds.remove(address.id);
+        });
+      }
     }
   }
 
@@ -252,8 +272,11 @@ class _AddressesScreenState extends State<AddressesScreen> {
                       child: AddressCard(
                         address: address,
                         onEdit: () => _openEditAddress(address),
-                        onDelete: () => _deleteAddress(address),
+                        onDelete: _deletingAddressIds.contains(address.id)
+                            ? null
+                            : () => _deleteAddress(address),
                         onSetDefault: () => _setDefault(address),
+                        isDeleting: _deletingAddressIds.contains(address.id),
                       ),
                     ),
                   ),

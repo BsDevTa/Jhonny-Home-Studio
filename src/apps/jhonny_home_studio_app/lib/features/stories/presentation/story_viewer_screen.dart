@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
@@ -103,19 +104,60 @@ class StoryViewerScreen extends StatelessWidget {
   }
 }
 
-class _StoryBackdrop extends StatelessWidget {
+class _StoryBackdrop extends StatefulWidget {
   const _StoryBackdrop({required this.story});
 
   final StoryModel story;
 
   @override
+  State<_StoryBackdrop> createState() => _StoryBackdropState();
+}
+
+class _StoryBackdropState extends State<_StoryBackdrop> {
+  VideoPlayerController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.story.isVideo && widget.story.hasMedia) {
+      _controller =
+          VideoPlayerController.networkUrl(Uri.parse(widget.story.mediaUrl))
+            ..setLooping(true)
+            ..initialize().then((_) {
+              if (!mounted) return;
+              _controller?.play();
+              setState(() {});
+            });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (!story.hasImage) {
+    if (widget.story.isVideo) {
+      final controller = _controller;
+      if (controller == null || !controller.value.isInitialized) {
+        return const _StoryVisualPlaceholder();
+      }
+      return Center(
+        child: AspectRatio(
+          aspectRatio: controller.value.aspectRatio,
+          child: VideoPlayer(controller),
+        ),
+      );
+    }
+
+    if (!widget.story.hasImage) {
       return const _StoryVisualPlaceholder();
     }
 
     return Image.network(
-      story.imageUrl,
+      widget.story.imageUrl,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return const _StoryVisualPlaceholder();

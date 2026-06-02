@@ -63,7 +63,26 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> deleteJson(String path, {Object? data}) async {
-    final response = await _dio.delete(path, data: data);
+    try {
+      final response = await _dio.delete(path, data: data);
+      return _normalizeResponse(response);
+    } on DioException catch (error) {
+      final apiError = error.error;
+      if (apiError is ApiException) {
+        throw apiError;
+      }
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required String filePath,
+  }) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final response = await _dio.post(path, data: formData);
     return _normalizeResponse(response);
   }
 

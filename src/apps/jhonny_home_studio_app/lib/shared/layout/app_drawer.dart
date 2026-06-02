@@ -17,6 +17,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<AppSettingsProvider>().settings;
+    final isAdmin = context.watch<AuthProvider>().isAdmin;
 
     return Drawer(
       backgroundColor: AppColors.background,
@@ -162,6 +163,16 @@ class AppDrawer extends StatelessWidget {
                       context.go(AppRoutes.sosLoiro);
                     },
                   ),
+                  if (isAdmin)
+                    _DrawerItem(
+                      icon: Icons.admin_panel_settings_outlined,
+                      title: 'Admin',
+                      selected: currentPath.startsWith(AppRoutes.adminMobile),
+                      onTap: () {
+                        context.pop();
+                        context.go(AppRoutes.adminMobile);
+                      },
+                    ),
                   _DrawerItem(
                     icon: Icons.settings_outlined,
                     title: 'Configurações',

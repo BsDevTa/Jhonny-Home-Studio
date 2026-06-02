@@ -42,6 +42,15 @@ class AuthService {
     return token != null && token.isNotEmpty;
   }
 
+  Future<AuthUser?> restoreUser() async {
+    final token = await _tokenStorage.getToken();
+    final user = await _tokenStorage.getUser();
+    if (token == null || token.isEmpty || user == null) {
+      return null;
+    }
+    return user;
+  }
+
   Future<AuthUser> _saveAndBuildUser(Map<String, dynamic> response) async {
     final data = response['data'];
     if (data is! Map<String, dynamic>) {
@@ -54,6 +63,7 @@ class AuthService {
     }
 
     await _tokenStorage.saveToken(user.token);
+    await _tokenStorage.saveUser(user);
     return user;
   }
 }

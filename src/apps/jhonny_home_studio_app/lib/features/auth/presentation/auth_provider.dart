@@ -18,6 +18,7 @@ class AuthProvider extends ChangeNotifier {
   AuthUser? get user => _user;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isAdmin => _user?.role.toLowerCase() == 'admin';
 
   Future<bool> login(String email, String password) async {
     _setLoading(true);
@@ -63,11 +64,13 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     try {
       await _authService.logout();
+    } catch (_) {
+      // Keep logout usable even if secure storage is temporarily unavailable.
+    } finally {
       _user = null;
       _isAuthenticated = false;
       _clearError();
       notifyListeners();
-    } finally {
       _setLoading(false);
     }
   }
@@ -75,9 +78,11 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> checkAuthStatus() async {
     _clearError();
     try {
-      final loggedIn = await _authService.isLoggedIn().timeout(
+      final user = await _authService.restoreUser().timeout(
         const Duration(seconds: 1),
       );
+      final loggedIn = user != null;
+      _user = user;
       _isAuthenticated = loggedIn;
       if (!loggedIn) {
         _user = null;

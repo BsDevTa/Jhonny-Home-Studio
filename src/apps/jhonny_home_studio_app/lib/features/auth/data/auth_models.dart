@@ -60,4 +60,13 @@ class AuthUser {
       role: json['role']?.toString() ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'token': token,
+    'expiresAt': expiresAt?.toIso8601String(),
+    'userId': userId,
+    'fullName': fullName,
+    'email': email,
+    'role': role,
+  };
 }

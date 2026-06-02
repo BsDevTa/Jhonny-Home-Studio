@@ -11,12 +11,14 @@ class AddressCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onSetDefault,
+    this.isDeleting = false,
   });
 
   final AddressModel address;
   final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback? onDelete;
   final VoidCallback onSetDefault;
+  final bool isDeleting;
 
   @override
   Widget build(BuildContext context) {
@@ -106,8 +108,14 @@ class AddressCard extends StatelessWidget {
                 ),
               OutlinedButton.icon(
                 onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Excluir'),
+                icon: isDeleting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.delete_outline),
+                label: Text(isDeleting ? 'Excluindo...' : 'Excluir'),
               ),
             ],
           ),

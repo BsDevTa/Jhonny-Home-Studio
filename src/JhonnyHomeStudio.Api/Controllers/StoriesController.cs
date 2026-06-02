@@ -13,12 +13,19 @@ namespace JhonnyHomeStudio.Api.Controllers;
 public sealed class StoriesController : ControllerBase
 {
     private const long MaxImageSizeBytes = 5 * 1024 * 1024;
+    private const long MaxMediaSizeBytes = 50 * 1024 * 1024;
     private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".jpg",
         ".jpeg",
         ".png",
         ".webp"
+    };
+    private static readonly HashSet<string> AllowedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".mp4",
+        ".mov",
+        ".webm"
     };
 
     private readonly IStoryService _storyService;
@@ -109,6 +116,50 @@ public sealed class StoriesController : ControllerBase
 
         var imageUrl = $"{Request.Scheme}://{Request.Host}/uploads/stories/{fileName}";
         return Ok(ApiResponse<object>.SuccessResponse("Imagem enviada com sucesso.", new { imageUrl }));
+    }
+
+    [HttpPost("/api/admin/stories/upload-media")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UploadMedia([FromForm] IFormFile? file)
+    {
+        if (file is null || file.Length == 0)
+        {
+            throw new ValidationAppException("Arquivo não enviado.");
+        }
+
+        if (file.Length > MaxMediaSizeBytes)
+        {
+            throw new ValidationAppException("Mídia muito grande. O limite é 50MB.");
+        }
+
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var isImage = AllowedImageExtensions.Contains(extension);
+        var isVideo = AllowedVideoExtensions.Contains(extension);
+        if (!isImage && !isVideo)
+        {
+            throw new ValidationAppException("Formato de mídia não permitido.");
+        }
+
+        var webRootPath = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
+        var storiesPath = Path.Combine(webRootPath, "uploads", "stories");
+        Directory.CreateDirectory(storiesPath);
+
+        var fileName = $"story_{Guid.NewGuid():N}{extension}";
+        var destinationPath = Path.Combine(storiesPath, fileName);
+
+        try
+        {
+            await using var destination = System.IO.File.Create(destinationPath);
+            await file.CopyToAsync(destination);
+        }
+        catch (Exception)
+        {
+            throw new ValidationAppException("Não foi possível enviar a mídia.");
+        }
+
+        var mediaUrl = $"{Request.Scheme}://{Request.Host}/uploads/stories/{fileName}";
+        var mediaType = isVideo ? "Video" : "Image";
+        return Ok(ApiResponse<object>.SuccessResponse("Mídia enviada com sucesso.", new { mediaUrl, mediaType, imageUrl = mediaUrl }));
     }
 
     [HttpPost("/api/admin/stories")]

@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_provider.dart';
+import '../../features/admin_mobile/presentation/admin_mobile_screens.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
@@ -37,6 +38,7 @@ class AppRoutes {
   static const String vip = '/vip';
   static const String loyalty = '/loyalty';
   static const String sosLoiro = '/sos-loiro';
+  static const String adminMobile = '/admin-mobile';
 
   static GoRouter createRouter(AuthProvider authProvider) {
     return GoRouter(
@@ -48,12 +50,17 @@ class AppRoutes {
         final isAuthPage =
             currentLocation == login || currentLocation == register;
         final isPublicPage = currentLocation == splash || isAuthPage;
+        final isAdminPage = currentLocation.startsWith(adminMobile);
 
         if (!isLoggedIn && !isPublicPage) {
           return login;
         }
 
         if (isLoggedIn && isAuthPage) {
+          return home;
+        }
+
+        if (isAdminPage && !authProvider.isAdmin) {
           return home;
         }
 
@@ -68,6 +75,90 @@ class AppRoutes {
         GoRoute(
           path: register,
           builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: adminMobile,
+          builder: (context, state) => const AdminMobileHomeScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/categories',
+          builder: (context, state) =>
+              const AdminListScreen(type: AdminListType.categories),
+        ),
+        GoRoute(
+          path: '$adminMobile/categories/new',
+          builder: (context, state) => const AdminCategoryFormScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/categories/:id/edit',
+          builder: (context, state) =>
+              AdminCategoryFormScreen(id: state.pathParameters['id']),
+        ),
+        GoRoute(
+          path: '$adminMobile/services',
+          builder: (context, state) =>
+              const AdminListScreen(type: AdminListType.services),
+        ),
+        GoRoute(
+          path: '$adminMobile/services/new',
+          builder: (context, state) => const AdminServiceFormScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/services/:id/edit',
+          builder: (context, state) =>
+              AdminServiceFormScreen(id: state.pathParameters['id']),
+        ),
+        GoRoute(
+          path: '$adminMobile/appointments',
+          builder: (context, state) =>
+              const AdminListScreen(type: AdminListType.appointments),
+        ),
+        GoRoute(
+          path: '$adminMobile/appointments/:id',
+          builder: (context, state) => AdminAppointmentDetailScreen(
+            id: state.pathParameters['id'] ?? '',
+          ),
+        ),
+        GoRoute(
+          path: '$adminMobile/customers',
+          builder: (context, state) =>
+              const AdminListScreen(type: AdminListType.customers),
+        ),
+        GoRoute(
+          path: '$adminMobile/customers/:id',
+          builder: (context, state) =>
+              AdminCustomerDetailScreen(id: state.pathParameters['id'] ?? ''),
+        ),
+        GoRoute(
+          path: '$adminMobile/stories',
+          builder: (context, state) =>
+              const AdminListScreen(type: AdminListType.stories),
+        ),
+        GoRoute(
+          path: '$adminMobile/stories/new',
+          builder: (context, state) => const AdminStoryFormScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/stories/:id/edit',
+          builder: (context, state) =>
+              AdminStoryFormScreen(id: state.pathParameters['id']),
+        ),
+        GoRoute(
+          path: '$adminMobile/settings',
+          builder: (context, state) => const AdminSettingsScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/availability',
+          builder: (context, state) => const AdminAvailabilityScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/availability/blocked-dates/new',
+          builder: (context, state) => const AdminBlockedDateFormScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/availability/blocked-dates/:id/edit',
+          builder: (context, state) =>
+              AdminBlockedDateFormScreen(id: state.pathParameters['id']),
         ),
         ShellRoute(
           builder: (context, state, child) {

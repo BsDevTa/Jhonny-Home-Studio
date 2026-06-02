@@ -8,16 +8,19 @@ class PremiumButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.isLoading = false,
+    this.height,
   });
 
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
+      height: height,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 180),
         opacity: onPressed == null ? 0.62 : 1,

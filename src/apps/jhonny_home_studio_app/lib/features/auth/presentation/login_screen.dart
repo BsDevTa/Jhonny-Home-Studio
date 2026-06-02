@@ -58,10 +58,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = context.watch<AuthProvider>();
     final settings = context.watch<AppSettingsProvider>().settings;
     final isWide = MediaQuery.sizeOf(context).width >= 700;
-    final logoWidth = isWide ? 240.0 : 180.0;
-    final logoHeight = isWide ? 135.0 : 105.0;
-    final topSpacing = isWide ? 70.0 : 36.0;
-    final logoCardSpacing = isWide ? 70.0 : 42.0;
+    final logoWidth = isWide ? 280.0 : 210.0;
+    final logoHeight = isWide ? 170.0 : 130.0;
+    final topSpacing = isWide ? 40.0 : 24.0;
+    final logoCardSpacing = isWide ? 38.0 : 30.0;
 
     return Scaffold(
       body: Stack(
@@ -101,120 +101,154 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fallbackName: settings.studioName,
                               ),
                               SizedBox(height: logoCardSpacing),
-                              PremiumCard(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    AppColors.surface,
-                                    AppColors.surfaceElevated,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Text(
-                                      AppTexts.loginTitle,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                              Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 440,
+                                  ),
+                                  child: PremiumCard(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 22,
                                     ),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      'Entre para continuar sua experiÃªncia premium.',
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                      ),
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        AppColors.surface,
+                                        AppColors.surfaceElevated,
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
                                     ),
-                                    const SizedBox(height: 22),
-                                    if (authProvider.errorMessage != null) ...[
-                                      ErrorMessage(
-                                        message: authProvider.errorMessage!,
-                                      ),
-                                      const SizedBox(height: 16),
-                                    ],
-                                    Form(
-                                      key: _formKey,
-                                      child: Column(
-                                        children: [
-                                          PremiumTextField(
-                                            controller: _emailController,
-                                            labelText: 'E-mail',
-                                            keyboardType:
-                                                TextInputType.emailAddress,
-                                            prefixIcon: Icons.email_outlined,
-                                            validator: (value) {
-                                              final text = value?.trim() ?? '';
-                                              if (text.isEmpty) {
-                                                return AppTexts
-                                                    .validationRequired;
-                                              }
-                                              if (!text.contains('@')) {
-                                                return AppTexts.validationEmail;
-                                              }
-                                              return null;
-                                            },
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Text(
+                                          AppTexts.loginTitle,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        const Text(
+                                          'Entre para continuar sua experiÃªncia premium.',
+                                          style: TextStyle(
+                                            color: AppColors.textSecondary,
                                           ),
-                                          const SizedBox(height: 16),
-                                          PremiumTextField(
-                                            controller: _passwordController,
-                                            labelText: 'Senha',
-                                            obscureText: true,
-                                            prefixIcon: Icons.lock_outline,
-                                            validator: (value) {
-                                              if ((value ?? '').isEmpty) {
-                                                return AppTexts
-                                                    .validationRequired;
-                                              }
-                                              return null;
-                                            },
-                                          ),
-                                          const SizedBox(height: 22),
-                                          PremiumButton(
-                                            text: AppTexts.signIn,
-                                            isLoading: authProvider.isLoading,
-                                            onPressed: _submit,
+                                        ),
+                                        const SizedBox(height: 18),
+                                        if (authProvider.errorMessage !=
+                                            null) ...[
+                                          ErrorMessage(
+                                            message: authProvider.errorMessage!,
                                           ),
                                           const SizedBox(height: 12),
-                                          TextButton(
-                                            style: TextButton.styleFrom(
-                                              foregroundColor:
-                                                  AppColors.buttonSecondaryText,
-                                              backgroundColor: AppColors
-                                                  .buttonSecondaryBackground,
-                                              side: const BorderSide(
-                                                color: AppColors.border,
-                                                width: 0.8,
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(18),
-                                              ),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 18,
-                                                    vertical: 14,
-                                                  ),
-                                            ),
-                                            onPressed: () =>
-                                                context.go(AppRoutes.register),
-                                            child: const Text(
-                                              AppTexts.createAccount,
-                                              style: TextStyle(
-                                                color: AppColors
-                                                    .buttonSecondaryText,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
                                         ],
-                                      ),
+                                        Form(
+                                          key: _formKey,
+                                          child: Column(
+                                            children: [
+                                              PremiumTextField(
+                                                controller: _emailController,
+                                                labelText: 'E-mail',
+                                                keyboardType:
+                                                    TextInputType.emailAddress,
+                                                prefixIcon:
+                                                    Icons.email_outlined,
+                                                prefixIconSize: 19,
+                                                isDense: true,
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 13,
+                                                    ),
+                                                validator: (value) {
+                                                  final text =
+                                                      value?.trim() ?? '';
+                                                  if (text.isEmpty) {
+                                                    return AppTexts
+                                                        .validationRequired;
+                                                  }
+                                                  if (!text.contains('@')) {
+                                                    return AppTexts
+                                                        .validationEmail;
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                              const SizedBox(height: 12),
+                                              PremiumTextField(
+                                                controller: _passwordController,
+                                                labelText: 'Senha',
+                                                obscureText: true,
+                                                prefixIcon: Icons.lock_outline,
+                                                prefixIconSize: 19,
+                                                isDense: true,
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 13,
+                                                    ),
+                                                validator: (value) {
+                                                  if ((value ?? '').isEmpty) {
+                                                    return AppTexts
+                                                        .validationRequired;
+                                                  }
+                                                  return null;
+                                                },
+                                              ),
+                                              const SizedBox(height: 18),
+                                              PremiumButton(
+                                                text: AppTexts.signIn,
+                                                isLoading:
+                                                    authProvider.isLoading,
+                                                height: 48,
+                                                onPressed: _submit,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              TextButton(
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: AppColors
+                                                      .buttonSecondaryText,
+                                                  backgroundColor: AppColors
+                                                      .buttonSecondaryBackground,
+                                                  side: const BorderSide(
+                                                    color: AppColors.border,
+                                                    width: 0.8,
+                                                  ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          18,
+                                                        ),
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 18,
+                                                        vertical: 11,
+                                                      ),
+                                                ),
+                                                onPressed: () => context.go(
+                                                  AppRoutes.register,
+                                                ),
+                                                child: const Text(
+                                                  AppTexts.createAccount,
+                                                  style: TextStyle(
+                                                    color: AppColors
+                                                        .buttonSecondaryText,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -253,6 +287,8 @@ class _BrandHeader extends StatelessWidget {
       child: AppLogo(
         width: width,
         height: height,
+        showBorder: true,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         fit: BoxFit.contain,
         logoUrl: logoUrl,
         fallbackName: fallbackName,

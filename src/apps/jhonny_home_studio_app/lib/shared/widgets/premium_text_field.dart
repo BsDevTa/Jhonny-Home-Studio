@@ -16,6 +16,9 @@ class PremiumTextField extends StatelessWidget {
     this.focusNode,
     this.inputFormatters,
     this.onChanged,
+    this.contentPadding,
+    this.prefixIconSize = 20,
+    this.isDense,
   });
 
   final TextEditingController controller;
@@ -28,6 +31,9 @@ class PremiumTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onChanged;
+  final EdgeInsetsGeometry? contentPadding;
+  final double prefixIconSize;
+  final bool? isDense;
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +52,12 @@ class PremiumTextField extends StatelessWidget {
       ),
       decoration: InputDecoration(
         labelText: labelText,
-        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
+        prefixIcon: prefixIcon == null
+            ? null
+            : Icon(prefixIcon, size: prefixIconSize),
         suffixIcon: suffixIcon,
+        contentPadding: contentPadding,
+        isDense: isDense,
         floatingLabelBehavior: FloatingLabelBehavior.auto,
       ),
     );
