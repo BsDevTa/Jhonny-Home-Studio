@@ -197,5 +197,37 @@ public static class JhonnyHomeStudioModelConfiguration
 
             entity.Property(x => x.Description).HasMaxLength(220).IsRequired();
         });
+
+        modelBuilder.Entity<ProductCategory>(entity =>
+        {
+            entity.HasIndex(x => x.Name).IsUnique();
+            entity.Property(x => x.Name).HasMaxLength(140).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasOne(x => x.ProductCategory)
+                .WithMany(x => x.Products)
+                .HasForeignKey(x => x.ProductCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(x => x.Name).HasMaxLength(180).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(2000).IsRequired();
+            entity.Property(x => x.ShortDescription).HasMaxLength(300);
+            entity.Property(x => x.MainImageUrl).HasMaxLength(500);
+            entity.Property(x => x.Price).HasPrecision(18, 2);
+            entity.Property(x => x.PromotionalPrice).HasPrecision(18, 2);
+        });
+
+        modelBuilder.Entity<ProductImage>(entity =>
+        {
+            entity.HasOne(x => x.Product)
+                .WithMany(x => x.Images)
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(x => x.ImageUrl).HasMaxLength(500).IsRequired();
+        });
     }
 }

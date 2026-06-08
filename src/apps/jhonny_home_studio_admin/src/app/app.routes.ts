@@ -91,6 +91,47 @@ export const routes: Routes = [
           import('./features/stories/story-form/story-form.component').then((component) => component.StoryFormComponent)
       },
       {
+        path: 'marketplace',
+        pathMatch: 'full',
+        redirectTo: 'marketplace/products'
+      },
+      {
+        path: 'marketplace/categories',
+        loadComponent: () =>
+          import('./features/marketplace/product-category-list/product-category-list.component').then(
+            (component) => component.ProductCategoryListComponent
+          )
+      },
+      {
+        path: 'marketplace/categories/new',
+        loadComponent: () =>
+          import('./features/marketplace/product-category-form/product-category-form.component').then(
+            (component) => component.ProductCategoryFormComponent
+          )
+      },
+      {
+        path: 'marketplace/categories/:id/edit',
+        loadComponent: () =>
+          import('./features/marketplace/product-category-form/product-category-form.component').then(
+            (component) => component.ProductCategoryFormComponent
+          )
+      },
+      {
+        path: 'marketplace/products',
+        loadComponent: () =>
+          import('./features/marketplace/product-list/product-list.component').then((component) => component.ProductListComponent)
+      },
+      {
+        path: 'marketplace/products/new',
+        loadComponent: () =>
+          import('./features/marketplace/product-form/product-form.component').then((component) => component.ProductFormComponent)
+      },
+      {
+        path: 'marketplace/products/:id/edit',
+        loadComponent: () =>
+          import('./features/marketplace/product-form/product-form.component').then((component) => component.ProductFormComponent)
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings-form/settings-form.component').then(

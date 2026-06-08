@@ -1,0 +1,87 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ editing ? 'Editar produto' : 'Novo produto' }}</h1>
+      <p class="page-subtitle">Cadastre produtos premium para contato pelo WhatsApp.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <form class="surface form-card" [formGroup]="form" (ngSubmit)="submit()">
+      @if (error()) {
+        <p class="error-banner">{{ error() }}</p>
+      }
+      @if (!hasSelectableCategories()) {
+        <p class="error-banner">Nenhuma categoria cadastrada. Cadastre uma categoria antes de criar produtos.</p>
+        <a routerLink="/marketplace/categories/new" class="secondary-button">Cadastrar categoria</a>
+      }
+      <div class="form-grid">
+        <div class="field">
+          <label for="category">Categoria do produto</label>
+          <select id="category" formControlName="productCategoryId">
+            <option value="">Selecione uma categoria</option>
+            @for (category of visibleCategories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+          @if (form.controls.productCategoryId.touched && form.controls.productCategoryId.invalid) {
+            <small>Selecione uma categoria para o produto.</small>
+          }
+        </div>
+        <div class="field">
+          <label for="name">Nome</label>
+          <input id="name" formControlName="name" placeholder="Kit Pós-Loiro Premium" />
+        </div>
+        <div class="field span-2">
+          <label for="shortDescription">Descrição curta</label>
+          <input id="shortDescription" formControlName="shortDescription" />
+        </div>
+        <div class="field span-2">
+          <label for="description">Descrição completa</label>
+          <textarea id="description" formControlName="description"></textarea>
+        </div>
+        <div class="field">
+          <label for="price">Preço</label>
+          <input id="price" type="number" min="0.01" step="0.01" formControlName="price" />
+        </div>
+        <div class="field">
+          <label for="promotionalPrice">Preço promocional</label>
+          <input id="promotionalPrice" type="number" min="0" step="0.01" formControlName="promotionalPrice" />
+        </div>
+        <div class="field">
+          <label for="stockQuantity">Estoque</label>
+          <input id="stockQuantity" type="number" min="0" step="1" formControlName="stockQuantity" />
+        </div>
+        <div class="field">
+          <label for="displayOrder">Ordem</label>
+          <input id="displayOrder" type="number" formControlName="displayOrder" />
+        </div>
+        <div class="field span-2">
+          <label for="image">Imagem principal</label>
+          <input id="image" type="file" accept="image/png,image/jpeg,image/webp" (change)="upload($event)" />
+          @if (uploading()) {
+            <small>Enviando imagem...</small>
+          }
+          <input type="url" formControlName="mainImageUrl" placeholder="URL da imagem" />
+          @if (form.controls.mainImageUrl.value) {
+            <img [src]="form.controls.mainImageUrl.value" alt="Preview do produto" style="margin-top: 12px; max-width: 180px; border-radius: 14px;" />
+          }
+        </div>
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="isFeatured" />
+          Produto em destaque
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="isActive" />
+          Produto ativo
+        </label>
+      </div>
+      <div class="form-actions">
+        <a routerLink="/marketplace/products" class="secondary-button">Cancelar</a>
+        <button type="submit" class="primary-button" [disabled]="saving() || uploading() || !hasSelectableCategories()">{{ saving() ? 'Salvando...' : 'Salvar produto' }}</button>
+      </div>
+    </form>
+  }
+</section>

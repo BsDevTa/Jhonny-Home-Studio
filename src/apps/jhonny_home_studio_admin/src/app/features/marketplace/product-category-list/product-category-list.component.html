@@ -1,0 +1,63 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Categorias da loja</h1>
+      <p class="page-subtitle">Organize os produtos da LOJA - VOCÊ MAIS BEAUTIFUL.</p>
+    </div>
+    <a routerLink="/marketplace/categories/new" class="primary-button">Nova categoria</a>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="surface">
+    @if (loading()) {
+      <app-loading />
+    } @else if (!categories().length) {
+      <app-empty-state title="Nenhuma categoria cadastrada" description="Crie categorias como Pós-Loiro, Finalizadores ou Kits." />
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Descrição</th>
+              <th>Ordem</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (category of categories(); track category.id) {
+              <tr>
+                <td><strong>{{ category.name }}</strong></td>
+                <td>{{ category.description || 'Sem descrição' }}</td>
+                <td>{{ category.displayOrder }}</td>
+                <td><app-status-badge [active]="category.isActive" /></td>
+                <td>
+                  <div class="table-actions">
+                    <a class="secondary-button table-button" [routerLink]="['/marketplace/categories', category.id, 'edit']">Editar</a>
+                    <button type="button" class="secondary-button table-button" (click)="toggle(category)">
+                      {{ category.isActive ? 'Desativar' : 'Ativar' }}
+                    </button>
+                    <button type="button" class="danger-button table-button" (click)="categoryToDelete.set(category)">Excluir</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>
+
+<app-confirm-dialog
+  [open]="!!categoryToDelete()"
+  title="Excluir categoria?"
+  [description]="'A categoria ' + (categoryToDelete()?.name ?? '') + ' será removida da vitrine.'"
+  confirmLabel="Excluir"
+  (canceled)="categoryToDelete.set(null)"
+  (confirmed)="confirmDelete()"
+/>

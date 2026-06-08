@@ -26,6 +26,9 @@ public sealed class JhonnyHomeStudioDbContext : DbContext
     public DbSet<BlockedDate> BlockedDates => Set<BlockedDate>();
     public DbSet<CustomerLoyalty> CustomerLoyalties => Set<CustomerLoyalty>();
     public DbSet<LoyaltyTransaction> LoyaltyTransactions => Set<LoyaltyTransaction>();
+    public DbSet<ProductCategory> ProductCategories => Set<ProductCategory>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

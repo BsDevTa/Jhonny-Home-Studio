@@ -1,0 +1,78 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Produtos da loja</h1>
+      <p class="page-subtitle">Vitrine premium para venda assistida pelo WhatsApp.</p>
+    </div>
+    <div class="form-actions">
+      <a routerLink="/marketplace/categories" class="secondary-button">Categorias</a>
+      <a routerLink="/marketplace/products/new" class="primary-button">Novo produto</a>
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  <section class="surface">
+    @if (loading()) {
+      <app-loading />
+    } @else if (!products().length) {
+      <app-empty-state title="Nenhum produto cadastrado" description="Cadastre o primeiro produto da loja Beauty." />
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Categoria</th>
+              <th>Preço</th>
+              <th>Destaque</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of products(); track product.id) {
+              <tr>
+                <td>
+                  <strong>{{ product.name }}</strong><br />
+                  <small>{{ product.shortDescription || 'Sem descrição curta' }}</small>
+                </td>
+                <td>{{ product.productCategoryName }}</td>
+                <td>
+                  @if (product.promotionalPrice) {
+                    <strong>{{ product.promotionalPrice | currency: 'BRL' }}</strong><br />
+                    <small>{{ product.price | currency: 'BRL' }}</small>
+                  } @else {
+                    {{ product.price | currency: 'BRL' }}
+                  }
+                </td>
+                <td>{{ product.isFeatured ? 'Sim' : 'Não' }}</td>
+                <td><app-status-badge [active]="product.isActive" /></td>
+                <td>
+                  <div class="table-actions">
+                    <a class="secondary-button table-button" [routerLink]="['/marketplace/products', product.id, 'edit']">Editar</a>
+                    <button type="button" class="secondary-button table-button" (click)="toggle(product)">
+                      {{ product.isActive ? 'Desativar' : 'Ativar' }}
+                    </button>
+                    <button type="button" class="danger-button table-button" (click)="productToDelete.set(product)">Excluir</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>
+
+<app-confirm-dialog
+  [open]="!!productToDelete()"
+  title="Excluir produto?"
+  [description]="'O produto ' + (productToDelete()?.name ?? '') + ' será removido da vitrine.'"
+  confirmLabel="Excluir"
+  (canceled)="productToDelete.set(null)"
+  (confirmed)="confirmDelete()"
+/>

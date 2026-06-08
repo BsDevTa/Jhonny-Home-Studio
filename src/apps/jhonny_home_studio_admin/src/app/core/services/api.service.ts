@@ -17,6 +17,10 @@ export class ApiService {
     return this.handle(this.http.post<ApiResponse<T>>(this.url(path), body));
   }
 
+  postForm<T>(path: string, body: FormData): Observable<T> {
+    return this.handle(this.http.post<ApiResponse<T>>(this.url(path), body));
+  }
+
   put<T>(path: string, body: unknown): Observable<T> {
     return this.handle(this.http.put<ApiResponse<T>>(this.url(path), body));
   }

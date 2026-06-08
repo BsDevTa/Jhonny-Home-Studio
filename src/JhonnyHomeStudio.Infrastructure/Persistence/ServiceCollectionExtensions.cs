@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStudioSettingsService, StudioSettingsService>();
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();
+        services.AddScoped<IMarketplaceService, MarketplaceService>();
 
         return services;
     }

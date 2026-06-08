@@ -1,0 +1,40 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">{{ editing ? 'Editar categoria da loja' : 'Nova categoria da loja' }}</h1>
+      <p class="page-subtitle">Use nomes claros para facilitar a navegação no app.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loading />
+  } @else {
+    <form class="surface form-card" [formGroup]="form" (ngSubmit)="submit()">
+      @if (error()) {
+        <p class="error-banner">{{ error() }}</p>
+      }
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Nome</label>
+          <input id="name" formControlName="name" placeholder="Ex.: Pós-Loiro" />
+        </div>
+        <div class="field">
+          <label for="displayOrder">Ordem</label>
+          <input id="displayOrder" type="number" formControlName="displayOrder" />
+        </div>
+        <div class="field span-2">
+          <label for="description">Descrição</label>
+          <textarea id="description" formControlName="description"></textarea>
+        </div>
+        <label class="checkbox-field span-2">
+          <input type="checkbox" formControlName="isActive" />
+          Categoria ativa
+        </label>
+      </div>
+      <div class="form-actions">
+        <a routerLink="/marketplace/categories" class="secondary-button">Cancelar</a>
+        <button type="submit" class="primary-button" [disabled]="saving()">{{ saving() ? 'Salvando...' : 'Salvar categoria' }}</button>
+      </div>
+    </form>
+  }
+</section>
