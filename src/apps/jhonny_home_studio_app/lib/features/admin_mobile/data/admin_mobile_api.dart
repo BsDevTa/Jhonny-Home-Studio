@@ -98,6 +98,38 @@ class AdminMobileApi {
   Future<void> deleteBlockedDate(String id) =>
       _delete('/admin/availability/blocked-dates/$id');
 
+  Future<List<Map<String, dynamic>>> getMarketplaceCategories() =>
+      _getList('/admin/marketplace/categories');
+  Future<Map<String, dynamic>> getMarketplaceCategory(String id) =>
+      _getObject('/admin/marketplace/categories/$id');
+  Future<void> saveMarketplaceCategory(String? id, Map<String, dynamic> data) =>
+      id == null
+      ? _post('/admin/marketplace/categories', data)
+      : _put('/admin/marketplace/categories/$id', data);
+  Future<void> toggleMarketplaceCategory(String id) =>
+      _patch('/admin/marketplace/categories/$id/toggle-active');
+  Future<void> deleteMarketplaceCategory(String id) =>
+      _delete('/admin/marketplace/categories/$id');
+  Future<List<Map<String, dynamic>>> getMarketplaceProducts() =>
+      _getList('/admin/marketplace/products');
+  Future<Map<String, dynamic>> getMarketplaceProduct(String id) =>
+      _getObject('/admin/marketplace/products/$id');
+  Future<void> saveMarketplaceProduct(String? id, Map<String, dynamic> data) =>
+      id == null
+      ? _post('/admin/marketplace/products', data)
+      : _put('/admin/marketplace/products/$id', data);
+  Future<void> toggleMarketplaceProduct(String id) =>
+      _patch('/admin/marketplace/products/$id/toggle-active');
+  Future<void> deleteMarketplaceProduct(String id) =>
+      _delete('/admin/marketplace/products/$id');
+  Future<Map<String, dynamic>> uploadMarketplaceImage(String filePath) async {
+    final response = await _api.postMultipart(
+      '/admin/marketplace/products/upload-image',
+      filePath: filePath,
+    );
+    return _asMap(response['data']);
+  }
+
   Future<List<Map<String, dynamic>>> _getList(String path) async {
     final response = await _api.getJson(path);
     return _asList(response['data']);

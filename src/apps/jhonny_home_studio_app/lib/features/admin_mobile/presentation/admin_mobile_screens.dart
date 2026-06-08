@@ -171,6 +171,12 @@ const _modules = [
     '/admin-mobile/availability',
     Icons.schedule_outlined,
   ),
+  _Module(
+    'Marketplace',
+    'Gerencie categorias e produtos da loja.',
+    '/admin-mobile/marketplace',
+    Icons.shopping_bag_outlined,
+  ),
 ];
 
 class _AdminModuleCard extends StatelessWidget {

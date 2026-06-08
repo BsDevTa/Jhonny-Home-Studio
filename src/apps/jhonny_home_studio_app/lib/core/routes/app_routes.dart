@@ -1,7 +1,11 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_provider.dart';
+import '../../features/admin_mobile/marketplace/presentation/admin_marketplace_home_screen.dart';
+import '../../features/admin_mobile/marketplace/presentation/admin_product_category_form_screen.dart';
+import '../../features/admin_mobile/marketplace/presentation/admin_product_category_list_screen.dart';
 import '../../features/admin_mobile/presentation/admin_mobile_screens.dart';
+import '../../features/admin_mobile/presentation/admin_mobile_marketplace_screens.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
@@ -12,6 +16,8 @@ import '../../features/appointments/presentation/create_appointment_screen.dart'
 import '../../features/appointments/presentation/my_appointments_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/loyalty/presentation/loyalty_screen.dart';
+import '../../features/marketplace/presentation/marketplace_screen.dart';
+import '../../features/marketplace/presentation/product_detail_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/services_screen.dart';
@@ -38,6 +44,8 @@ class AppRoutes {
   static const String vip = '/vip';
   static const String loyalty = '/loyalty';
   static const String sosLoiro = '/sos-loiro';
+  static const String marketplace = '/marketplace';
+  static const String marketplaceProduct = '/marketplace/products/:id';
   static const String adminMobile = '/admin-mobile';
 
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -160,6 +168,38 @@ class AppRoutes {
           builder: (context, state) =>
               AdminBlockedDateFormScreen(id: state.pathParameters['id']),
         ),
+        GoRoute(
+          path: '$adminMobile/marketplace',
+          builder: (context, state) => const AdminMarketplaceHomeScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/marketplace/categories',
+          builder: (context, state) => const AdminProductCategoryListScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/marketplace/categories/new',
+          builder: (context, state) => const AdminProductCategoryFormScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/marketplace/categories/:id/edit',
+          builder: (context, state) =>
+              AdminProductCategoryFormScreen(id: state.pathParameters['id']),
+        ),
+        GoRoute(
+          path: '$adminMobile/marketplace/products',
+          builder: (context, state) =>
+              const AdminMarketplaceProductListScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/marketplace/products/new',
+          builder: (context, state) =>
+              const AdminMarketplaceProductFormScreen(),
+        ),
+        GoRoute(
+          path: '$adminMobile/marketplace/products/:id/edit',
+          builder: (context, state) =>
+              AdminMarketplaceProductFormScreen(id: state.pathParameters['id']),
+        ),
         ShellRoute(
           builder: (context, state, child) {
             return MainShell(currentPath: state.uri.path, child: child);
@@ -232,6 +272,16 @@ class AppRoutes {
             GoRoute(
               path: sosLoiro,
               builder: (context, state) => const SosLoiroScreen(),
+            ),
+            GoRoute(
+              path: marketplace,
+              builder: (context, state) => const MarketplaceScreen(),
+            ),
+            GoRoute(
+              path: marketplaceProduct,
+              builder: (context, state) => ProductDetailScreen(
+                productId: state.pathParameters['id'] ?? '',
+              ),
             ),
           ],
         ),

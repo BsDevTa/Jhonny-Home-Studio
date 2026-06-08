@@ -9,6 +9,7 @@ import '../../../core/routes/app_routes.dart';
 import '../../../shared/widgets/premium_section_header.dart';
 import '../../loyalty/data/loyalty_api.dart';
 import '../../loyalty/data/loyalty_model.dart';
+import '../../marketplace/presentation/widgets/beauty_store_card.dart';
 import '../../services/data/service_models.dart';
 import '../../services/data/services_api.dart';
 import '../../services/presentation/widgets/category_chip.dart';
@@ -352,6 +353,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         onVip: () => context.push(AppRoutes.vip),
                         onLoyalty: () => context.push(AppRoutes.loyalty),
                         onSos: () => context.push(AppRoutes.sosLoiro),
+                      ),
+                      const SizedBox(height: 14),
+                      BeautyStoreCard(
+                        onOpen: () => context.push(AppRoutes.marketplace),
                       ),
                       const SizedBox(height: 8),
                     ],
