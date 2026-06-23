@@ -41,7 +41,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       setState(() => _product = product);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Não foi possível carregar o produto.');
+      setState(() => _error = 'NÃ£o foi possÃ­vel carregar o produto.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -50,11 +50,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _openWhatsApp(ProductModel product) async {
     final settings = context.read<AppSettingsProvider>().settings;
     final messenger = ScaffoldMessenger.of(context);
-    if (settings.whatsAppNumber.trim().isEmpty) {
+    if (!hasConfiguredWhatsAppNumber(settings.whatsAppNumber)) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('WhatsApp do estúdio ainda não configurado.'),
-        ),
+        const SnackBar(content: Text(whatsAppNotConfiguredMessage)),
       );
       return;
     }
@@ -70,7 +68,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (!opened) {
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('Não foi possível abrir o WhatsApp agora.'),
+          content: Text('NÃ£o foi possÃ­vel abrir o WhatsApp agora.'),
         ),
       );
     }
@@ -90,7 +88,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             : product == null
             ? Center(
                 child: Text(
-                  _error ?? 'Produto não encontrado.',
+                  _error ?? 'Produto nÃ£o encontrado.',
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
               )
@@ -152,7 +150,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 10),
                   Text(
                     product.isAvailable
-                        ? 'Disponível para consulta'
+                        ? 'DisponÃ­vel para consulta'
                         : 'Consulte disponibilidade',
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),

@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (success) {
-      context.go(AppRoutes.home);
+      context.go(authProvider.isAdmin ? AppRoutes.adminMobile : AppRoutes.home);
     }
   }
 

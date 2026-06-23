@@ -19,8 +19,8 @@ class _VipClubScreenState extends State<VipClubScreen> {
 
   Future<void> _openWhatsApp() async {
     final settings = context.read<AppSettingsProvider>().settings;
-    if (settings.whatsAppNumber.trim().isEmpty) {
-      _showMessage('WhatsApp do estúdio ainda não configurado.');
+    if (!hasConfiguredWhatsAppNumber(settings.whatsAppNumber)) {
+      _showMessage(whatsAppNotConfiguredMessage);
       return;
     }
 
@@ -30,8 +30,7 @@ class _VipClubScreenState extends State<VipClubScreen> {
 
     final opened = await openWhatsApp(
       phoneNumber: settings.whatsAppNumber,
-      message:
-          'Olá, quero saber mais sobre o Clube VIP do ${settings.studioName}.',
+      message: 'Olá, quero saber mais sobre o Clube VIP do Jhonny Home Studio.',
     );
 
     if (!mounted) {
@@ -43,7 +42,7 @@ class _VipClubScreenState extends State<VipClubScreen> {
     });
 
     if (!opened) {
-      _showMessage('Não foi possível abrir o WhatsApp agora.');
+      _showMessage('NÃ£o foi possÃ­vel abrir o WhatsApp agora.');
     }
   }
 
@@ -58,7 +57,7 @@ class _VipClubScreenState extends State<VipClubScreen> {
     return Scaffold(
       body: _PremiumPage(
         title: 'Clube VIP',
-        subtitle: 'Benefícios exclusivos para clientes especiais.',
+        subtitle: 'BenefÃ­cios exclusivos para clientes especiais.',
         children: [
           const _IntroCard(),
           const SizedBox(height: 16),
@@ -91,7 +90,7 @@ class _IntroCard extends StatelessWidget {
           Icon(Icons.diamond_outlined, color: AppColors.gold, size: 20),
           SizedBox(height: 10),
           Text(
-            'Uma experiência além do atendimento',
+            'Uma experiÃªncia alÃ©m do atendimento',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 16,
@@ -275,15 +274,15 @@ class _VipPlan {
 const _plans = [
   _VipPlan(
     name: 'VIP Essential',
-    description: 'Uma entrada elegante para benefícios exclusivos.',
-    benefits: ['Acesso antecipado a novidades', 'Experiência personalizada'],
+    description: 'Uma entrada elegante para benefÃ­cios exclusivos.',
+    benefits: ['Acesso antecipado a novidades', 'ExperiÃªncia personalizada'],
   ),
   _VipPlan(
     name: 'VIP Gold',
     description: 'Mais prioridade para uma rotina beauty sem pressa.',
     benefits: [
-      'Atendimento prioritário',
-      'Benefícios em serviços premium',
+      'Atendimento prioritÃ¡rio',
+      'BenefÃ­cios em serviÃ§os premium',
       'Brindes exclusivos',
     ],
     highlighted: true,
@@ -292,10 +291,10 @@ const _plans = [
     name: 'VIP Diamond',
     description: 'O cuidado mais completo para clientes especiais.',
     benefits: [
-      'Horários especiais',
-      'Atendimento prioritário',
-      'Acesso antecipado à agenda',
-      'Experiência personalizada',
+      'HorÃ¡rios especiais',
+      'Atendimento prioritÃ¡rio',
+      'Acesso antecipado Ã  agenda',
+      'ExperiÃªncia personalizada',
     ],
   ),
 ];

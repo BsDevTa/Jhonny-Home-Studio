@@ -4,6 +4,7 @@ import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/admin_mobile/marketplace/presentation/admin_marketplace_home_screen.dart';
 import '../../features/admin_mobile/marketplace/presentation/admin_product_category_form_screen.dart';
 import '../../features/admin_mobile/marketplace/presentation/admin_product_category_list_screen.dart';
+import '../../features/admin_mobile/presentation/admin_mobile_home_screen.dart';
 import '../../features/admin_mobile/presentation/admin_mobile_screens.dart';
 import '../../features/admin_mobile/presentation/admin_mobile_marketplace_screens.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -65,11 +66,15 @@ class AppRoutes {
         }
 
         if (isLoggedIn && isAuthPage) {
-          return home;
+          return authProvider.isAdmin ? adminMobile : home;
+        }
+
+        if (isLoggedIn && currentLocation == splash) {
+          return authProvider.isAdmin ? adminMobile : home;
         }
 
         if (isAdminPage && !authProvider.isAdmin) {
-          return home;
+          return '$home?adminRestricted=1';
         }
 
         return null;
@@ -207,7 +212,10 @@ class AppRoutes {
           routes: [
             GoRoute(
               path: home,
-              builder: (context, state) => const HomeScreen(),
+              builder: (context, state) => HomeScreen(
+                showAdminRestrictedMessage:
+                    state.uri.queryParameters['adminRestricted'] == '1',
+              ),
             ),
             GoRoute(
               path: services,

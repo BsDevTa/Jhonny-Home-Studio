@@ -1,12 +1,24 @@
 import 'package:url_launcher/url_launcher.dart';
 
+const whatsAppNotConfiguredMessage =
+    'WhatsApp do estúdio ainda não configurado.';
+
 String normalizeBrazilianWhatsAppNumber(String phoneNumber) {
   final digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
-  if (digits.isEmpty || digits.startsWith('55')) {
+
+  if (digits.length == 11) {
+    return '55$digits';
+  }
+
+  if (digits.length == 13 && digits.startsWith('55')) {
     return digits;
   }
 
-  return '55$digits';
+  return '';
+}
+
+bool hasConfiguredWhatsAppNumber(String phoneNumber) {
+  return normalizeBrazilianWhatsAppNumber(phoneNumber).isNotEmpty;
 }
 
 Uri? buildWhatsAppUri({required String phoneNumber, required String message}) {

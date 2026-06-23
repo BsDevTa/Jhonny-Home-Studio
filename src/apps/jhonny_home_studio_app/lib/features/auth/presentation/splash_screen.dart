@@ -45,7 +45,12 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
 
-      context.go(isLoggedIn ? AppRoutes.home : AppRoutes.login);
+      if (!isLoggedIn) {
+        context.go(AppRoutes.login);
+        return;
+      }
+
+      context.go(authProvider.isAdmin ? AppRoutes.adminMobile : AppRoutes.home);
     });
   }
 

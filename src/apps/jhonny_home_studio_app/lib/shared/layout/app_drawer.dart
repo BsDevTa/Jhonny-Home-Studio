@@ -102,7 +102,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.location_on_outlined,
-                    title: 'Meus endereços',
+                    title: 'Meus endereÃ§os',
                     selected: currentPath.startsWith('/addresses'),
                     onTap: () {
                       context.pop();
@@ -120,7 +120,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.spa_outlined,
-                    title: 'Serviços',
+                    title: 'ServiÃ§os',
                     selected: currentPath.startsWith('/services'),
                     onTap: () {
                       context.pop();
@@ -147,7 +147,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.loyalty_outlined,
-                    title: 'Cartão fidelidade',
+                    title: 'CartÃ£o fidelidade',
                     selected: currentPath == AppRoutes.loyalty,
                     onTap: () {
                       context.pop();
@@ -175,13 +175,13 @@ class AppDrawer extends StatelessWidget {
                     ),
                   _DrawerItem(
                     icon: Icons.settings_outlined,
-                    title: 'Configurações',
+                    title: 'ConfiguraÃ§Ãµes',
                     onTap: () {
                       context.pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Configurações serão implementadas em breve.',
+                            'ConfiguraÃ§Ãµes serÃ£o implementadas em breve.',
                           ),
                         ),
                       );
@@ -196,12 +196,12 @@ class AppDrawer extends StatelessWidget {
                           .read<AppSettingsProvider>()
                           .settings;
                       context.pop();
-                      if (settings.whatsAppNumber.trim().isEmpty) {
+                      if (!hasConfiguredWhatsAppNumber(
+                        settings.whatsAppNumber,
+                      )) {
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text(
-                              'WhatsApp do estúdio ainda não configurado.',
-                            ),
+                            content: Text(whatsAppNotConfiguredMessage),
                           ),
                         );
                         return;
@@ -216,7 +216,7 @@ class AppDrawer extends StatelessWidget {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'Não foi possível abrir o WhatsApp agora.',
+                              'NÃ£o foi possÃ­vel abrir o WhatsApp agora.',
                             ),
                           ),
                         );

@@ -22,7 +22,9 @@ import '../../settings/presentation/app_settings_provider.dart';
 import 'widgets/premium_experience_card.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.showAdminRestrictedMessage = false});
+
+  final bool showAdminRestrictedMessage;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -50,6 +52,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _servicesApi = ServicesApi(apiClient: context.read<ApiClient>());
     _storiesApi = StoriesApi(apiClient: context.read<ApiClient>());
     _loyaltyApi = LoyaltyApi(apiClient: context.read<ApiClient>());
+    if (widget.showAdminRestrictedMessage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Acesso restrito ao administrador.')),
+        );
+      });
+    }
     _loadHomeData();
   }
 

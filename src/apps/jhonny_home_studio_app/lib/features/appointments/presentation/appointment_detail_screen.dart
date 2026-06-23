@@ -81,7 +81,8 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
         return;
       }
       setState(() {
-        _errorMessage = 'Não foi possível carregar os detalhes do agendamento.';
+        _errorMessage =
+            'NÃ£o foi possÃ­vel carregar os detalhes do agendamento.';
       });
     } finally {
       if (mounted) {
@@ -107,7 +108,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Não'),
+              child: const Text('NÃ£o'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -159,8 +160,8 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     }
 
     final settings = context.read<AppSettingsProvider>().settings;
-    if (settings.whatsAppNumber.trim().isEmpty) {
-      _showMessage('WhatsApp do estúdio ainda não configurado.');
+    if (!hasConfiguredWhatsAppNumber(settings.whatsAppNumber)) {
+      _showMessage(whatsAppNotConfiguredMessage);
       return;
     }
 
@@ -173,15 +174,14 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       phoneNumber: settings.whatsAppNumber,
       message:
           '''
-Olá, quero confirmar meu agendamento no ${settings.studioName}.
+Olá, quero confirmar meu agendamento no Jhonny Home Studio.
 
-Cliente: ${appointment.customerName}
 Serviço: ${appointment.serviceName}
 Data: ${date == null ? 'Não informada' : DateFormat('dd/MM/yyyy').format(date)}
 Horário: ${date == null ? 'Não informado' : DateFormat('HH:mm').format(date)}
 Status: ${appointmentStatusLabel(appointment.status)}
 
-Pode me orientar sobre a confirmação/sinal?''',
+Pode me orientar sobre a confirmação?''',
     );
 
     if (!mounted) {
@@ -193,7 +193,7 @@ Pode me orientar sobre a confirmação/sinal?''',
     });
 
     if (!opened) {
-      _showMessage('Não foi possível abrir o WhatsApp agora.');
+      _showMessage('NÃ£o foi possÃ­vel abrir o WhatsApp agora.');
     }
   }
 
@@ -231,7 +231,7 @@ Pode me orientar sobre a confirmação/sinal?''',
               : _errorMessage != null
               ? _ErrorCard(message: _errorMessage!, onRetry: _loadDetail)
               : appointment == null
-              ? const _ErrorCard(message: 'Agendamento não encontrado.')
+              ? const _ErrorCard(message: 'Agendamento nÃ£o encontrado.')
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Center(
@@ -285,7 +285,7 @@ Pode me orientar sobre a confirmação/sinal?''',
                           ),
                           const SizedBox(height: 16),
                           _DetailRow(
-                            label: 'Serviço',
+                            label: 'ServiÃ§o',
                             value: appointment.serviceName,
                           ),
                           _DetailRow(
@@ -293,7 +293,7 @@ Pode me orientar sobre a confirmação/sinal?''',
                             value: appointmentStatusLabel(appointment.status),
                           ),
                           _DetailRow(
-                            label: 'Data e horário',
+                            label: 'Data e horÃ¡rio',
                             value: appointment.scheduledAt == null
                                 ? 'Não informado'
                                 : _dateFormat.format(
@@ -301,24 +301,24 @@ Pode me orientar sobre a confirmação/sinal?''',
                                   ),
                           ),
                           _DetailRow(
-                            label: 'Preço',
+                            label: 'PreÃ§o',
                             value: _currencyFormat.format(
                               appointment.servicePriceSnapshot,
                             ),
                           ),
                           _DetailRow(
-                            label: 'Duração',
+                            label: 'DuraÃ§Ã£o',
                             value:
                                 '${appointment.estimatedDurationMinutesSnapshot} min',
                           ),
                           _DetailRow(
-                            label: 'Endereço',
+                            label: 'EndereÃ§o',
                             value: appointment.addressText,
                           ),
                           _DetailRow(
-                            label: 'Observações',
+                            label: 'ObservaÃ§Ãµes',
                             value: appointment.customerNotes.trim().isEmpty
-                                ? 'Sem observações'
+                                ? 'Sem observaÃ§Ãµes'
                                 : appointment.customerNotes,
                           ),
                           const SizedBox(height: 18),
@@ -436,7 +436,7 @@ class _ErrorCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: PremiumEmptyState(
           icon: Icons.error_outline,
-          title: 'Não foi possível carregar',
+          title: 'NÃ£o foi possÃ­vel carregar',
           message: message,
           actionLabel: onRetry == null ? null : 'Tentar novamente',
           onAction: onRetry,

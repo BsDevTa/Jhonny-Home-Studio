@@ -24,217 +24,6 @@ String _date(dynamic value) {
       : DateFormat('dd/MM/yyyy HH:mm').format(parsed.toLocal());
 }
 
-class AdminMobileHomeScreen extends StatefulWidget {
-  const AdminMobileHomeScreen({super.key});
-
-  @override
-  State<AdminMobileHomeScreen> createState() => _AdminMobileHomeScreenState();
-}
-
-class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
-  bool loading = true;
-  String error = '';
-  Map<String, int> counts = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      loading = true;
-      error = '';
-    });
-    try {
-      final api = _api(context);
-      final values = await Future.wait([
-        api.getCategories(),
-        api.getServices(),
-        api.getAppointments(),
-        api.getCustomers(),
-        api.getStories(),
-      ]);
-      if (!mounted) return;
-      setState(() {
-        counts = {
-          'Categorias': values[0].length,
-          'Serviços': values[1].length,
-          'Agenda': values[2]
-              .where((x) => _text(x, 'status') == 'Pending')
-              .length,
-          'Clientes': values[3].length,
-          'Stories': values[4].where((x) => _flag(x, 'isActive')).length,
-        };
-      });
-    } catch (e) {
-      if (mounted) setState(() => error = e.toString());
-    } finally {
-      if (mounted) setState(() => loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AdminScaffold(
-      title: 'Admin Mobile',
-      child: RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const Text(
-              'Gestão rápida do estúdio',
-              style: TextStyle(
-                color: AppColors.champagne,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Acesse os módulos administrativos pelo celular.',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 18),
-            if (loading)
-              const Center(
-                child: CircularProgressIndicator(color: AppColors.gold),
-              ),
-            if (error.isNotEmpty) _ErrorCard(message: error),
-            ..._modules.map(
-              (module) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _AdminModuleCard(
-                  module: module,
-                  count: counts[module.title],
-                  onTap: () => context.push(module.path),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Module {
-  const _Module(this.title, this.subtitle, this.path, this.icon);
-  final String title;
-  final String subtitle;
-  final String path;
-  final IconData icon;
-}
-
-const _modules = [
-  _Module(
-    'Categorias',
-    'Organize os tipos de serviço',
-    '/admin-mobile/categories',
-    Icons.category_outlined,
-  ),
-  _Module(
-    'Serviços',
-    'Edite catálogo, preço e duração',
-    '/admin-mobile/services',
-    Icons.spa_outlined,
-  ),
-  _Module(
-    'Agenda',
-    'Acompanhe e altere status',
-    '/admin-mobile/appointments',
-    Icons.event_note_outlined,
-  ),
-  _Module(
-    'Clientes',
-    'Consulte perfis e fidelidade',
-    '/admin-mobile/customers',
-    Icons.people_outline,
-  ),
-  _Module(
-    'Stories',
-    'Publique fotos e vídeos',
-    '/admin-mobile/stories',
-    Icons.auto_awesome_outlined,
-  ),
-  _Module(
-    'Configurações',
-    'Atualize dados do estúdio',
-    '/admin-mobile/settings',
-    Icons.settings_outlined,
-  ),
-  _Module(
-    'Disponibilidade',
-    'Horários e datas bloqueadas',
-    '/admin-mobile/availability',
-    Icons.schedule_outlined,
-  ),
-  _Module(
-    'Marketplace',
-    'Gerencie categorias e produtos da loja.',
-    '/admin-mobile/marketplace',
-    Icons.shopping_bag_outlined,
-  ),
-];
-
-class _AdminModuleCard extends StatelessWidget {
-  const _AdminModuleCard({
-    required this.module,
-    required this.onTap,
-    this.count,
-  });
-  final _Module module;
-  final VoidCallback onTap;
-  final int? count;
-
-  @override
-  Widget build(BuildContext context) {
-    return AdminMobileCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(module.icon, color: AppColors.gold, size: 22),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  module.title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  module.subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (count != null)
-            Text(
-              '$count',
-              style: const TextStyle(
-                color: AppColors.champagne,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          const SizedBox(width: 6),
-          const Icon(Icons.chevron_right, color: AppColors.textMuted),
-        ],
-      ),
-    );
-  }
-}
-
 enum AdminListType { categories, services, appointments, customers, stories }
 
 class AdminListScreen extends StatefulWidget {
@@ -255,7 +44,7 @@ class _AdminListScreenState extends State<AdminListScreen> {
 
   String get title => switch (widget.type) {
     AdminListType.categories => 'Categorias',
-    AdminListType.services => 'Serviços',
+    AdminListType.services => 'ServiÃ§os',
     AdminListType.appointments => 'Agenda',
     AdminListType.customers => 'Clientes',
     AdminListType.stories => 'Stories',
@@ -421,20 +210,20 @@ class _ItemCard extends StatelessWidget {
     AdminListType.categories => _text(item, 'name'),
     AdminListType.services => _text(item, 'name'),
     AdminListType.appointments =>
-      '${_text(item, 'customerName')} · ${_text(item, 'serviceName')}',
+      '${_text(item, 'customerName')} Â· ${_text(item, 'serviceName')}',
     AdminListType.customers => _text(item, 'fullName'),
     AdminListType.stories => _text(item, 'title'),
   };
   String get subtitle => switch (type) {
     AdminListType.categories => _text(item, 'description'),
     AdminListType.services =>
-      '${_text(item, 'serviceCategoryName')} · R\$ ${_text(item, 'price')}',
+      '${_text(item, 'serviceCategoryName')} Â· R\$ ${_text(item, 'price')}',
     AdminListType.appointments =>
-      '${_date(item['scheduledAt'])} · ${_statusLabel(_text(item, 'status'))}',
+      '${_date(item['scheduledAt'])} Â· ${_statusLabel(_text(item, 'status'))}',
     AdminListType.customers =>
-      '${_text(item, 'email')} · ${_text(item, 'phone')}',
+      '${_text(item, 'email')} Â· ${_text(item, 'phone')}',
     AdminListType.stories =>
-      '${_text(item, 'subtitle')} · ordem ${_text(item, 'displayOrder')}',
+      '${_text(item, 'subtitle')} Â· ordem ${_text(item, 'displayOrder')}',
   };
 
   @override
@@ -594,7 +383,7 @@ class _AdminCategoryFormScreenState extends State<AdminCategoryFormScreen> {
       TextField(
         controller: description,
         maxLines: 3,
-        decoration: const InputDecoration(labelText: 'Descrição'),
+        decoration: const InputDecoration(labelText: 'DescriÃ§Ã£o'),
       ),
       if (widget.id != null)
         SwitchListTile(
@@ -656,7 +445,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
 
   @override
   Widget build(BuildContext context) => _SimpleFormScaffold(
-    title: widget.id == null ? 'Novo serviço' : 'Editar serviço',
+    title: widget.id == null ? 'Novo serviÃ§o' : 'Editar serviÃ§o',
     saving: saving,
     onSave: () async {
       setState(() => saving = true);
@@ -695,19 +484,19 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       TextField(
         controller: description,
         maxLines: 3,
-        decoration: const InputDecoration(labelText: 'Descrição'),
+        decoration: const InputDecoration(labelText: 'DescriÃ§Ã£o'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: price,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'Preço'),
+        decoration: const InputDecoration(labelText: 'PreÃ§o'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: duration,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'Duração em minutos'),
+        decoration: const InputDecoration(labelText: 'DuraÃ§Ã£o em minutos'),
       ),
       const SizedBox(height: 12),
       TextField(
@@ -760,19 +549,19 @@ class _AdminAppointmentDetailScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _Info('Cliente', _text(item, 'customerName')),
-                    _Info('Serviço', _text(item, 'serviceName')),
-                    _Info('Endereço', _text(item, 'addressText')),
+                    _Info('ServiÃ§o', _text(item, 'serviceName')),
+                    _Info('EndereÃ§o', _text(item, 'addressText')),
                     _Info('Data', _date(item['scheduledAt'])),
                     _Info('Status', _statusLabel(_text(item, 'status'))),
                     _Info(
-                      'Preço',
+                      'PreÃ§o',
                       'R\$ ${_text(item, 'servicePriceSnapshot')}',
                     ),
                     _Info(
-                      'Duração',
+                      'DuraÃ§Ã£o',
                       '${_text(item, 'estimatedDurationMinutesSnapshot')} min',
                     ),
-                    _Info('Observação', _text(item, 'customerNotes')),
+                    _Info('ObservaÃ§Ã£o', _text(item, 'customerNotes')),
                   ],
                 ),
               ),
@@ -849,27 +638,27 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
                     _Info('Cadastro', _date(profile['createdAt'])),
                     _Info(
                       'Pontos',
-                      '${_text(loyalty, 'points')} · ${_text(loyalty, 'level')}',
+                      '${_text(loyalty, 'points')} Â· ${_text(loyalty, 'level')}',
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-              const _Section('Endereços'),
+              const _Section('EndereÃ§os'),
               ...addresses.map(
                 (x) => AdminMobileCard(
                   child: Text(
-                    '${_text(x, 'street')}, ${_text(x, 'number')} · ${_text(x, 'city')}',
+                    '${_text(x, 'street')}, ${_text(x, 'number')} Â· ${_text(x, 'city')}',
                     style: const TextStyle(color: AppColors.textPrimary),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const _Section('Histórico'),
+              const _Section('HistÃ³rico'),
               ...appointments.map(
                 (x) => AdminMobileCard(
                   child: Text(
-                    '${_text(x, 'serviceName')} · ${_date(x['scheduledAt'])} · ${_statusLabel(_text(x, 'status'))}',
+                    '${_text(x, 'serviceName')} Â· ${_date(x['scheduledAt'])} Â· ${_statusLabel(_text(x, 'status'))}',
                     style: const TextStyle(color: AppColors.textPrimary),
                   ),
                 ),
@@ -962,17 +751,17 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
     children: [
       TextField(
         controller: title,
-        decoration: const InputDecoration(labelText: 'Título'),
+        decoration: const InputDecoration(labelText: 'TÃ­tulo'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: subtitle,
-        decoration: const InputDecoration(labelText: 'Subtítulo'),
+        decoration: const InputDecoration(labelText: 'SubtÃ­tulo'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: mediaUrl,
-        decoration: const InputDecoration(labelText: 'URL da mídia'),
+        decoration: const InputDecoration(labelText: 'URL da mÃ­dia'),
       ),
       const SizedBox(height: 10),
       if (uploading) const LinearProgressIndicator(color: AppColors.gold),
@@ -993,19 +782,19 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
           OutlinedButton.icon(
             onPressed: () => _pick(ImageSource.camera, video: true),
             icon: const Icon(Icons.videocam),
-            label: const Text('Gravar vídeo'),
+            label: const Text('Gravar vÃ­deo'),
           ),
           OutlinedButton.icon(
             onPressed: () => _pick(ImageSource.gallery, video: true),
             icon: const Icon(Icons.video_library),
-            label: const Text('Vídeo'),
+            label: const Text('VÃ­deo'),
           ),
         ],
       ),
       const SizedBox(height: 12),
       DropdownButtonFormField<String>(
         initialValue: serviceId,
-        decoration: const InputDecoration(labelText: 'Serviço vinculado'),
+        decoration: const InputDecoration(labelText: 'ServiÃ§o vinculado'),
         items: [
           const DropdownMenuItem(value: '', child: Text('Nenhum')),
           ...services
@@ -1081,7 +870,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
   @override
   Widget build(BuildContext context) => _SimpleFormScaffold(
-    title: 'Configurações',
+    title: 'ConfiguraÃ§Ãµes',
     saving: saving,
     onSave: () async {
       final messenger = ScaffoldMessenger.of(context);
@@ -1093,7 +882,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       if (mounted) {
         setState(() => saving = false);
         messenger.showSnackBar(
-          const SnackBar(content: Text('Configurações salvas.')),
+          const SnackBar(content: Text('ConfiguraÃ§Ãµes salvas.')),
         );
       }
     },
@@ -1108,20 +897,20 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       SwitchListTile(
         value: active,
         onChanged: (v) => setState(() => active = v),
-        title: const Text('Estúdio ativo'),
+        title: const Text('EstÃºdio ativo'),
       ),
     ],
   );
 }
 
 const _settingsLabels = {
-  'studioName': 'Nome do estúdio',
-  'subtitle': 'Subtítulo',
+  'studioName': 'Nome do estÃºdio',
+  'subtitle': 'SubtÃ­tulo',
   'slogan': 'Slogan',
   'logoUrl': 'URL da logo',
   'whatsAppNumber': 'WhatsApp',
   'instagramUrl': 'Instagram',
-  'welcomeTitle': 'Título de boas-vindas',
+  'welcomeTitle': 'TÃ­tulo de boas-vindas',
   'welcomeMessage': 'Mensagem de boas-vindas',
   'supportMessage': 'Mensagem de suporte',
 };
@@ -1165,7 +954,9 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
           .toList(),
     );
     if (mounted) {
-      messenger.showSnackBar(const SnackBar(content: Text('Horários salvos.')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('HorÃ¡rios salvos.')),
+      );
     }
   }
 
@@ -1186,7 +977,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const _Section('Horários semanais'),
+              const _Section('HorÃ¡rios semanais'),
               ...hours.map(
                 (x) => AdminMobileCard(
                   child: Column(
@@ -1204,7 +995,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
                               child: TextFormField(
                                 initialValue: _text(x, 'startTime'),
                                 decoration: const InputDecoration(
-                                  labelText: 'Início',
+                                  labelText: 'InÃ­cio',
                                 ),
                                 onChanged: (v) => x['startTime'] = v,
                               ),
@@ -1239,7 +1030,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
               ),
               FilledButton(
                 onPressed: _saveHours,
-                child: const Text('Salvar horários'),
+                child: const Text('Salvar horÃ¡rios'),
               ),
               const SizedBox(height: 18),
               const _Section('Datas bloqueadas'),
@@ -1255,7 +1046,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          '${_text(x, 'date')} · ${_text(x, 'reason')}',
+                          '${_text(x, 'date')} Â· ${_text(x, 'reason')}',
                           style: const TextStyle(color: AppColors.textPrimary),
                         ),
                       ),
@@ -1348,7 +1139,7 @@ class _AdminBlockedDateFormScreenState
             Expanded(
               child: TextField(
                 controller: start,
-                decoration: const InputDecoration(labelText: 'Início'),
+                decoration: const InputDecoration(labelText: 'InÃ­cio'),
               ),
             ),
             const SizedBox(width: 8),
@@ -1391,19 +1182,22 @@ class AdminScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: const _AdminDrawer(),
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Voltar',
-          onPressed: () {
-            if (isHome) {
-              context.go(AppRoutes.home);
-            } else if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go(AppRoutes.adminMobile);
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
+        leading: Builder(
+          builder: (context) => IconButton(
+            tooltip: isHome ? 'Menu' : 'Voltar',
+            onPressed: () {
+              if (isHome) {
+                Scaffold.of(context).openDrawer();
+              } else if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(AppRoutes.adminMobile);
+              }
+            },
+            icon: Icon(isHome ? Icons.menu_rounded : Icons.arrow_back),
+          ),
         ),
         title: Text(title),
         actions: [
@@ -1428,6 +1222,200 @@ class AdminScaffold extends StatelessWidget {
       ),
       floatingActionButton: floatingActionButton,
       body: SafeArea(child: child),
+    );
+  }
+}
+
+class _AdminDrawer extends StatelessWidget {
+  const _AdminDrawer();
+
+  @override
+  Widget build(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+
+    return Drawer(
+      backgroundColor: AppColors.background,
+      child: SafeArea(
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Painel Administrativo',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Gestão mobile do estúdio',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: [
+                  _AdminDrawerItem(
+                    icon: Icons.dashboard_outlined,
+                    title: 'Dashboard',
+                    path: AppRoutes.adminMobile,
+                    selected: path == AppRoutes.adminMobile,
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.event_note_outlined,
+                    title: 'Agenda',
+                    path: '${AppRoutes.adminMobile}/appointments',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/appointments',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.people_outline,
+                    title: 'Clientes',
+                    path: '${AppRoutes.adminMobile}/customers',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/customers',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.spa_outlined,
+                    title: 'Serviços',
+                    path: '${AppRoutes.adminMobile}/services',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/services',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.category_outlined,
+                    title: 'Categorias',
+                    path: '${AppRoutes.adminMobile}/categories',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/categories',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.storefront_outlined,
+                    title: 'Marketplace',
+                    path: '${AppRoutes.adminMobile}/marketplace',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/marketplace',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.auto_awesome_outlined,
+                    title: 'Stories',
+                    path: '${AppRoutes.adminMobile}/stories',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/stories',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.settings_outlined,
+                    title: 'Configurações',
+                    path: '${AppRoutes.adminMobile}/settings',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/settings',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.schedule_outlined,
+                    title: 'Disponibilidade',
+                    path: '${AppRoutes.adminMobile}/availability',
+                    selected: path.startsWith(
+                      '${AppRoutes.adminMobile}/availability',
+                    ),
+                  ),
+                  _AdminDrawerItem(
+                    icon: Icons.visibility_outlined,
+                    title: 'Ver app como cliente',
+                    path: AppRoutes.home,
+                    selected: false,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await context.read<AuthProvider>().logout();
+                    if (!context.mounted) {
+                      return;
+                    }
+                    context.go(AppRoutes.login);
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sair'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminDrawerItem extends StatelessWidget {
+  const _AdminDrawerItem({
+    required this.icon,
+    required this.title,
+    required this.path,
+    required this.selected,
+  });
+
+  final IconData icon;
+  final String title;
+  final String path;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: selected
+            ? AppColors.gold.withValues(alpha: 0.10)
+            : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          dense: true,
+          visualDensity: VisualDensity.compact,
+          leading: Icon(
+            icon,
+            color: selected ? AppColors.gold : AppColors.textSecondary,
+            size: 18,
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: selected ? AppColors.textPrimary : AppColors.textSecondary,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+          onTap: () {
+            context.pop();
+            context.go(path);
+          },
+        ),
+      ),
     );
   }
 }
@@ -1572,14 +1560,14 @@ String _statusLabel(String status) =>
       'Rescheduled': 'Remarcado',
       'OnTheWay': 'A caminho',
       'InProgress': 'Em atendimento',
-      'Completed': 'Concluído',
-      'NoShow': 'Não compareceu',
+      'Completed': 'ConcluÃ­do',
+      'NoShow': 'NÃ£o compareceu',
     }[status] ??
     status;
 List<(String, String, String)> _statusActions(String status) =>
     switch (status) {
       'Pending' => [
-        ('Confirmed', 'Confirmar', 'Horário confirmado pelo administrador.'),
+        ('Confirmed', 'Confirmar', 'HorÃ¡rio confirmado pelo administrador.'),
         (
           'WaitingPayment',
           'Solicitar sinal',
@@ -1605,8 +1593,8 @@ List<(String, String, String)> _statusActions(String status) =>
         ),
         (
           'NoShow',
-          'Não compareceu',
-          'Não comparecimento registrado pelo administrador.',
+          'NÃ£o compareceu',
+          'NÃ£o comparecimento registrado pelo administrador.',
         ),
         ('Canceled', 'Cancelar', 'Agendamento cancelado pelo administrador.'),
       ],
@@ -1619,7 +1607,7 @@ List<(String, String, String)> _statusActions(String status) =>
         ('Canceled', 'Cancelar', 'Agendamento cancelado pelo administrador.'),
       ],
       'InProgress' => [
-        ('Completed', 'Concluir', 'Atendimento concluído pelo administrador.'),
+        ('Completed', 'Concluir', 'Atendimento concluÃ­do pelo administrador.'),
       ],
       _ => [],
     };
