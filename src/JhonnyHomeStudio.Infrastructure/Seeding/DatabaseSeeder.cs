@@ -10,52 +10,61 @@ namespace JhonnyHomeStudio.Infrastructure.Seeding;
 
 public static class DatabaseSeeder
 {
-    public static async Task SeedInitialDataAsync(this IServiceProvider serviceProvider)
+    public static async Task SeedInitialDataAsync(this IServiceProvider serviceProvider, CancellationToken cancellationToken = default)
     {
         using var scope = serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<JhonnyHomeStudioDbContext>();
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
-        await dbContext.Database.MigrateAsync();
+        await dbContext.Database.MigrateAsync(cancellationToken);
 
         var adminEmail = "admin@jhonnyhomestudio.com";
         var normalizedEmail = adminEmail.Trim().ToLowerInvariant();
 
-        var adminExists = await dbContext.Users.AnyAsync(x => x.Email == normalizedEmail && x.Role == UserRole.Admin);
-        if (!adminExists)
+        var adminUser = await dbContext.Users
+            .FirstOrDefaultAsync(x => x.Email == normalizedEmail, cancellationToken);
+
+        if (adminUser is null)
         {
-            var user = new User
+            adminUser = new User
             {
                 FullName = "Administrador",
                 Email = normalizedEmail,
                 Phone = null,
-                PasswordHash = passwordHasher.Hash("Admin@123456"),
+                PasswordHash = passwordHasher.Hash("Admin@1234"),
                 Role = UserRole.Admin,
                 IsActive = true
             };
 
-            var adminUser = new AdminUser
+            dbContext.Users.Add(adminUser);
+        }
+
+        if (!await dbContext.AdminUsers.AnyAsync(x => x.UserId == adminUser.Id, cancellationToken))
+        {
+            adminUser.Role = UserRole.Admin;
+            adminUser.IsActive = true;
+
+            var adminProfile = new AdminUser
             {
-                User = user,
+                User = adminUser,
                 Notes = "Administrador inicial do sistema"
             };
 
-            dbContext.Users.Add(user);
-            dbContext.AdminUsers.Add(adminUser);
+            dbContext.AdminUsers.Add(adminProfile);
         }
 
-        var settingsExist = await dbContext.StudioSettings.AnyAsync();
+        var settingsExist = await dbContext.StudioSettings.AnyAsync(cancellationToken);
         if (!settingsExist)
         {
             dbContext.StudioSettings.Add(StudioSettingsService.CreateDefault());
         }
 
-        var businessHoursExist = await dbContext.BusinessHours.AnyAsync();
+        var businessHoursExist = await dbContext.BusinessHours.AnyAsync(cancellationToken);
         if (!businessHoursExist)
         {
             dbContext.BusinessHours.AddRange(AvailabilityService.CreateDefaultBusinessHours());
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }
