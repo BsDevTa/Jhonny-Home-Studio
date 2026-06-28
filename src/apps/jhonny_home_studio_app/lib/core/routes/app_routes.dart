@@ -22,6 +22,7 @@ import '../../features/marketplace/presentation/product_detail_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/services/presentation/service_detail_screen.dart';
 import '../../features/services/presentation/services_screen.dart';
+import '../../features/settings/presentation/client_settings_screen.dart';
 import '../../features/sos/presentation/sos_loiro_screen.dart';
 import '../../features/vip/presentation/vip_club_screen.dart';
 import '../../shared/layout/main_shell.dart';
@@ -34,6 +35,7 @@ class AppRoutes {
   static const String services = '/services';
   static const String serviceDetail = '/services/:id';
   static const String profile = '/profile';
+  static const String clientSettings = '/settings';
   static const String addresses = '/addresses';
   static const String newAddress = '/addresses/new';
   static const String editAddress = '/addresses/:id/edit';
@@ -231,6 +233,10 @@ class AppRoutes {
             GoRoute(
               path: profile,
               builder: (context, state) => const ProfileScreen(),
+            ),
+            GoRoute(
+              path: clientSettings,
+              builder: (context, state) => const ClientSettingsScreen(),
             ),
             GoRoute(
               path: addresses,

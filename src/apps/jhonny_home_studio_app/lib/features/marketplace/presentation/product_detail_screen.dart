@@ -41,7 +41,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       setState(() => _product = product);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'NÃ£o foi possÃ­vel carregar o produto.');
+      setState(() => _error = 'Não foi possível carregar o produto.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -68,7 +68,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (!opened) {
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('NÃ£o foi possÃ­vel abrir o WhatsApp agora.'),
+          content: Text('Não foi possível abrir o WhatsApp agora.'),
         ),
       );
     }
@@ -88,7 +88,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             : product == null
             ? Center(
                 child: Text(
-                  _error ?? 'Produto nÃ£o encontrado.',
+                  _error ?? 'Produto não encontrado.',
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
               )
@@ -150,7 +150,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 10),
                   Text(
                     product.isAvailable
-                        ? 'DisponÃ­vel para consulta'
+                        ? 'Disponível para consulta'
                         : 'Consulte disponibilidade',
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),

@@ -44,7 +44,7 @@ class _AdminListScreenState extends State<AdminListScreen> {
 
   String get title => switch (widget.type) {
     AdminListType.categories => 'Categorias',
-    AdminListType.services => 'ServiÃ§os',
+    AdminListType.services => 'Serviços',
     AdminListType.appointments => 'Agenda',
     AdminListType.customers => 'Clientes',
     AdminListType.stories => 'Stories',
@@ -210,20 +210,20 @@ class _ItemCard extends StatelessWidget {
     AdminListType.categories => _text(item, 'name'),
     AdminListType.services => _text(item, 'name'),
     AdminListType.appointments =>
-      '${_text(item, 'customerName')} Â· ${_text(item, 'serviceName')}',
+      '${_text(item, 'customerName')} · ${_text(item, 'serviceName')}',
     AdminListType.customers => _text(item, 'fullName'),
     AdminListType.stories => _text(item, 'title'),
   };
   String get subtitle => switch (type) {
     AdminListType.categories => _text(item, 'description'),
     AdminListType.services =>
-      '${_text(item, 'serviceCategoryName')} Â· R\$ ${_text(item, 'price')}',
+      '${_text(item, 'serviceCategoryName')} · R\$ ${_text(item, 'price')}',
     AdminListType.appointments =>
-      '${_date(item['scheduledAt'])} Â· ${_statusLabel(_text(item, 'status'))}',
+      '${_date(item['scheduledAt'])} · ${_statusLabel(_text(item, 'status'))}',
     AdminListType.customers =>
-      '${_text(item, 'email')} Â· ${_text(item, 'phone')}',
+      '${_text(item, 'email')} · ${_text(item, 'phone')}',
     AdminListType.stories =>
-      '${_text(item, 'subtitle')} Â· ordem ${_text(item, 'displayOrder')}',
+      '${_text(item, 'subtitle')} · ordem ${_text(item, 'displayOrder')}',
   };
 
   @override
@@ -383,7 +383,7 @@ class _AdminCategoryFormScreenState extends State<AdminCategoryFormScreen> {
       TextField(
         controller: description,
         maxLines: 3,
-        decoration: const InputDecoration(labelText: 'DescriÃ§Ã£o'),
+        decoration: const InputDecoration(labelText: 'Descrição'),
       ),
       if (widget.id != null)
         SwitchListTile(
@@ -445,7 +445,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
 
   @override
   Widget build(BuildContext context) => _SimpleFormScaffold(
-    title: widget.id == null ? 'Novo serviÃ§o' : 'Editar serviÃ§o',
+    title: widget.id == null ? 'Novo serviço' : 'Editar serviço',
     saving: saving,
     onSave: () async {
       setState(() => saving = true);
@@ -484,19 +484,19 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       TextField(
         controller: description,
         maxLines: 3,
-        decoration: const InputDecoration(labelText: 'DescriÃ§Ã£o'),
+        decoration: const InputDecoration(labelText: 'Descrição'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: price,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'PreÃ§o'),
+        decoration: const InputDecoration(labelText: 'Preço'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: duration,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'DuraÃ§Ã£o em minutos'),
+        decoration: const InputDecoration(labelText: 'Duração em minutos'),
       ),
       const SizedBox(height: 12),
       TextField(
@@ -549,19 +549,19 @@ class _AdminAppointmentDetailScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _Info('Cliente', _text(item, 'customerName')),
-                    _Info('ServiÃ§o', _text(item, 'serviceName')),
-                    _Info('EndereÃ§o', _text(item, 'addressText')),
+                    _Info('Serviço', _text(item, 'serviceName')),
+                    _Info('Endereço', _text(item, 'addressText')),
                     _Info('Data', _date(item['scheduledAt'])),
                     _Info('Status', _statusLabel(_text(item, 'status'))),
                     _Info(
-                      'PreÃ§o',
+                      'Preço',
                       'R\$ ${_text(item, 'servicePriceSnapshot')}',
                     ),
                     _Info(
-                      'DuraÃ§Ã£o',
+                      'Duração',
                       '${_text(item, 'estimatedDurationMinutesSnapshot')} min',
                     ),
-                    _Info('ObservaÃ§Ã£o', _text(item, 'customerNotes')),
+                    _Info('Observação', _text(item, 'customerNotes')),
                   ],
                 ),
               ),
@@ -638,27 +638,27 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
                     _Info('Cadastro', _date(profile['createdAt'])),
                     _Info(
                       'Pontos',
-                      '${_text(loyalty, 'points')} Â· ${_text(loyalty, 'level')}',
+                      '${_text(loyalty, 'points')} · ${_text(loyalty, 'level')}',
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-              const _Section('EndereÃ§os'),
+              const _Section('Endereços'),
               ...addresses.map(
                 (x) => AdminMobileCard(
                   child: Text(
-                    '${_text(x, 'street')}, ${_text(x, 'number')} Â· ${_text(x, 'city')}',
+                    '${_text(x, 'street')}, ${_text(x, 'number')} · ${_text(x, 'city')}',
                     style: const TextStyle(color: AppColors.textPrimary),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const _Section('HistÃ³rico'),
+              const _Section('Histórico'),
               ...appointments.map(
                 (x) => AdminMobileCard(
                   child: Text(
-                    '${_text(x, 'serviceName')} Â· ${_date(x['scheduledAt'])} Â· ${_statusLabel(_text(x, 'status'))}',
+                    '${_text(x, 'serviceName')} · ${_date(x['scheduledAt'])} · ${_statusLabel(_text(x, 'status'))}',
                     style: const TextStyle(color: AppColors.textPrimary),
                   ),
                 ),
@@ -751,17 +751,17 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
     children: [
       TextField(
         controller: title,
-        decoration: const InputDecoration(labelText: 'TÃ­tulo'),
+        decoration: const InputDecoration(labelText: 'Título'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: subtitle,
-        decoration: const InputDecoration(labelText: 'SubtÃ­tulo'),
+        decoration: const InputDecoration(labelText: 'Subtítulo'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: mediaUrl,
-        decoration: const InputDecoration(labelText: 'URL da mÃ­dia'),
+        decoration: const InputDecoration(labelText: 'URL da mídia'),
       ),
       const SizedBox(height: 10),
       if (uploading) const LinearProgressIndicator(color: AppColors.gold),
@@ -782,19 +782,19 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
           OutlinedButton.icon(
             onPressed: () => _pick(ImageSource.camera, video: true),
             icon: const Icon(Icons.videocam),
-            label: const Text('Gravar vÃ­deo'),
+            label: const Text('Gravar vídeo'),
           ),
           OutlinedButton.icon(
             onPressed: () => _pick(ImageSource.gallery, video: true),
             icon: const Icon(Icons.video_library),
-            label: const Text('VÃ­deo'),
+            label: const Text('Vídeo'),
           ),
         ],
       ),
       const SizedBox(height: 12),
       DropdownButtonFormField<String>(
         initialValue: serviceId,
-        decoration: const InputDecoration(labelText: 'ServiÃ§o vinculado'),
+        decoration: const InputDecoration(labelText: 'Serviço vinculado'),
         items: [
           const DropdownMenuItem(value: '', child: Text('Nenhum')),
           ...services
@@ -870,7 +870,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
   @override
   Widget build(BuildContext context) => _SimpleFormScaffold(
-    title: 'ConfiguraÃ§Ãµes',
+    title: 'Configurações',
     saving: saving,
     onSave: () async {
       final messenger = ScaffoldMessenger.of(context);
@@ -882,7 +882,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       if (mounted) {
         setState(() => saving = false);
         messenger.showSnackBar(
-          const SnackBar(content: Text('ConfiguraÃ§Ãµes salvas.')),
+          const SnackBar(content: Text('Configurações salvas.')),
         );
       }
     },
@@ -897,20 +897,20 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       SwitchListTile(
         value: active,
         onChanged: (v) => setState(() => active = v),
-        title: const Text('EstÃºdio ativo'),
+        title: const Text('Estúdio ativo'),
       ),
     ],
   );
 }
 
 const _settingsLabels = {
-  'studioName': 'Nome do estÃºdio',
-  'subtitle': 'SubtÃ­tulo',
+  'studioName': 'Nome do estúdio',
+  'subtitle': 'Subtítulo',
   'slogan': 'Slogan',
   'logoUrl': 'URL da logo',
   'whatsAppNumber': 'WhatsApp',
   'instagramUrl': 'Instagram',
-  'welcomeTitle': 'TÃ­tulo de boas-vindas',
+  'welcomeTitle': 'Título de boas-vindas',
   'welcomeMessage': 'Mensagem de boas-vindas',
   'supportMessage': 'Mensagem de suporte',
 };
@@ -955,7 +955,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
     );
     if (mounted) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('HorÃ¡rios salvos.')),
+        const SnackBar(content: Text('Horários salvos.')),
       );
     }
   }
@@ -977,7 +977,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
         : ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const _Section('HorÃ¡rios semanais'),
+              const _Section('Horários semanais'),
               ...hours.map(
                 (x) => AdminMobileCard(
                   child: Column(
@@ -995,7 +995,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
                               child: TextFormField(
                                 initialValue: _text(x, 'startTime'),
                                 decoration: const InputDecoration(
-                                  labelText: 'InÃ­cio',
+                                  labelText: 'Início',
                                 ),
                                 onChanged: (v) => x['startTime'] = v,
                               ),
@@ -1030,7 +1030,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
               ),
               FilledButton(
                 onPressed: _saveHours,
-                child: const Text('Salvar horÃ¡rios'),
+                child: const Text('Salvar horários'),
               ),
               const SizedBox(height: 18),
               const _Section('Datas bloqueadas'),
@@ -1046,7 +1046,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          '${_text(x, 'date')} Â· ${_text(x, 'reason')}',
+                          '${_text(x, 'date')} · ${_text(x, 'reason')}',
                           style: const TextStyle(color: AppColors.textPrimary),
                         ),
                       ),
@@ -1139,7 +1139,7 @@ class _AdminBlockedDateFormScreenState
             Expanded(
               child: TextField(
                 controller: start,
-                decoration: const InputDecoration(labelText: 'InÃ­cio'),
+                decoration: const InputDecoration(labelText: 'Início'),
               ),
             ),
             const SizedBox(width: 8),
@@ -1560,14 +1560,14 @@ String _statusLabel(String status) =>
       'Rescheduled': 'Remarcado',
       'OnTheWay': 'A caminho',
       'InProgress': 'Em atendimento',
-      'Completed': 'ConcluÃ­do',
-      'NoShow': 'NÃ£o compareceu',
+      'Completed': 'Concluído',
+      'NoShow': 'Não compareceu',
     }[status] ??
     status;
 List<(String, String, String)> _statusActions(String status) =>
     switch (status) {
       'Pending' => [
-        ('Confirmed', 'Confirmar', 'HorÃ¡rio confirmado pelo administrador.'),
+        ('Confirmed', 'Confirmar', 'Horário confirmado pelo administrador.'),
         (
           'WaitingPayment',
           'Solicitar sinal',
@@ -1593,8 +1593,8 @@ List<(String, String, String)> _statusActions(String status) =>
         ),
         (
           'NoShow',
-          'NÃ£o compareceu',
-          'NÃ£o comparecimento registrado pelo administrador.',
+          'Não compareceu',
+          'Não comparecimento registrado pelo administrador.',
         ),
         ('Canceled', 'Cancelar', 'Agendamento cancelado pelo administrador.'),
       ],
@@ -1607,7 +1607,7 @@ List<(String, String, String)> _statusActions(String status) =>
         ('Canceled', 'Cancelar', 'Agendamento cancelado pelo administrador.'),
       ],
       'InProgress' => [
-        ('Completed', 'Concluir', 'Atendimento concluÃ­do pelo administrador.'),
+        ('Completed', 'Concluir', 'Atendimento concluído pelo administrador.'),
       ],
       _ => [],
     };

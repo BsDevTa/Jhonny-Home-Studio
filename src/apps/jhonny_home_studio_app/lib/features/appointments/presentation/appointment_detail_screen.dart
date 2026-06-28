@@ -82,7 +82,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       }
       setState(() {
         _errorMessage =
-            'NÃ£o foi possÃ­vel carregar os detalhes do agendamento.';
+            'Não foi possível carregar os detalhes do agendamento.';
       });
     } finally {
       if (mounted) {
@@ -108,7 +108,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('NÃ£o'),
+              child: const Text('Não'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
@@ -193,7 +193,7 @@ Pode me orientar sobre a confirmação?''',
     });
 
     if (!opened) {
-      _showMessage('NÃ£o foi possÃ­vel abrir o WhatsApp agora.');
+      _showMessage('Não foi possível abrir o WhatsApp agora.');
     }
   }
 
@@ -231,7 +231,7 @@ Pode me orientar sobre a confirmação?''',
               : _errorMessage != null
               ? _ErrorCard(message: _errorMessage!, onRetry: _loadDetail)
               : appointment == null
-              ? const _ErrorCard(message: 'Agendamento nÃ£o encontrado.')
+              ? const _ErrorCard(message: 'Agendamento não encontrado.')
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Center(
@@ -285,7 +285,7 @@ Pode me orientar sobre a confirmação?''',
                           ),
                           const SizedBox(height: 16),
                           _DetailRow(
-                            label: 'ServiÃ§o',
+                            label: 'Serviço',
                             value: appointment.serviceName,
                           ),
                           _DetailRow(
@@ -293,7 +293,7 @@ Pode me orientar sobre a confirmação?''',
                             value: appointmentStatusLabel(appointment.status),
                           ),
                           _DetailRow(
-                            label: 'Data e horÃ¡rio',
+                            label: 'Data e horário',
                             value: appointment.scheduledAt == null
                                 ? 'Não informado'
                                 : _dateFormat.format(
@@ -301,24 +301,24 @@ Pode me orientar sobre a confirmação?''',
                                   ),
                           ),
                           _DetailRow(
-                            label: 'PreÃ§o',
+                            label: 'Preço',
                             value: _currencyFormat.format(
                               appointment.servicePriceSnapshot,
                             ),
                           ),
                           _DetailRow(
-                            label: 'DuraÃ§Ã£o',
+                            label: 'Duração',
                             value:
                                 '${appointment.estimatedDurationMinutesSnapshot} min',
                           ),
                           _DetailRow(
-                            label: 'EndereÃ§o',
+                            label: 'Endereço',
                             value: appointment.addressText,
                           ),
                           _DetailRow(
-                            label: 'ObservaÃ§Ãµes',
+                            label: 'Observações',
                             value: appointment.customerNotes.trim().isEmpty
-                                ? 'Sem observaÃ§Ãµes'
+                                ? 'Sem observações'
                                 : appointment.customerNotes,
                           ),
                           const SizedBox(height: 18),
@@ -436,7 +436,7 @@ class _ErrorCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: PremiumEmptyState(
           icon: Icons.error_outline,
-          title: 'NÃ£o foi possÃ­vel carregar',
+          title: 'Não foi possível carregar',
           message: message,
           actionLabel: onRetry == null ? null : 'Tentar novamente',
           onAction: onRetry,

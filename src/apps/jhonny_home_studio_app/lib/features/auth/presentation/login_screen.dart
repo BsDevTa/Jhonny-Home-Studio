@@ -134,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         const Text(
-                                          'Entre para continuar sua experiÃªncia premium.',
+                                          'Entre para continuar sua experiência premium.',
                                           style: TextStyle(
                                             color: AppColors.textSecondary,
                                           ),

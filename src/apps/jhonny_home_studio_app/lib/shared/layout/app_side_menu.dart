@@ -28,13 +28,13 @@ class AppSideMenu extends StatelessWidget {
             const SizedBox(height: 20),
             _SideIconButton(
               icon: Icons.home_rounded,
-              label: 'Início',
+              label: 'In\u00edcio',
               active: currentPath == AppRoutes.home,
               onTap: () => context.go(AppRoutes.home),
             ),
             _SideIconButton(
               icon: Icons.spa_rounded,
-              label: 'Serviços',
+              label: 'Servi\u00e7os',
               active: currentPath.startsWith('/services'),
               onTap: () => context.go(AppRoutes.services),
             ),
@@ -56,16 +56,8 @@ class AppSideMenu extends StatelessWidget {
             _SideIconButton(
               icon: Icons.settings_rounded,
               label: 'Config',
-              active: false,
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Configurações serão implementadas em breve.',
-                    ),
-                  ),
-                );
-              },
+              active: currentPath == AppRoutes.clientSettings,
+              onTap: () => context.go(AppRoutes.clientSettings),
             ),
             const SizedBox(height: 10),
           ],

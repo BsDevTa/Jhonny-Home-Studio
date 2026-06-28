@@ -102,7 +102,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.location_on_outlined,
-                    title: 'Meus endereÃ§os',
+                    title: 'Meus endere\u00e7os',
                     selected: currentPath.startsWith('/addresses'),
                     onTap: () {
                       context.pop();
@@ -120,7 +120,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.spa_outlined,
-                    title: 'ServiÃ§os',
+                    title: 'Servi\u00e7os',
                     selected: currentPath.startsWith('/services'),
                     onTap: () {
                       context.pop();
@@ -147,7 +147,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _DrawerItem(
                     icon: Icons.loyalty_outlined,
-                    title: 'CartÃ£o fidelidade',
+                    title: 'Cart\u00e3o fidelidade',
                     selected: currentPath == AppRoutes.loyalty,
                     onTap: () {
                       context.pop();
@@ -175,16 +175,11 @@ class AppDrawer extends StatelessWidget {
                     ),
                   _DrawerItem(
                     icon: Icons.settings_outlined,
-                    title: 'ConfiguraÃ§Ãµes',
+                    title: 'Configura\u00e7\u00f5es',
+                    selected: currentPath == AppRoutes.clientSettings,
                     onTap: () {
                       context.pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'ConfiguraÃ§Ãµes serÃ£o implementadas em breve.',
-                          ),
-                        ),
-                      );
+                      context.go(AppRoutes.clientSettings);
                     },
                   ),
                   _DrawerItem(
@@ -210,13 +205,13 @@ class AppDrawer extends StatelessWidget {
                       final opened = await openWhatsApp(
                         phoneNumber: settings.whatsAppNumber,
                         message:
-                            'Olá, preciso de ajuda com meu atendimento no ${settings.studioName}.',
+                            'Ol\u00e1, preciso de ajuda com meu atendimento no ${settings.studioName}.',
                       );
                       if (!opened) {
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text(
-                              'NÃ£o foi possÃ­vel abrir o WhatsApp agora.',
+                              'N\u00e3o foi poss\u00edvel abrir o WhatsApp agora.',
                             ),
                           ),
                         );

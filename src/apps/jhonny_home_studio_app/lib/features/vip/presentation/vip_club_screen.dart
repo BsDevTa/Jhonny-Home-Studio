@@ -42,7 +42,7 @@ class _VipClubScreenState extends State<VipClubScreen> {
     });
 
     if (!opened) {
-      _showMessage('NÃ£o foi possÃ­vel abrir o WhatsApp agora.');
+      _showMessage('Não foi possível abrir o WhatsApp agora.');
     }
   }
 
@@ -57,7 +57,7 @@ class _VipClubScreenState extends State<VipClubScreen> {
     return Scaffold(
       body: _PremiumPage(
         title: 'Clube VIP',
-        subtitle: 'BenefÃ­cios exclusivos para clientes especiais.',
+        subtitle: 'Benefícios exclusivos para clientes especiais.',
         children: [
           const _IntroCard(),
           const SizedBox(height: 16),
@@ -90,7 +90,7 @@ class _IntroCard extends StatelessWidget {
           Icon(Icons.diamond_outlined, color: AppColors.gold, size: 20),
           SizedBox(height: 10),
           Text(
-            'Uma experiÃªncia alÃ©m do atendimento',
+            'Uma experiência além do atendimento',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 16,
@@ -274,15 +274,15 @@ class _VipPlan {
 const _plans = [
   _VipPlan(
     name: 'VIP Essential',
-    description: 'Uma entrada elegante para benefÃ­cios exclusivos.',
-    benefits: ['Acesso antecipado a novidades', 'ExperiÃªncia personalizada'],
+    description: 'Uma entrada elegante para benefícios exclusivos.',
+    benefits: ['Acesso antecipado a novidades', 'Experiência personalizada'],
   ),
   _VipPlan(
     name: 'VIP Gold',
     description: 'Mais prioridade para uma rotina beauty sem pressa.',
     benefits: [
-      'Atendimento prioritÃ¡rio',
-      'BenefÃ­cios em serviÃ§os premium',
+      'Atendimento prioritário',
+      'Benefícios em serviços premium',
       'Brindes exclusivos',
     ],
     highlighted: true,
@@ -291,10 +291,10 @@ const _plans = [
     name: 'VIP Diamond',
     description: 'O cuidado mais completo para clientes especiais.',
     benefits: [
-      'HorÃ¡rios especiais',
-      'Atendimento prioritÃ¡rio',
-      'Acesso antecipado Ã  agenda',
-      'ExperiÃªncia personalizada',
+      'Horários especiais',
+      'Atendimento prioritário',
+      'Acesso antecipado à agenda',
+      'Experiência personalizada',
     ],
   ),
 ];

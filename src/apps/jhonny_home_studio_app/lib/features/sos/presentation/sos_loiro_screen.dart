@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -48,7 +48,7 @@ class _SosLoiroScreenState extends State<SosLoiroScreen> {
         }
       }
     } catch (_) {
-      // A tela continua Ãºtil mesmo quando o catÃ¡logo estÃ¡ indisponÃ­vel.
+      // A tela continua útil mesmo quando o catálogo está indisponível.
     }
   }
 
@@ -83,7 +83,7 @@ Quero saber disponibilidade para mechas ou correção premium.''',
     });
 
     if (!opened) {
-      _showMessage('NÃ£o foi possÃ­vel abrir o WhatsApp agora.');
+      _showMessage('Não foi possível abrir o WhatsApp agora.');
     }
   }
 
@@ -134,7 +134,7 @@ Quero saber disponibilidade para mechas ou correção premium.''',
                     ),
                     const SizedBox(height: 5),
                     const Text(
-                      'Johnny Help para mechas, correÃ§Ãµes e eventos.',
+                      'Johnny Help para mechas, correções e eventos.',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
@@ -162,7 +162,7 @@ Quero saber disponibilidade para mechas ou correção premium.''',
                           ),
                           SizedBox(height: 6),
                           Text(
-                            'CorreÃ§Ã£o urgente, casamento, evento ou emergÃªncia estÃ©tica? Conte com um atendimento expresso para transformar seu visual.',
+                            'Correção urgente, casamento, evento ou emergência estética? Conte com um atendimento expresso para transformar seu visual.',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 13,
@@ -219,7 +219,7 @@ Quero saber disponibilidade para mechas ou correção premium.''',
                     OutlinedButton.icon(
                       onPressed: _openMechasService,
                       icon: const Icon(Icons.spa_outlined, size: 17),
-                      label: const Text('Ver serviÃ§o de Mechas'),
+                      label: const Text('Ver serviço de Mechas'),
                     ),
                     const SizedBox(height: 6),
                     TextButton.icon(
@@ -257,7 +257,7 @@ class _PortfolioPlaceholder extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'PortfÃ³lio de Mechas',
+              'Portfólio de Mechas',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 15,
@@ -266,7 +266,7 @@ class _PortfolioPlaceholder extends StatelessWidget {
             ),
             SizedBox(height: 6),
             Text(
-              'Em breve, uma seleÃ§Ã£o de transformaÃ§Ãµes para inspirar seu prÃ³ximo visual.',
+              'Em breve, uma seleção de transformações para inspirar seu próximo visual.',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
@@ -281,9 +281,9 @@ class _PortfolioPlaceholder extends StatelessWidget {
 }
 
 const _reasons = [
-  'CorreÃ§Ã£o urgente',
+  'Correção urgente',
   'Evento',
   'Casamento',
-  'EmergÃªncia estÃ©tica',
+  'Emergência estética',
   'Quero fazer mechas',
 ];

@@ -146,7 +146,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         const Text(
-                                          'Crie sua conta e comece com uma experiÃªncia exclusiva.',
+                                          'Crie sua conta e comece com uma experiência exclusiva.',
                                           style: TextStyle(
                                             color: AppColors.textSecondary,
                                           ),
