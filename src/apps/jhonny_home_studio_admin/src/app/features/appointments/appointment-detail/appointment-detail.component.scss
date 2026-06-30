@@ -5,7 +5,8 @@
 }
 
 .detail-card,
-.status-card {
+.status-card,
+.history-card {
   padding: 20px;
 }
 
@@ -65,6 +66,14 @@ dd {
   align-self: start;
 }
 
+.history-card {
+  grid-column: 1 / -1;
+}
+
+.history-card dl {
+  margin-top: 14px;
+}
+
 .status-card .field + .field {
   margin-top: 13px;
 }
@@ -95,6 +104,27 @@ dd {
 .status-card .primary-button {
   width: 100%;
   margin-top: 16px;
+}
+
+.status-toast {
+  position: sticky;
+  z-index: 2;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 14px auto;
+  padding: 10px 12px;
+  border: 1px solid rgb(214 163 84 / 28%);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 22%);
+}
+
+.status-toast span {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 @media (max-width: 920px) {

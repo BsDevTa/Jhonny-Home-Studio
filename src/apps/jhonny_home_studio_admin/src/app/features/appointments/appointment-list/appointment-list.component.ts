@@ -4,11 +4,14 @@ import { RouterLink } from '@angular/router';
 
 import {
   AppointmentListModel,
+  AppointmentModel,
   appointmentStatusOptions,
   AppointmentStatusAction,
   getAppointmentStatusActions
 } from '../../../core/models/appointment.model';
 import { AppointmentService } from '../../../core/services/appointment.service';
+import { SettingsService } from '../../../core/services/settings.service';
+import { WhatsAppService } from '../../../core/services/whatsapp.service';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
 import { AppointmentStatusBadgeComponent } from '../widgets/appointment-status-badge/appointment-status-badge.component';
@@ -35,6 +38,8 @@ export class AppointmentListComponent implements OnInit {
   readonly loading = signal(true);
   readonly actionLoadingId = signal('');
   readonly error = signal('');
+  readonly successMessage = signal('');
+  readonly pendingWhatsAppAppointment = signal<AppointmentModel | null>(null);
   readonly filteredAppointments = computed(() => {
     const status = this.selectedStatus();
     return status
@@ -42,7 +47,11 @@ export class AppointmentListComponent implements OnInit {
       : this.appointments();
   });
 
-  constructor(private readonly appointmentService: AppointmentService) {}
+  constructor(
+    private readonly appointmentService: AppointmentService,
+    private readonly settingsService: SettingsService,
+    private readonly whatsAppService: WhatsAppService
+  ) {}
 
   ngOnInit(): void {
     this.load();
@@ -82,10 +91,13 @@ export class AppointmentListComponent implements OnInit {
   updateStatus(appointment: AppointmentListModel, status: string, note: string): void {
     this.actionLoadingId.set(appointment.id);
     this.error.set('');
+    this.successMessage.set('');
 
     this.appointmentService.updateStatus(appointment.id, status, note).subscribe({
-      next: () => {
+      next: (updatedAppointment) => {
         this.actionLoadingId.set('');
+        this.successMessage.set('Status atualizado com sucesso.');
+        this.pendingWhatsAppAppointment.set(updatedAppointment);
         this.load();
       },
       error: (error: Error) => {
@@ -97,5 +109,44 @@ export class AppointmentListComponent implements OnInit {
 
   actionsFor(status: string): AppointmentStatusAction[] {
     return getAppointmentStatusActions(status);
+  }
+
+  sendWhatsApp(): void {
+    const appointment = this.pendingWhatsAppAppointment();
+    if (!appointment) {
+      return;
+    }
+
+    this.settingsService.getSettings().subscribe({
+      next: (settings) => {
+        if (!this.whatsAppService.hasConfiguredWhatsAppNumber(settings.whatsAppNumber)) {
+          this.error.set('Configure o WhatsApp do estúdio em Configurações.');
+          return;
+        }
+
+        const opened = this.whatsAppService.sendAppointmentStatus({
+          customerName: appointment.customerName,
+          customerPhone: appointment.customerPhone,
+          serviceName: appointment.serviceName,
+          scheduledAt: appointment.scheduledAt,
+          servicePrice: appointment.servicePriceSnapshot,
+          status: appointment.status
+        });
+
+        if (!opened) {
+          this.error.set('Telefone do cliente não informado ou inválido.');
+          return;
+        }
+
+        this.pendingWhatsAppAppointment.set(null);
+        this.successMessage.set('');
+      },
+      error: (error: Error) => this.error.set(error.message)
+    });
+  }
+
+  dismissSuccess(): void {
+    this.pendingWhatsAppAppointment.set(null);
+    this.successMessage.set('');
   }
 }

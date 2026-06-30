@@ -28,6 +28,14 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
+  @if (successMessage()) {
+    <div class="status-toast surface" role="status" aria-live="polite">
+      <span>{{ successMessage() }}</span>
+      <button type="button" class="primary-button compact-button" (click)="sendWhatsApp()">Enviar WhatsApp</button>
+      <button type="button" class="secondary-button compact-button" (click)="dismissSuccess()">Fechar</button>
+    </div>
+  }
+
   @if (loading()) {
     <app-loading />
   } @else if (!filteredAppointments().length) {

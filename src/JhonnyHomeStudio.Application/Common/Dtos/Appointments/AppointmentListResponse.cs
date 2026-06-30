@@ -4,6 +4,7 @@ public sealed class AppointmentListResponse
 {
     public Guid Id { get; set; }
     public string CustomerName { get; set; } = string.Empty;
+    public string? CustomerPhone { get; set; }
     public string ServiceName { get; set; } = string.Empty;
     public DateTime ScheduledAt { get; set; }
     public string Status { get; set; } = string.Empty;

@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'dart:typed_data';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/services/whatsapp_service.dart';
+import '../../../core/utils/appointment_status_helper.dart';
 import '../../auth/presentation/auth_provider.dart';
+import '../../settings/presentation/app_settings_provider.dart';
 import '../data/admin_mobile_api.dart';
 
 AdminMobileApi _api(BuildContext context) =>
@@ -141,7 +147,10 @@ class _AdminListScreenState extends State<AdminListScreen> {
                 items: [
                   const DropdownMenuItem(value: '', child: Text('Todos')),
                   ..._statuses.map(
-                    (x) => DropdownMenuItem(value: x, child: Text(x)),
+                    (x) => DropdownMenuItem(
+                      value: x,
+                      child: Text(_statusLabel(x)),
+                    ),
                   ),
                 ],
                 onChanged: (value) => setState(() => status = value ?? ''),
@@ -525,6 +534,9 @@ class _AdminAppointmentDetailScreenState
     extends State<AdminAppointmentDetailScreen> {
   Map<String, dynamic> item = {};
   bool loading = true;
+  bool sendingWhatsApp = false;
+  String lastWhatsAppStatus = '';
+
   @override
   void initState() {
     super.initState();
@@ -532,8 +544,61 @@ class _AdminAppointmentDetailScreenState
   }
 
   Future<void> _load() async {
+    if (mounted) setState(() => loading = true);
     item = await _api(context).getAppointment(widget.id);
     if (mounted) setState(() => loading = false);
+  }
+
+  Future<void> _sendWhatsApp({String? statusOverride}) async {
+    if (sendingWhatsApp) {
+      return;
+    }
+
+    setState(() => sendingWhatsApp = true);
+    final settings = context.read<AppSettingsProvider>().settings;
+    final statusToSend = statusOverride ?? _text(item, 'status');
+    final result = await WhatsAppService().sendAppointmentStatus(
+      studioWhatsAppNumber: settings.whatsAppNumber,
+      customerName: _text(item, 'customerName'),
+      customerPhone: _text(item, 'customerPhone'),
+      serviceName: _text(item, 'serviceName'),
+      scheduledAt: DateTime.tryParse(_text(item, 'scheduledAt')),
+      servicePrice: num.tryParse(_text(item, 'servicePriceSnapshot')) ?? 0,
+      status: statusToSend,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      sendingWhatsApp = false;
+      if (result.success) {
+        lastWhatsAppStatus = statusToSend;
+      }
+    });
+
+    if (!result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.errorMessage ?? 'Não foi possível abrir o WhatsApp agora.',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showStatusUpdatedSnackBar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Status atualizado com sucesso.'),
+        action: SnackBarAction(
+          label: 'Enviar WhatsApp',
+          onPressed: () => _sendWhatsApp(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -553,6 +618,13 @@ class _AdminAppointmentDetailScreenState
                     _Info('Endereço', _text(item, 'addressText')),
                     _Info('Data', _date(item['scheduledAt'])),
                     _Info('Status', _statusLabel(_text(item, 'status'))),
+                    _Info('Última atualização', _date(item['updatedAt'])),
+                    _Info(
+                      'Último status enviado via WhatsApp',
+                      lastWhatsAppStatus.isEmpty
+                          ? '-'
+                          : _statusLabel(lastWhatsAppStatus),
+                    ),
                     _Info(
                       'Preço',
                       'R\$ ${_text(item, 'servicePriceSnapshot')}',
@@ -577,11 +649,25 @@ class _AdminAppointmentDetailScreenState
                         action.$3,
                       );
                       await _load();
+                      if (!mounted) return;
+                      _showStatusUpdatedSnackBar();
                     },
                     child: Text(action.$2),
                   ),
                 ),
               ),
+              if (lastWhatsAppStatus.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: sendingWhatsApp
+                      ? null
+                      : () => _sendWhatsApp(statusOverride: lastWhatsAppStatus),
+                  icon: const Icon(Icons.send_outlined, size: 18),
+                  label: Text(
+                    sendingWhatsApp ? 'Abrindo...' : 'Reenviar WhatsApp',
+                  ),
+                ),
+              ],
             ],
           ),
   );
@@ -683,6 +769,9 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
   List<Map<String, dynamic>> services = [];
   String serviceId = '';
   bool active = true, saving = false, uploading = false;
+  Uint8List? mediaPreviewBytes;
+  String mediaPreviewName = '';
+  bool mediaPreviewIsVideo = false;
   @override
   void initState() {
     super.initState();
@@ -714,12 +803,23 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         : await picker.pickImage(source: source);
     if (file == null) return;
     setState(() => uploading = true);
-    final result = await api.uploadStoryMedia(file.path);
-    if (mounted) {
+    try {
+      final bytes = await file.readAsBytes();
+      final result = await api.uploadStoryMedia(bytes, fileName: file.name);
+      if (!mounted) return;
       setState(() {
         mediaUrl.text = _text(result, 'mediaUrl');
-        uploading = false;
+        mediaPreviewBytes = bytes;
+        mediaPreviewName = file.name;
+        mediaPreviewIsVideo = video;
       });
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage(_readApiError(error));
+    } finally {
+      if (mounted) {
+        setState(() => uploading = false);
+      }
     }
   }
 
@@ -738,15 +838,24 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
     saving: saving,
     onSave: () async {
       setState(() => saving = true);
-      await _api(context).saveStory(widget.id, {
-        'title': title.text,
-        'subtitle': subtitle.text,
-        'imageUrl': mediaUrl.text,
-        'serviceId': serviceId.isEmpty ? null : serviceId,
-        'displayOrder': int.tryParse(order.text) ?? 0,
-        'isActive': active,
-      });
-      if (mounted) this.context.pop();
+      try {
+        await _api(context).saveStory(widget.id, {
+          'title': title.text,
+          'subtitle': subtitle.text,
+          'imageUrl': mediaUrl.text,
+          'serviceId': serviceId.isEmpty ? null : serviceId,
+          'displayOrder': int.tryParse(order.text) ?? 0,
+          'isActive': active,
+        });
+        if (mounted) this.context.pop();
+      } catch (error) {
+        if (!mounted) return;
+        _showMessage(_readSaveError(error));
+      } finally {
+        if (mounted) {
+          setState(() => saving = false);
+        }
+      }
     },
     children: [
       TextField(
@@ -765,6 +874,47 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
       ),
       const SizedBox(height: 10),
       if (uploading) const LinearProgressIndicator(color: AppColors.gold),
+      if (mediaPreviewBytes != null) ...[
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceElevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.gold.withValues(alpha: 0.25)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: mediaPreviewIsVideo
+                ? Row(
+                    children: [
+                      const Icon(Icons.videocam, color: AppColors.gold),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          mediaPreviewName.isEmpty
+                              ? 'Vídeo selecionado'
+                              : mediaPreviewName,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      mediaPreviewBytes!,
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+          ),
+        ),
+      ],
       Wrap(
         spacing: 8,
         runSpacing: 8,
@@ -821,6 +971,60 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
       ),
     ],
   );
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _readSaveError(Object error) {
+    final apiError = _apiException(error);
+    final message = _readApiError(
+      error,
+      fallback: 'Nao foi possivel salvar o story. Tente novamente.',
+    );
+    final normalized = message.toLowerCase();
+
+    if (normalized.contains('titulo') || normalized.contains('title')) {
+      return 'Informe um título para o story.';
+    }
+
+    if (apiError?.statusCode == 400) {
+      return message;
+    }
+
+    return message;
+  }
+
+  String _readApiError(
+    Object error, {
+    String fallback = 'Nao foi possivel concluir a operacao.',
+  }) {
+    final apiError = _apiException(error);
+    if (apiError?.statusCode == 401) {
+      return 'Sessao expirada. Faca login novamente.';
+    }
+    if (apiError != null) {
+      if (apiError.errors.isNotEmpty) {
+        return apiError.errors.join(' ');
+      }
+      if (apiError.message.isNotEmpty) {
+        return apiError.message;
+      }
+    }
+    return fallback;
+  }
+
+  ApiException? _apiException(Object error) {
+    if (error is ApiException) {
+      return error;
+    }
+    if (error is DioException && error.error is ApiException) {
+      return error.error! as ApiException;
+    }
+    return null;
+  }
 }
 
 class AdminSettingsScreen extends StatefulWidget {
@@ -954,9 +1158,7 @@ class _AdminAvailabilityScreenState extends State<AdminAvailabilityScreen> {
           .toList(),
     );
     if (mounted) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Horários salvos.')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('Horários salvos.')));
     }
   }
 
@@ -1550,20 +1752,7 @@ const _statuses = [
   'Completed',
   'NoShow',
 ];
-String _statusLabel(String status) =>
-    const {
-      'Pending': 'Pendente',
-      'WaitingPayment': 'Aguardando sinal',
-      'Confirmed': 'Confirmado',
-      'Rejected': 'Recusado',
-      'Canceled': 'Cancelado',
-      'Rescheduled': 'Remarcado',
-      'OnTheWay': 'A caminho',
-      'InProgress': 'Em atendimento',
-      'Completed': 'Concluído',
-      'NoShow': 'Não compareceu',
-    }[status] ??
-    status;
+String _statusLabel(String status) => appointmentStatusLabel(status);
 List<(String, String, String)> _statusActions(String status) =>
     switch (status) {
       'Pending' => [

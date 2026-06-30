@@ -11,6 +11,13 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
+  @if (successMessage()) {
+    <div class="status-toast surface" role="status" aria-live="polite">
+      <span>{{ successMessage() }}</span>
+      <button type="button" class="primary-button compact-button" (click)="sendWhatsApp()">Enviar WhatsApp</button>
+    </div>
+  }
+
   @if (loading()) {
     <app-loading />
   } @else if (appointment(); as item) {
@@ -76,6 +83,24 @@
         <button type="button" class="primary-button" [disabled]="saving()" (click)="updateStatus()">
           {{ saving() ? 'Salvando...' : 'Salvar status' }}
         </button>
+      </section>
+
+      <section class="history-card surface">
+        <h2>Histórico</h2>
+        <dl>
+          <div>
+            <dt>Última atualização</dt>
+            <dd>{{ item.updatedAt ? (item.updatedAt | date: 'dd/MM/yyyy HH:mm') : '-' }}</dd>
+          </div>
+          <div>
+            <dt>Último status enviado via WhatsApp</dt>
+            <dd>{{ lastWhatsAppStatusLabel() }}</dd>
+          </div>
+        </dl>
+
+        @if (lastWhatsAppStatus()) {
+          <button type="button" class="secondary-button compact-button" (click)="resendWhatsApp()">Reenviar WhatsApp</button>
+        }
       </section>
     </div>
   }

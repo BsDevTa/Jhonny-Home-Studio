@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 
@@ -77,10 +78,18 @@ class ApiClient {
 
   Future<Map<String, dynamic>> postMultipart(
     String path, {
-    required String filePath,
+    String? filePath,
+    Uint8List? bytes,
+    String fileName = 'upload.bin',
   }) async {
+    if (filePath == null && bytes == null) {
+      throw ArgumentError('Informe filePath ou bytes para o upload.');
+    }
+
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath),
+      'file': bytes != null
+          ? MultipartFile.fromBytes(bytes, filename: fileName)
+          : await MultipartFile.fromFile(filePath!),
     });
     final response = await _dio.post(path, data: formData);
     return _normalizeResponse(response);

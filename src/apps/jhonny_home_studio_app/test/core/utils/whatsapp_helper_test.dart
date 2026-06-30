@@ -35,6 +35,6 @@ void main() {
     expect(needsWhatsAppConfirmation('Pending'), isTrue);
     expect(needsWhatsAppConfirmation('WaitingPayment'), isTrue);
     expect(needsWhatsAppConfirmation('Confirmed'), isFalse);
-    expect(appointmentStatusLabel('WaitingPayment'), 'Aguardando sinal');
+    expect(appointmentStatusLabel('WaitingPayment'), 'Aguardando pagamento');
   });
 }

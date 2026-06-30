@@ -1,11 +1,11 @@
 String appointmentStatusLabel(String status) {
   return switch (status.trim().toLowerCase()) {
     'pending' => 'Pendente',
-    'waitingpayment' => 'Aguardando sinal',
+    'waitingpayment' => 'Aguardando pagamento',
     'confirmed' => 'Confirmado',
     'rejected' => 'Recusado',
     'canceled' => 'Cancelado',
-    'rescheduled' => 'Remarcado',
+    'rescheduled' => 'Reagendado',
     'ontheway' => 'A caminho',
     'inprogress' => 'Em atendimento',
     'completed' => 'Concluído',

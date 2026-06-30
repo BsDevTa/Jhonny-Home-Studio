@@ -5,6 +5,7 @@ public sealed class AppointmentResponse
     public Guid Id { get; set; }
     public Guid CustomerId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
+    public string? CustomerPhone { get; set; }
     public Guid ServiceId { get; set; }
     public string ServiceName { get; set; } = string.Empty;
     public Guid AddressId { get; set; }

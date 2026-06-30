@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../../core/network/api_client.dart';
 
 class AdminMobileApi {
@@ -71,10 +73,14 @@ class AdminMobileApi {
   Future<void> toggleStory(String id) =>
       _patch('/admin/stories/$id/toggle-active');
   Future<void> deleteStory(String id) => _delete('/admin/stories/$id');
-  Future<Map<String, dynamic>> uploadStoryMedia(String filePath) async {
+  Future<Map<String, dynamic>> uploadStoryMedia(
+    Uint8List bytes, {
+    required String fileName,
+  }) async {
     final response = await _api.postMultipart(
       '/admin/stories/upload-media',
-      filePath: filePath,
+      bytes: bytes,
+      fileName: fileName,
     );
     return _asMap(response['data']);
   }

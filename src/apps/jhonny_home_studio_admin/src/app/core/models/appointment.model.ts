@@ -1,6 +1,7 @@
 export interface AppointmentListModel {
   id: string;
   customerName: string;
+  customerPhone?: string | null;
   serviceName: string;
   scheduledAt: string;
   status: string;
@@ -12,6 +13,7 @@ export interface AppointmentModel {
   id: string;
   customerId: string;
   customerName: string;
+  customerPhone?: string | null;
   serviceId: string;
   serviceName: string;
   addressId: string;
@@ -39,11 +41,11 @@ export interface AppointmentStatusAction {
 
 export const appointmentStatusOptions = [
   { value: 'Pending', label: 'Pendente', tone: 'warning' },
-  { value: 'WaitingPayment', label: 'Aguardando sinal', tone: 'warning' },
+  { value: 'WaitingPayment', label: 'Aguardando pagamento', tone: 'warning' },
   { value: 'Confirmed', label: 'Confirmado', tone: 'success' },
   { value: 'Rejected', label: 'Recusado', tone: 'danger' },
   { value: 'Canceled', label: 'Cancelado', tone: 'danger' },
-  { value: 'Rescheduled', label: 'Remarcado', tone: 'neutral' },
+  { value: 'Rescheduled', label: 'Reagendado', tone: 'neutral' },
   { value: 'OnTheWay', label: 'A caminho', tone: 'accent' },
   { value: 'InProgress', label: 'Em atendimento', tone: 'accent' },
   { value: 'Completed', label: 'Concluído', tone: 'success' },

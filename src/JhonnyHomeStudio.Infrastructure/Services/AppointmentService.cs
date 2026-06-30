@@ -90,6 +90,7 @@ public sealed class AppointmentService : IAppointmentService
             {
                 Id = x.Id,
                 CustomerName = x.Customer.User.FullName,
+                CustomerPhone = x.Customer.User.Phone,
                 ServiceName = x.Service.Name,
                 ScheduledAt = x.ScheduledAtUtc,
                 Status = x.Status.ToString(),
@@ -176,6 +177,7 @@ public sealed class AppointmentService : IAppointmentService
             {
                 Id = x.Id,
                 CustomerName = x.Customer.User.FullName,
+                CustomerPhone = x.Customer.User.Phone,
                 ServiceName = x.Service.Name,
                 ScheduledAt = x.ScheduledAtUtc,
                 Status = x.Status.ToString(),
@@ -540,6 +542,7 @@ public sealed class AppointmentService : IAppointmentService
             Id = x.Id,
             CustomerId = x.CustomerId,
             CustomerName = x.Customer.User.FullName,
+            CustomerPhone = x.Customer.User.Phone,
             ServiceId = x.ServiceId,
             ServiceName = x.Service.Name,
             AddressId = x.AddressId,

@@ -103,6 +103,27 @@ p {
   font-size: 12px;
 }
 
+.status-toast {
+  position: sticky;
+  z-index: 2;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 14px auto;
+  padding: 10px 12px;
+  border: 1px solid rgb(214 163 84 / 28%);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 22%);
+}
+
+.status-toast span {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
 @media (max-width: 680px) {
   .filters {
     grid-template-columns: 1fr;
