@@ -21,11 +21,11 @@ export class AppointmentService {
       parameters.set('customerId', customerId);
     }
     const query = parameters.size ? `?${parameters.toString()}` : '';
-    return this.api.get<AppointmentListModel[]>(`/admin/appointments${query}`);
+    return this.api.get<AppointmentListModel[]>(`/api/admin/appointments${query}`);
   }
 
   getById(id: string): Observable<AppointmentModel> {
-    return this.api.get<AppointmentModel>(`/admin/appointments/${id}`);
+    return this.api.get<AppointmentModel>(`/api/admin/appointments/${id}`);
   }
 
   updateStatus(
@@ -37,6 +37,6 @@ export class AppointmentService {
       status,
       note: note?.trim() || null
     };
-    return this.api.patch<AppointmentModel>(`/admin/appointments/${id}/status`, request);
+    return this.api.patch<AppointmentModel>(`/api/admin/appointments/${id}/status`, request);
   }
 }

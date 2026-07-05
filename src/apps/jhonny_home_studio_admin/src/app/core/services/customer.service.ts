@@ -20,13 +20,13 @@ export class CustomerService {
   ) {}
 
   getAll(): Observable<CustomerListModel[]> {
-    return this.api.get<CustomerListModel[]>('/admin/customers');
+    return this.api.get<CustomerListModel[]>('/api/admin/customers');
   }
 
   getById(id: string): Observable<CustomerDetailModel> {
     return forkJoin({
-      profile: this.api.get<CustomerProfileModel>(`/admin/customers/${id}`),
-      addresses: this.api.get<CustomerAddressModel[]>(`/admin/customers/${id}/addresses`),
+      profile: this.api.get<CustomerProfileModel>(`/api/admin/customers/${id}`),
+      addresses: this.api.get<CustomerAddressModel[]>(`/api/admin/customers/${id}/addresses`),
       appointments: this.appointments.getAll(undefined, id),
       loyalty: this.loyalty.getForCustomer(id)
     }).pipe(
@@ -40,10 +40,10 @@ export class CustomerService {
   }
 
   activate(id: string): Observable<unknown> {
-    return this.api.patch(`/admin/customers/${id}/activate`);
+    return this.api.patch(`/api/admin/customers/${id}/activate`);
   }
 
   deactivate(id: string): Observable<unknown> {
-    return this.api.patch(`/admin/customers/${id}/deactivate`);
+    return this.api.patch(`/api/admin/customers/${id}/deactivate`);
   }
 }

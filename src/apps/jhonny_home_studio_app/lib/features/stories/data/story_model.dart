@@ -27,14 +27,15 @@ class StoryModel {
   bool get hasMedia => mediaUrl.trim().isNotEmpty;
   bool get isVideo => mediaType.toLowerCase() == 'video';
   bool get hasLinkedService => serviceId.trim().isNotEmpty;
+  String get visualUrl => hasImage ? imageUrl : mediaUrl;
 
   factory StoryModel.fromJson(Map<String, dynamic> json) {
     return StoryModel(
       id: _readString(json, 'id'),
       title: _readString(json, 'title'),
       subtitle: _readString(json, 'subtitle'),
-      imageUrl: _resolveImageUrl(_readString(json, 'imageUrl')),
-      mediaUrl: _resolveImageUrl(
+      imageUrl: _resolveMediaUrl(_readString(json, 'imageUrl')),
+      mediaUrl: _resolveMediaUrl(
         _readString(json, 'mediaUrl').isEmpty
             ? _readString(json, 'imageUrl')
             : _readString(json, 'mediaUrl'),
@@ -60,9 +61,18 @@ String _readMediaType(Map<String, dynamic> json) {
       : 'Image';
 }
 
-String _resolveImageUrl(String value) {
+String _resolveMediaUrl(String value) {
   final imageUrl = value.trim();
-  if (imageUrl.isEmpty || Uri.tryParse(imageUrl)?.hasScheme == true) {
+  if (imageUrl.isEmpty) {
+    return imageUrl;
+  }
+
+  final parsed = Uri.tryParse(imageUrl);
+  if (parsed?.scheme == 'http') {
+    return parsed!.replace(scheme: 'https').toString();
+  }
+
+  if (parsed?.hasScheme == true) {
     return imageUrl;
   }
 

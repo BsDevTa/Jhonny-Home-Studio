@@ -17,6 +17,7 @@ class StoryCircleItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
+    final normalizedImageUrl = hasImage ? _normalizeImageUrl(imageUrl!) : null;
 
     return InkWell(
       borderRadius: BorderRadius.circular(999),
@@ -51,9 +52,12 @@ class StoryCircleItem extends StatelessWidget {
                 child: ClipOval(
                   child: hasImage
                       ? Image.network(
-                          imageUrl!,
+                          normalizedImageUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
+                            debugPrint(
+                              'Erro ao carregar story circle "$title" em $normalizedImageUrl: $error',
+                            );
                             return const _StoryPlaceholder();
                           },
                         )
@@ -79,6 +83,20 @@ class StoryCircleItem extends StatelessWidget {
       ),
     );
   }
+}
+
+String _normalizeImageUrl(String value) {
+  final imageUrl = value.trim();
+  if (imageUrl.isEmpty) {
+    return imageUrl;
+  }
+
+  final parsed = Uri.tryParse(imageUrl);
+  if (parsed?.scheme == 'http') {
+    return parsed!.replace(scheme: 'https').toString();
+  }
+
+  return imageUrl;
 }
 
 class _StoryPlaceholder extends StatelessWidget {

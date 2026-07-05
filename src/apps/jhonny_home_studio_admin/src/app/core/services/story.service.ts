@@ -9,32 +9,32 @@ export class StoryService {
   constructor(private readonly api: ApiService) {}
 
   getAll(): Observable<StudioStory[]> {
-    return this.api.get<StudioStory[]>('/admin/stories');
+    return this.api.get<StudioStory[]>('/api/admin/stories');
   }
 
   getById(id: string): Observable<StudioStory> {
-    return this.api.get<StudioStory>(`/admin/stories/${id}`);
+    return this.api.get<StudioStory>(`/api/admin/stories/${id}`);
   }
 
   uploadImage(file: File): Observable<{ imageUrl: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.api.post<{ imageUrl: string }>('/admin/stories/upload-image', formData);
+    return this.api.post<{ imageUrl: string }>('/api/admin/stories/upload-image', formData);
   }
 
   create(request: CreateStudioStoryRequest): Observable<StudioStory> {
-    return this.api.post<StudioStory>('/admin/stories', request);
+    return this.api.post<StudioStory>('/api/admin/stories', request);
   }
 
   update(id: string, request: UpdateStudioStoryRequest): Observable<StudioStory> {
-    return this.api.put<StudioStory>(`/admin/stories/${id}`, request);
+    return this.api.put<StudioStory>(`/api/admin/stories/${id}`, request);
   }
 
   toggleActive(id: string): Observable<StudioStory> {
-    return this.api.patch<StudioStory>(`/admin/stories/${id}/toggle-active`);
+    return this.api.patch<StudioStory>(`/api/admin/stories/${id}/toggle-active`);
   }
 
   delete(id: string): Observable<unknown> {
-    return this.api.delete(`/admin/stories/${id}`);
+    return this.api.delete(`/api/admin/stories/${id}`);
   }
 }

@@ -275,7 +275,11 @@ class _AdminMarketplaceProductFormScreenState
     if (file == null) return;
     setState(() => uploading = true);
     try {
-      final result = await api.uploadMarketplaceImage(file.path);
+      final bytes = await file.readAsBytes();
+      final result = await api.uploadMarketplaceImage(
+        bytes,
+        fileName: file.name,
+      );
       if (!mounted) return;
       setState(() {
         imageUrl.text = _text(result, 'imageUrl');

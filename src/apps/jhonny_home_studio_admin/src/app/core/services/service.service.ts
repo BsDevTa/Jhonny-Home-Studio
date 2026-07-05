@@ -13,7 +13,7 @@ export class ServiceService {
   constructor(private readonly api: ApiService) {}
 
   getAll(): Observable<StudioService[]> {
-    return this.api.get<StudioService[]>('/admin/services');
+    return this.api.get<StudioService[]>('/api/admin/services');
   }
 
   getById(id: string): Observable<StudioService> {
@@ -21,22 +21,22 @@ export class ServiceService {
   }
 
   create(request: CreateStudioServiceRequest): Observable<StudioService> {
-    return this.api.post<StudioService>('/admin/services', request);
+    return this.api.post<StudioService>('/api/admin/services', request);
   }
 
   update(id: string, request: UpdateStudioServiceRequest): Observable<StudioService> {
-    return this.api.put<StudioService>(`/admin/services/${id}`, request);
+    return this.api.put<StudioService>(`/api/admin/services/${id}`, request);
   }
 
   activate(id: string): Observable<unknown> {
-    return this.api.patch(`/admin/services/${id}/activate`);
+    return this.api.patch(`/api/admin/services/${id}/activate`);
   }
 
   deactivate(id: string): Observable<unknown> {
-    return this.api.patch(`/admin/services/${id}/deactivate`);
+    return this.api.patch(`/api/admin/services/${id}/deactivate`);
   }
 
   delete(id: string): Observable<unknown> {
-    return this.api.delete(`/admin/services/${id}`);
+    return this.api.delete(`/api/admin/services/${id}`);
   }
 }

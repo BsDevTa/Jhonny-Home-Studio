@@ -1,0 +1,85 @@
+<main class="register-shell">
+  <section class="register-card card-dark">
+    <div class="register-card__halo"></div>
+    <header class="register-card__header">
+      <span class="register-card__mark">J</span>
+      <p class="register-card__eyebrow">Jhonny Home Studio</p>
+      <h1>Acesso administrativo</h1>
+      <small>Gestão premium com clareza e simplicidade.</small>
+    </header>
+
+    <form class="register-form" [formGroup]="form" (ngSubmit)="register()" novalidate>
+      @if (error()) {
+        <p class="error-banner register-form__error" aria-live="polite">{{ error() }}</p>
+      }
+
+      <div class="field">
+        <label for="fullName">Nome</label>
+        <input
+          id="fullName"
+          class="input-dark"
+          type="text"
+          formControlName="fullName"
+          autocomplete="name"
+          placeholder="Seu nome completo"
+        />
+        @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+          <span class="field-error">Informe seu nome.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input
+          id="email"
+          class="input-dark"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          placeholder="admin@studio.com"
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <span class="field-error">Informe um e-mail válido.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input
+          id="password"
+          class="input-dark"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          placeholder="Crie uma senha"
+        />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <span class="field-error">A senha deve ter ao menos 6 caracteres.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword">Confirmar senha</label>
+        <input
+          id="confirmPassword"
+          class="input-dark"
+          type="password"
+          formControlName="confirmPassword"
+          autocomplete="new-password"
+          placeholder="Repita a senha"
+        />
+        @if (form.controls.confirmPassword.touched && form.controls.confirmPassword.invalid) {
+          <span class="field-error">Confirme sua senha.</span>
+        } @else if (form.touched && form.errors?.['passwordsMismatch']) {
+          <span class="field-error">As senhas não coincidem.</span>
+        }
+      </div>
+
+      <button type="submit" class="btn-primary register-form__submit" [disabled]="loading()">
+        {{ loading() ? 'Cadastrando...' : 'Cadastrar' }}
+      </button>
+
+      <a class="register-form__link" routerLink="/login">Já possui acesso? Entrar</a>
+    </form>
+  </section>
+</main>

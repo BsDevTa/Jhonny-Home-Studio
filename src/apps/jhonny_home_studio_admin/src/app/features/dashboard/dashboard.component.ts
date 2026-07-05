@@ -1,11 +1,9 @@
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map, Observable } from 'rxjs';
 
-import { AppointmentService } from '../../core/services/appointment.service';
-import { CategoryService } from '../../core/services/category.service';
-import { CustomerService } from '../../core/services/customer.service';
-import { ServiceService } from '../../core/services/service.service';
-import { StoryService } from '../../core/services/story.service';
+import { ApiConfig } from '../../core/config/api-config';
+import { ApiResponse } from '../../core/models/api-response.model';
 import { LoadingComponent } from '../../shared/components/loading/loading.component';
 
 @Component({
@@ -25,13 +23,7 @@ export class DashboardComponent implements OnInit {
   readonly totalCustomers = signal(0);
   readonly activeStories = signal(0);
 
-  constructor(
-    private readonly categories: CategoryService,
-    private readonly services: ServiceService,
-    private readonly appointments: AppointmentService,
-    private readonly customers: CustomerService,
-    private readonly stories: StoryService
-  ) {}
+  constructor(private readonly http: HttpClient) {}
 
   ngOnInit(): void {
     this.load();
@@ -42,11 +34,11 @@ export class DashboardComponent implements OnInit {
     this.error.set('');
 
     forkJoin({
-      categories: this.categories.getAll(),
-      services: this.services.getAll(),
-      appointments: this.appointments.getAll(),
-      customers: this.customers.getAll(),
-      stories: this.stories.getAll()
+      categories: this.fetchCollection<{ id: string; isActive?: boolean }>('/api/admin/service-categories'),
+      services: this.fetchCollection<{ id: string; isActive: boolean }>('/api/admin/services'),
+      appointments: this.fetchCollection<{ id: string }>('/api/admin/appointments'),
+      customers: this.fetchCollection<{ id: string }>('/api/admin/customers'),
+      stories: this.fetchCollection<{ id: string; isActive: boolean }>('/api/admin/stories')
     }).subscribe({
       next: ({ categories, services, appointments, customers, stories }) => {
         this.totalCategories.set(categories.length);
@@ -57,10 +49,43 @@ export class DashboardComponent implements OnInit {
         this.activeStories.set(stories.filter((story) => story.isActive).length);
         this.loading.set(false);
       },
-      error: (error: Error) => {
-        this.error.set(error.message);
+      error: (error: unknown) => {
+        console.error('Erro detalhado:', error);
+        this.error.set(this.readErrorMessage(error));
         this.loading.set(false);
       }
     });
+  }
+
+  private fetchCollection<T>(path: string): Observable<T[]> {
+    return this.http.get<ApiResponse<T[]>>(this.url(path)).pipe(map((response) => response.data ?? []));
+  }
+
+  private readErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 0) {
+        return 'Falha de comunicação com a API. Verifique CORS, rede ou backend indisponível.';
+      }
+
+      if (error.status === 401) {
+        return 'Sessão inválida ou token ausente. Faça login novamente.';
+      }
+
+      if (error.status === 403) {
+        return 'Acesso negado para este recurso.';
+      }
+
+      return error.message || 'Não foi possível concluir a operação.';
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'Não foi possível concluir a operação.';
+  }
+
+  private url(path: string): string {
+    return `${ApiConfig.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
   }
 }

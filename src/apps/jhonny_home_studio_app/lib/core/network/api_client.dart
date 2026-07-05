@@ -43,6 +43,8 @@ class ApiClient {
   final Dio _dio;
   final TokenStorage _tokenStorage;
 
+  Future<String?> getToken() => _tokenStorage.getToken();
+
   Future<Map<String, dynamic>> getJson(String path) async {
     final response = await _dio.get(path);
     return _normalizeResponse(response);

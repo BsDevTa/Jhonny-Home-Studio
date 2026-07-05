@@ -1,5 +1,10 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:http/http.dart' as http;
+
+import '../../../core/config/api_config.dart';
+import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 
 class AdminMobileApi {
@@ -128,12 +133,45 @@ class AdminMobileApi {
       _patch('/admin/marketplace/products/$id/toggle-active');
   Future<void> deleteMarketplaceProduct(String id) =>
       _delete('/admin/marketplace/products/$id');
-  Future<Map<String, dynamic>> uploadMarketplaceImage(String filePath) async {
-    final response = await _api.postMultipart(
-      '/admin/marketplace/products/upload-image',
-      filePath: filePath,
+  Future<Map<String, dynamic>> uploadMarketplaceImage(
+    Uint8List bytes, {
+    required String fileName,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/admin/marketplace/products/upload-image',
     );
-    return _asMap(response['data']);
+    final request = http.MultipartRequest('POST', uri);
+
+    final token = await _api.getToken();
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    request.headers['Accept'] = 'application/json';
+
+    request.files.add(
+      http.MultipartFile.fromBytes('file', bytes, filename: fileName),
+    );
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw ApiException(
+        message: response.body,
+        statusCode: response.statusCode,
+      );
+    }
+
+    final decoded = _decodeBody(response.body);
+    if (decoded is Map<String, dynamic>) {
+      final data = decoded['data'];
+      if (data is Map<String, dynamic>) {
+        return _normalizeUploadResponse(data);
+      }
+      return _normalizeUploadResponse(decoded);
+    }
+
+    return const <String, dynamic>{};
   }
 
   Future<List<Map<String, dynamic>>> _getList(String path) async {
@@ -171,4 +209,42 @@ List<Map<String, dynamic>> _asList(dynamic value) {
 
 Map<String, dynamic> _asMap(dynamic value) {
   return value is Map<String, dynamic> ? value : <String, dynamic>{};
+}
+
+dynamic _decodeBody(String body) {
+  final trimmed = body.trim();
+  if (trimmed.isEmpty) {
+    return const <String, dynamic>{};
+  }
+
+  try {
+    return jsonDecode(trimmed);
+  } catch (_) {
+    return trimmed;
+  }
+}
+
+Map<String, dynamic> _normalizeUploadResponse(Map<String, dynamic> value) {
+  final normalized = Map<String, dynamic>.from(value);
+  for (final key in ['imageUrl', 'mediaUrl', 'url']) {
+    final raw = normalized[key];
+    if (raw is String && raw.isNotEmpty) {
+      normalized[key] = _ensureHttps(raw);
+    }
+  }
+  return normalized;
+}
+
+String _ensureHttps(String value) {
+  final text = value.trim();
+  if (text.isEmpty) {
+    return text;
+  }
+
+  final parsed = Uri.tryParse(text);
+  if (parsed?.scheme == 'http') {
+    return parsed!.replace(scheme: 'https').toString();
+  }
+
+  return text;
 }

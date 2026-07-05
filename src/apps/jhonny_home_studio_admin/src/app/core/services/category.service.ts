@@ -13,7 +13,7 @@ export class CategoryService {
   constructor(private readonly api: ApiService) {}
 
   getAll(): Observable<ServiceCategory[]> {
-    return this.api.get<ServiceCategory[]>('/admin/service-categories');
+    return this.api.get<ServiceCategory[]>('/api/admin/service-categories');
   }
 
   getById(id: string): Observable<ServiceCategory> {
@@ -21,22 +21,22 @@ export class CategoryService {
   }
 
   create(request: CreateServiceCategoryRequest): Observable<ServiceCategory> {
-    return this.api.post<ServiceCategory>('/admin/service-categories', request);
+    return this.api.post<ServiceCategory>('/api/admin/service-categories', request);
   }
 
   update(id: string, request: UpdateServiceCategoryRequest): Observable<ServiceCategory> {
-    return this.api.put<ServiceCategory>(`/admin/service-categories/${id}`, request);
+    return this.api.put<ServiceCategory>(`/api/admin/service-categories/${id}`, request);
   }
 
   activate(id: string): Observable<unknown> {
-    return this.api.patch(`/admin/service-categories/${id}/activate`);
+    return this.api.patch(`/api/admin/service-categories/${id}/activate`);
   }
 
   deactivate(id: string): Observable<unknown> {
-    return this.api.patch(`/admin/service-categories/${id}/deactivate`);
+    return this.api.patch(`/api/admin/service-categories/${id}/deactivate`);
   }
 
   delete(id: string): Observable<unknown> {
-    return this.api.delete(`/admin/service-categories/${id}`);
+    return this.api.delete(`/api/admin/service-categories/${id}`);
   }
 }

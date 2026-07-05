@@ -9,10 +9,10 @@ export class SettingsService {
   constructor(private readonly api: ApiService) {}
 
   getSettings(): Observable<StudioSettingsModel> {
-    return this.api.get<StudioSettingsModel>('/admin/settings');
+    return this.api.get<StudioSettingsModel>('/api/admin/settings');
   }
 
   updateSettings(request: UpdateStudioSettingsRequest): Observable<StudioSettingsModel> {
-    return this.api.put<StudioSettingsModel>('/admin/settings', request);
+    return this.api.put<StudioSettingsModel>('/api/admin/settings', request);
   }
 }

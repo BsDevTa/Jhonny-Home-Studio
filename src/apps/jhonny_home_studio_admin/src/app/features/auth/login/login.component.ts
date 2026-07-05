@@ -1,13 +1,14 @@
 import { Component, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
@@ -26,8 +27,11 @@ export class LoginComponent {
       password: ['', [Validators.required]]
     });
 
-    if (this.auth.isAuthenticated()) {
-      void this.router.navigate(['/dashboard']);
+    const currentUser = this.auth.currentUser();
+    if (currentUser) {
+      void this.router.navigate([currentUser.role === 'Admin' ? '/dashboard' : '/home'], {
+        replaceUrl: true
+      });
     }
   }
 
@@ -40,11 +44,10 @@ export class LoginComponent {
     this.loading.set(true);
     this.error.set('');
 
-    this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => void this.router.navigate(['/dashboard']),
+    this.auth.login(this.form.getRawValue()).pipe(finalize(() => this.loading.set(false))).subscribe({
+      next: (user) => void this.router.navigate([user.role === 'Admin' ? '/dashboard' : '/home'], { replaceUrl: true }),
       error: (error: Error) => {
         this.error.set(error.message);
-        this.loading.set(false);
       }
     });
   }

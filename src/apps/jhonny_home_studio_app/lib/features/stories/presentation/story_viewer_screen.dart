@@ -152,14 +152,18 @@ class _StoryBackdropState extends State<_StoryBackdrop> {
       );
     }
 
-    if (!widget.story.hasImage) {
+    final imageUrl = widget.story.visualUrl.trim();
+    if (imageUrl.isEmpty) {
       return const _StoryVisualPlaceholder();
     }
 
     return Image.network(
-      widget.story.imageUrl,
+      imageUrl,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
+        debugPrint(
+          'Erro ao carregar story ${widget.story.id} em $imageUrl: $error',
+        );
         return const _StoryVisualPlaceholder();
       },
     );

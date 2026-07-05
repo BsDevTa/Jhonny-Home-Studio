@@ -1,36 +1,74 @@
 <main class="login-shell">
-  <section class="login-card surface">
-    <header>
-      <span class="login-card__mark">J</span>
-      <p>Jhonny Home Studio</p>
-      <h1>Acesso administrativo</h1>
-      <small>Gestão premium com clareza e simplicidade.</small>
+  <section class="login-card">
+    <header class="login-card__header">
+      <div class="login-card__brand-frame" aria-hidden="true">
+        <img
+          class="login-card__logo"
+          src="/assets/logo.png"
+          alt="Jhonny Home Studio"
+        />
+      </div>
+      <p class="login-card__eyebrow">Jhonny Home Studio</p>
+      <h1>Acesse sua conta</h1>
+      <small>Entre para continuar sua experiência premium.</small>
     </header>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
+    <form class="login-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       @if (error()) {
-        <p class="error-banner">{{ error() }}</p>
+        <p class="error-banner login-form__error" aria-live="polite">{{ error() }}</p>
       }
 
       <div class="field">
-        <label for="email">E-mail</label>
-        <input id="email" type="email" formControlName="email" autocomplete="email" placeholder="admin@studio.com" />
+        <label class="sr-only" for="email">E-mail</label>
+        <div class="input-shell">
+          <span class="input-shell__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6.75A2.75 2.75 0 0 1 6.75 4h10.5A2.75 2.75 0 0 1 20 6.75v10.5A2.75 2.75 0 0 1 17.25 20H6.75A2.75 2.75 0 0 1 4 17.25V6.75Z" stroke="currentColor" stroke-width="1.8"/>
+              <path d="m6.5 7.5 5.5 4.25L17.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <input
+            id="email"
+            class="input-dark"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="E-mail"
+          />
+        </div>
         @if (form.controls.email.touched && form.controls.email.invalid) {
           <span class="field-error">Informe um e-mail válido.</span>
         }
       </div>
 
       <div class="field">
-        <label for="password">Senha</label>
-        <input id="password" type="password" formControlName="password" autocomplete="current-password" placeholder="Sua senha" />
+        <label class="sr-only" for="password">Senha</label>
+        <div class="input-shell">
+          <span class="input-shell__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 11V8.75A5 5 0 0 1 12 4a5 5 0 0 1 5 4.75V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M6.75 11h10.5A2.75 2.75 0 0 1 20 13.75v3.5A2.75 2.75 0 0 1 17.25 20H6.75A2.75 2.75 0 0 1 4 17.25v-3.5A2.75 2.75 0 0 1 6.75 11Z" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </span>
+          <input
+            id="password"
+            class="input-dark"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="Senha"
+          />
+        </div>
         @if (form.controls.password.touched && form.controls.password.invalid) {
           <span class="field-error">Informe sua senha.</span>
         }
       </div>
 
-      <button type="submit" class="primary-button" [disabled]="loading()">
+      <button type="submit" class="btn-primary login-form__submit" [disabled]="loading()">
         {{ loading() ? 'Entrando...' : 'Entrar' }}
       </button>
+
+      <a class="login-form__link" routerLink="/register">Criar conta</a>
     </form>
   </section>
 </main>

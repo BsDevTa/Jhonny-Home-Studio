@@ -9,6 +9,6 @@ export class LoyaltyService {
   constructor(private readonly api: ApiService) {}
 
   getForCustomer(customerId: string): Observable<LoyaltyModel> {
-    return this.api.get<LoyaltyModel>(`/admin/customers/${customerId}/loyalty`);
+    return this.api.get<LoyaltyModel>(`/api/admin/customers/${customerId}/loyalty`);
   }
 }

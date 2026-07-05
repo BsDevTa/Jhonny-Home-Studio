@@ -4,18 +4,33 @@ import { authGuard } from './core/guards/auth.guard';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login/login.component').then((component) => component.LoginComponent)
   },
   {
-    path: '',
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component').then((component) => component.RegisterComponent)
+  },
+  {
+    path: 'home',
+    loadComponent: () =>
+      import('./features/public-home/public-home.component').then((component) => component.PublicHomeComponent),
+    canActivate: [authGuard],
+    data: { roles: ['Client'] }
+  },
+  {
+    path: 'dashboard',
     component: AdminLayoutComponent,
     canActivate: [authGuard],
+    data: { roles: ['Admin'] },
     children: [
       {
-        path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard.component').then((component) => component.DashboardComponent)
+        path: '',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then((component) => component.DashboardComponent)
       },
       {
         path: 'categories',
@@ -159,8 +174,9 @@ export const routes: Routes = [
             (component) => component.BlockedDateFormComponent
           )
       },
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },
-  { path: '**', redirectTo: 'dashboard' }
+  { path: 'admin', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: 'admin/login', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', redirectTo: 'login' }
 ];

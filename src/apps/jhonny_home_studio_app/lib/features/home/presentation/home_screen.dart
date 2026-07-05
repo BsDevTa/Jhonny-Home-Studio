@@ -400,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final story = _editorialStories[index];
         return StoryCircleItem(
           title: story.title,
-          imageUrl: story.imageUrl,
+          imageUrl: story.visualUrl,
           onTap: () => _openEditorialStory(story),
         );
       },

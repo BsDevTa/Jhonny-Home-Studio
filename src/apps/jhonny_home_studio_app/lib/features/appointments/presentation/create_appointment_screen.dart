@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/routes/app_routes.dart';
 import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_empty_state.dart';
 import '../../../shared/widgets/premium_button.dart';
@@ -51,6 +53,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
   bool _isLoadingSlots = false;
   bool _isSaving = false;
   String? _errorMessage;
+
+  static const String _whatsAppPhoneNumber = '5571999999999';
 
   @override
   void initState() {
@@ -246,14 +250,16 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Seu horário foi solicitado. Aguarde a confirmação do estúdio.',
-          ),
-        ),
-      );
-      context.go('/appointments/my');
+      final opened = await _redirectToWhatsApp();
+      if (!mounted) {
+        return;
+      }
+
+      if (!opened) {
+        _showMessage('Não foi possível abrir o WhatsApp agora.');
+      }
+
+      context.go(AppRoutes.home);
     } on ApiException catch (error) {
       if (!mounted) {
         return;
@@ -281,6 +287,30 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<bool> _redirectToWhatsApp() async {
+    final service = _selectedService;
+    final date = _selectedDate;
+    final slot = _selectedSlot;
+
+    if (service == null || date == null || slot?.startAt == null) {
+      return false;
+    }
+
+    final message =
+        '''
+Olá! Gostaria de confirmar meu agendamento:
+✂️ Serviço: ${service.name}
+📅 Data: ${_dateFormat.format(date)} às ${DateFormat('HH:mm').format(slot!.startAt!)}
+⏱️ Duração: ${service.estimatedDurationMinutes} min
+💰 Valor: ${_currencyFormat.format(service.price)}''';
+
+    final uri = Uri.parse(
+      'https://wa.me/$_whatsAppPhoneNumber?text=${Uri.encodeComponent(message)}',
+    );
+
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _goToAddresses() async {
