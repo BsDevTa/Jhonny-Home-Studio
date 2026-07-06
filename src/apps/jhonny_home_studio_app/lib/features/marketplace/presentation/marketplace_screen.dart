@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../shared/responsive/app_breakpoints.dart';
 import '../../../shared/widgets/premium_section_header.dart';
 import '../data/marketplace_api.dart';
 import '../data/marketplace_models.dart';
@@ -72,10 +73,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   int _getCrossAxisCount(double width) {
-    if (width >= 1000) return 4;
-    if (width >= 700) return 3;
-    if (width >= 420) return 2;
-    return 1;
+    if (width >= 2000) return 6;
+    if (width >= 1600) return 5;
+    if (width >= 1200) return 4;
+    if (width >= 800) return 3;
+    return 2;
   }
 
   List<ProductModel> _dedupeById(Iterable<ProductModel> products) {
@@ -110,6 +112,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 final crossAxisCount = _getCrossAxisCount(constraints.maxWidth);
                 final childAspectRatio = _getChildAspectRatio(crossAxisCount);
                 final imageHeight = _getImageHeight(crossAxisCount);
+                final isDesktop = AppBreakpoints.isDesktopWidth(
+                  constraints.maxWidth,
+                );
                 final allProducts = _dedupeById(_products);
                 final featuredProducts = allProducts
                     .where((product) => product.isFeatured)
@@ -125,7 +130,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     : 'Nenhum produto encontrado nesta categoria.';
 
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                  padding: EdgeInsets.fromLTRB(
+                    isDesktop ? 32 : 20,
+                    isDesktop ? 28 : 18,
+                    isDesktop ? 32 : 20,
+                    24,
+                  ),
                   children: [
                     const Text(
                       'LOJA - VOCÊ MAIS BEAUTIFUL.',
@@ -235,15 +245,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   double _getChildAspectRatio(int crossAxisCount) {
     return switch (crossAxisCount) {
+      6 => 0.70,
+      5 => 0.69,
       4 => 0.68,
       3 => 0.66,
-      2 => 0.58,
-      _ => 1.05,
+      _ => 0.58,
     };
   }
 
   double _getImageHeight(int crossAxisCount) {
     return switch (crossAxisCount) {
+      6 => 126,
+      5 => 130,
       4 => 132,
       3 => 128,
       2 => 116,

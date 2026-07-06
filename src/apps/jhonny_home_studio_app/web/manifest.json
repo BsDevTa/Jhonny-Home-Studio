@@ -1,12 +1,12 @@
 {
-    "name": "jhonny_home_studio_app",
-    "short_name": "jhonny_home_studio_app",
+    "name": "Jhonny Home Studio",
+    "short_name": "JHS",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#050505",
+    "theme_color": "#D6A354",
+    "description": "Sistema web premium do Jhonny Home Studio para agendamentos, marketplace, Clube VIP e painel do cliente.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

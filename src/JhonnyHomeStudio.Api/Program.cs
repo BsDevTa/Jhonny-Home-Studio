@@ -5,6 +5,7 @@ using JhonnyHomeStudio.Infrastructure.Persistence;
 using JhonnyHomeStudio.Api.Middleware;
 using JhonnyHomeStudio.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -97,22 +98,28 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFlutterWebDev", policy =>
+    options.AddPolicy("FlutterWeb", policy =>
     {
         policy
-            .SetIsOriginAllowed(origin =>
-            {
-                if (string.IsNullOrWhiteSpace(origin))
-                    return false;
-
-                var uri = new Uri(origin);
-
-                return uri.Host == "localhost" ||
-                       uri.Host == "127.0.0.1";
-            })
+            .WithOrigins(
+                "https://jhonny-home-studio.web.app",
+                "https://jhonny-home-studio.firebaseapp.com",
+                "http://localhost:3000",
+                "http://localhost:5000",
+                "http://localhost:8080",
+                "http://localhost:5173"
+            )
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 var app = builder.Build();
@@ -123,10 +130,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowFlutterWebDev");
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRouting();
+app.UseCors("FlutterWeb");
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

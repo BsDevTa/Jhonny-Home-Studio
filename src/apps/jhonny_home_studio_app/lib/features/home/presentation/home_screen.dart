@@ -6,6 +6,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../shared/responsive/app_breakpoints.dart';
+import '../../../shared/widgets/premium_dashboard_card.dart';
+import '../../../shared/widgets/premium_modal.dart';
 import '../../../shared/widgets/premium_section_header.dart';
 import '../../loyalty/data/loyalty_api.dart';
 import '../../loyalty/data/loyalty_model.dart';
@@ -253,6 +256,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openEditorialStory(StoryModel story) {
+    if (AppBreakpoints.isDesktop(context)) {
+      PremiumModal.show<void>(
+        context: context,
+        maxWidth: 460,
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * 0.78,
+          child: StoryViewerScreen(story: story),
+        ),
+      );
+      return;
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => StoryViewerScreen(story: story),
@@ -265,6 +280,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final settings = context.watch<AppSettingsProvider>().settings;
     final visibleServices = _services.take(8).toList(growable: false);
     final hasServices = visibleServices.isNotEmpty;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isDesktop = AppBreakpoints.isDesktop(context);
+    final pagePadding = AppBreakpoints.horizontalPadding(screenWidth);
 
     return Scaffold(
       body: Container(
@@ -285,10 +303,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onRefresh: () => _loadHomeData(refreshSettings: true),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              padding: EdgeInsets.fromLTRB(
+                pagePadding,
+                isDesktop ? 28 : 18,
+                pagePadding,
+                24,
+              ),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 760),
+                  constraints: BoxConstraints(maxWidth: isDesktop ? 980 : 760),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -309,6 +332,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 1.4,
                         ),
                       ),
+                      if (isDesktop) ...[
+                        const SizedBox(height: 22),
+                        _DesktopDashboardStrip(
+                          serviceCount: _services.length,
+                          loyalty: _loyalty,
+                        ),
+                      ],
                       const SizedBox(height: 24),
                       if (_isLoadingStories ||
                           _editorialStories.isNotEmpty) ...[
@@ -480,6 +510,72 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       separatorBuilder: (context, index) => const SizedBox(width: 8),
       itemCount: _categories.length + 1,
+    );
+  }
+}
+
+class _DesktopDashboardStrip extends StatelessWidget {
+  const _DesktopDashboardStrip({
+    required this.serviceCount,
+    required this.loyalty,
+  });
+
+  final int serviceCount;
+  final LoyaltyModel loyalty;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - 36) / 4;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            SizedBox(
+              width: itemWidth.clamp(190, 260).toDouble(),
+              child: PremiumDashboardCard(
+                icon: Icons.calendar_month_rounded,
+                title: 'Agendamentos',
+                value: 'Sua agenda',
+                subtitle: 'Acompanhe horarios e detalhes.',
+                onTap: () => context.go(AppRoutes.myAppointments),
+              ),
+            ),
+            SizedBox(
+              width: itemWidth.clamp(190, 260).toDouble(),
+              child: PremiumDashboardCard(
+                icon: Icons.spa_rounded,
+                title: 'Ultimos servicos',
+                value: '$serviceCount opcoes',
+                subtitle: 'Continue sua experiencia.',
+                onTap: () => context.go(AppRoutes.services),
+              ),
+            ),
+            SizedBox(
+              width: itemWidth.clamp(190, 260).toDouble(),
+              child: PremiumDashboardCard(
+                icon: Icons.shopping_bag_rounded,
+                title: 'Marketplace',
+                value: 'Loja premium',
+                subtitle: 'Produtos para o cuidado diario.',
+                onTap: () => context.go(AppRoutes.marketplace),
+              ),
+            ),
+            SizedBox(
+              width: itemWidth.clamp(190, 260).toDouble(),
+              child: PremiumDashboardCard(
+                icon: Icons.workspace_premium_rounded,
+                title: 'Clube VIP',
+                value: loyalty.level,
+                subtitle: '${loyalty.points} pontos disponiveis.',
+                onTap: () => context.go(AppRoutes.vip),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

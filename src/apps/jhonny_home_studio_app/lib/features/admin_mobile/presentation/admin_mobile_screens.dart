@@ -12,6 +12,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/whatsapp_service.dart';
 import '../../../core/utils/appointment_status_helper.dart';
+import '../../../shared/responsive/app_breakpoints.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../../settings/presentation/app_settings_provider.dart';
 import '../data/admin_mobile_api.dart';
@@ -1380,50 +1381,459 @@ class AdminScaffold extends StatelessWidget {
   final Widget? floatingActionButton;
   @override
   Widget build(BuildContext context) {
-    final isHome = GoRouterState.of(context).uri.path == AppRoutes.adminMobile;
+    final path = GoRouterState.of(context).uri.path;
+    final isHome = path == AppRoutes.adminMobile;
+    final width = MediaQuery.sizeOf(context).width;
+    final isDesktop = AppBreakpoints.isDesktopWidth(width);
+    final showContextPanel = width >= 1280;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const _AdminDrawer(),
-      appBar: AppBar(
-        leading: Builder(
-          builder: (context) => IconButton(
-            tooltip: isHome ? 'Menu' : 'Voltar',
-            onPressed: () {
-              if (isHome) {
-                Scaffold.of(context).openDrawer();
-              } else if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go(AppRoutes.adminMobile);
-              }
-            },
-            icon: Icon(isHome ? Icons.menu_rounded : Icons.arrow_back),
-          ),
-        ),
-        title: Text(title),
-        actions: [
-          if (!isHome)
-            IconButton(
-              tooltip: 'Dashboard',
-              onPressed: () => context.go(AppRoutes.adminMobile),
-              icon: const Icon(Icons.dashboard_outlined),
+      drawer: isDesktop ? null : const _AdminDrawer(),
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              leading: Builder(
+                builder: (context) => IconButton(
+                  tooltip: isHome ? 'Menu' : 'Voltar',
+                  onPressed: () {
+                    if (isHome) {
+                      Scaffold.of(context).openDrawer();
+                    } else if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go(AppRoutes.adminMobile);
+                    }
+                  },
+                  icon: Icon(isHome ? Icons.menu_rounded : Icons.arrow_back),
+                ),
+              ),
+              title: Text(title),
+              actions: [
+                if (!isHome)
+                  IconButton(
+                    tooltip: 'Dashboard',
+                    onPressed: () => context.go(AppRoutes.adminMobile),
+                    icon: const Icon(Icons.dashboard_outlined),
+                  ),
+                IconButton(
+                  tooltip: 'Sair',
+                  onPressed: () async {
+                    await context.read<AuthProvider>().logout();
+                    if (!context.mounted) {
+                      return;
+                    }
+                    context.go(AppRoutes.login);
+                  },
+                  icon: const Icon(Icons.logout),
+                ),
+              ],
             ),
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: () async {
-              await context.read<AuthProvider>().logout();
-              if (!context.mounted) {
-                return;
-              }
-              context.go(AppRoutes.login);
-            },
-            icon: const Icon(Icons.logout),
+      floatingActionButton: floatingActionButton,
+      body: SafeArea(
+        child: isDesktop
+            ? Row(
+                children: [
+                  const _AdminNavigationPanel(width: 272),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _AdminTopBar(title: title, path: path, isHome: isHome),
+                        Expanded(child: child),
+                      ],
+                    ),
+                  ),
+                  if (showContextPanel) const _AdminContextPanel(),
+                ],
+              )
+            : child,
+      ),
+    );
+  }
+}
+
+class _AdminNavigationPanel extends StatelessWidget {
+  const _AdminNavigationPanel({this.width});
+
+  final double? width;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          right: BorderSide(color: AppColors.border.withValues(alpha: 0.8)),
+        ),
+      ),
+      child: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 18, 18, 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Jhonny ERP',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Sistema administrativo premium',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                _AdminDrawerItem(
+                  icon: Icons.dashboard_outlined,
+                  title: 'Dashboard',
+                  path: AppRoutes.adminMobile,
+                  selected: path == AppRoutes.adminMobile,
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.event_note_outlined,
+                  title: 'Agenda',
+                  path: '${AppRoutes.adminMobile}/appointments',
+                  selected: path.startsWith(
+                    '${AppRoutes.adminMobile}/appointments',
+                  ),
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.people_outline,
+                  title: 'Clientes',
+                  path: '${AppRoutes.adminMobile}/customers',
+                  selected: path.startsWith(
+                    '${AppRoutes.adminMobile}/customers',
+                  ),
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'Produtos',
+                  path: '${AppRoutes.adminMobile}/marketplace/products',
+                  selected: path.startsWith(
+                    '${AppRoutes.adminMobile}/marketplace/products',
+                  ),
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.storefront_outlined,
+                  title: 'Marketplace',
+                  path: '${AppRoutes.adminMobile}/marketplace',
+                  selected: path == '${AppRoutes.adminMobile}/marketplace',
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.spa_outlined,
+                  title: 'Servicos',
+                  path: '${AppRoutes.adminMobile}/services',
+                  selected: path.startsWith('${AppRoutes.adminMobile}/services'),
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.category_outlined,
+                  title: 'Categorias',
+                  path: '${AppRoutes.adminMobile}/categories',
+                  selected: path.startsWith(
+                    '${AppRoutes.adminMobile}/categories',
+                  ),
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.workspace_premium_outlined,
+                  title: 'Clube VIP',
+                  path: AppRoutes.adminMobile,
+                  selected: false,
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.loyalty_outlined,
+                  title: 'Fidelidade',
+                  path: AppRoutes.adminMobile,
+                  selected: false,
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.auto_awesome_outlined,
+                  title: 'Stories',
+                  path: '${AppRoutes.adminMobile}/stories',
+                  selected: path.startsWith('${AppRoutes.adminMobile}/stories'),
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.schedule_outlined,
+                  title: 'Disponibilidade',
+                  path: '${AppRoutes.adminMobile}/availability',
+                  selected: path.startsWith(
+                    '${AppRoutes.adminMobile}/availability',
+                  ),
+                  closeOnTap: false,
+                ),
+                _AdminDrawerItem(
+                  icon: Icons.settings_outlined,
+                  title: 'Configuracoes',
+                  path: '${AppRoutes.adminMobile}/settings',
+                  selected: path.startsWith('${AppRoutes.adminMobile}/settings'),
+                  closeOnTap: false,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () async {
+                  await context.read<AuthProvider>().logout();
+                  if (!context.mounted) {
+                    return;
+                  }
+                  context.go(AppRoutes.login);
+                },
+                icon: const Icon(Icons.logout),
+                label: const Text('Sair'),
+              ),
+            ),
           ),
         ],
       ),
-      floatingActionButton: floatingActionButton,
-      body: SafeArea(child: child),
+    );
+  }
+}
+
+class _AdminTopBar extends StatelessWidget {
+  const _AdminTopBar({
+    required this.title,
+    required this.path,
+    required this.isHome,
+  });
+
+  final String title;
+  final String path;
+  final bool isHome;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      decoration: BoxDecoration(
+        color: AppColors.background.withValues(alpha: 0.94),
+        border: Border(
+          bottom: BorderSide(color: AppColors.border.withValues(alpha: 0.75)),
+        ),
+      ),
+      child: Row(
+        children: [
+          if (!isHome) ...[
+            IconButton(
+              tooltip: 'Voltar',
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(AppRoutes.adminMobile);
+                }
+              },
+              icon: const Icon(Icons.arrow_back_rounded),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  path == AppRoutes.adminMobile
+                      ? 'Dashboard executivo'
+                      : path.replaceFirst('/admin-mobile', 'ERP'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton.icon(
+            onPressed: () => context.go('${AppRoutes.adminMobile}/appointments'),
+            icon: const Icon(Icons.calendar_month_outlined, size: 18),
+            label: const Text('Agenda'),
+          ),
+          const SizedBox(width: 10),
+          FilledButton.icon(
+            onPressed: () => context.go('${AppRoutes.adminMobile}/services/new'),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Novo servico'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminContextPanel extends StatelessWidget {
+  const _AdminContextPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 316,
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.72),
+        border: Border(
+          left: BorderSide(color: AppColors.border.withValues(alpha: 0.8)),
+        ),
+      ),
+      child: ListView(
+        children: const [
+          _ContextPanelHeader(),
+          SizedBox(height: 14),
+          _ContextPanelItem(
+            icon: Icons.event_available_outlined,
+            title: 'Proximos horarios',
+            value: 'Agenda do dia',
+          ),
+          _ContextPanelItem(
+            icon: Icons.shopping_bag_outlined,
+            title: 'Produtos mais vendidos',
+            value: 'Marketplace',
+          ),
+          _ContextPanelItem(
+            icon: Icons.workspace_premium_outlined,
+            title: 'Clientes VIP',
+            value: 'Relacionamento',
+          ),
+          _ContextPanelItem(
+            icon: Icons.receipt_long_outlined,
+            title: 'Ultimos pedidos',
+            value: 'Operacao',
+          ),
+          _ContextPanelItem(
+            icon: Icons.notifications_active_outlined,
+            title: 'Notificacoes',
+            value: 'Sem alertas criticos',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContextPanelHeader extends StatelessWidget {
+  const _ContextPanelHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return AdminMobileCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text(
+            'Painel contextual',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Sinais rapidos para acompanhar a operacao em tempo real.',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContextPanelItem extends StatelessWidget {
+  const _ContextPanelItem({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return AdminMobileCard(
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.gold, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1580,12 +1990,14 @@ class _AdminDrawerItem extends StatelessWidget {
     required this.title,
     required this.path,
     required this.selected,
+    this.closeOnTap = true,
   });
 
   final IconData icon;
   final String title;
   final String path;
   final bool selected;
+  final bool closeOnTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1613,7 +2025,9 @@ class _AdminDrawerItem extends StatelessWidget {
             ),
           ),
           onTap: () {
-            context.pop();
+            if (closeOnTap) {
+              context.pop();
+            }
             context.go(path);
           },
         ),

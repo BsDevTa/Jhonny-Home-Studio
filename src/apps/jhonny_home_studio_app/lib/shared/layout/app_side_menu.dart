@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/routes/app_routes.dart';
+import '../../features/auth/presentation/auth_provider.dart';
+import '../../features/settings/presentation/app_settings_provider.dart';
 import '../widgets/premium_icon_tile.dart';
 
 class AppSideMenu extends StatelessWidget {
@@ -12,8 +15,11 @@ class AppSideMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<AppSettingsProvider>().settings;
+    final isAdmin = context.watch<AuthProvider>().isAdmin;
+
     return Container(
-      width: 92,
+      width: 248,
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(
@@ -23,9 +29,42 @@ class AppSideMenu extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 12),
-            const PremiumIconTile(icon: Icons.spa_rounded, size: 58),
-            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+              child: Row(
+                children: [
+                  const PremiumIconTile(icon: Icons.spa_rounded, size: 52),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          settings.studioName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          settings.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             _SideIconButton(
               icon: Icons.home_rounded,
               label: 'In\u00edcio',
@@ -39,10 +78,28 @@ class AppSideMenu extends StatelessWidget {
               onTap: () => context.go(AppRoutes.services),
             ),
             _SideIconButton(
+              icon: Icons.storefront_rounded,
+              label: 'Marketplace',
+              active: currentPath.startsWith('/marketplace'),
+              onTap: () => context.go(AppRoutes.marketplace),
+            ),
+            _SideIconButton(
               icon: Icons.calendar_month_rounded,
               label: 'Agenda',
               active: currentPath.startsWith('/appointments'),
               onTap: () => context.go(AppRoutes.myAppointments),
+            ),
+            _SideIconButton(
+              icon: Icons.workspace_premium_rounded,
+              label: 'Clube VIP',
+              active: currentPath == AppRoutes.vip,
+              onTap: () => context.go(AppRoutes.vip),
+            ),
+            _SideIconButton(
+              icon: Icons.auto_awesome_rounded,
+              label: 'SOS Loiro',
+              active: currentPath == AppRoutes.sosLoiro,
+              onTap: () => context.go(AppRoutes.sosLoiro),
             ),
             _SideIconButton(
               icon: Icons.person_rounded,
@@ -52,10 +109,17 @@ class AppSideMenu extends StatelessWidget {
                   currentPath.startsWith('/addresses'),
               onTap: () => context.go(AppRoutes.profile),
             ),
+            if (isAdmin)
+              _SideIconButton(
+                icon: Icons.admin_panel_settings_rounded,
+                label: 'Admin',
+                active: currentPath.startsWith(AppRoutes.adminMobile),
+                onTap: () => context.go(AppRoutes.adminMobile),
+              ),
             const Spacer(),
             _SideIconButton(
               icon: Icons.settings_rounded,
-              label: 'Config',
+              label: 'Configuracoes',
               active: currentPath == AppRoutes.clientSettings,
               onTap: () => context.go(AppRoutes.clientSettings),
             ),
@@ -83,32 +147,52 @@ class _SideIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          Material(
-            color: active
-                ? AppColors.gold.withValues(alpha: 0.12)
-                : Colors.transparent,
-            shape: const CircleBorder(),
-            child: IconButton(
-              onPressed: onTap,
-              icon: Icon(
-                icon,
-                color: active ? AppColors.gold : AppColors.textSecondary,
-              ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Material(
+        color: active
+            ? AppColors.gold.withValues(alpha: 0.12)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: active ? AppColors.gold : AppColors.textSecondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: active
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary,
+                      fontSize: 13,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (active)
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.gold,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              color: active ? AppColors.textPrimary : AppColors.textSecondary,
-              fontSize: 11,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
