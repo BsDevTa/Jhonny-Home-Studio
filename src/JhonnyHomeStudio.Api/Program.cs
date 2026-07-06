@@ -11,7 +11,29 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .SelectMany(entry => entry.Value!.Errors.Select(error =>
+                string.IsNullOrWhiteSpace(error.ErrorMessage)
+                    ? "Requisição inválida."
+                    : error.ErrorMessage))
+            .ToArray();
+
+        var response = JhonnyHomeStudio.Application.Common.Responses.ApiResponse<object>.FailureResponse(
+            "Não foi possível processar a requisição.",
+            errors);
+
+        return new Microsoft.AspNetCore.Mvc.JsonResult(response)
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            ContentType = "application/json"
+        };
+    };
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -131,7 +153,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseForwardedHeaders();
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("FlutterWeb");
