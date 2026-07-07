@@ -11,6 +11,21 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var allowedOrigins = new[]
+{
+    "https://jhonny-home-studio.web.app",
+    "https://jhonny-home-studio.firebaseapp.com",
+
+    // Caso o Firebase esteja usando johnny ao invés de jhonny
+    "https://johnny-home-studio.web.app",
+    "https://johnny-home-studio.firebaseapp.com",
+
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "http://localhost:8080",
+    "http://localhost:5173",
+};
+
 builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
@@ -123,14 +138,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("FlutterWeb", policy =>
     {
         policy
-            .WithOrigins(
-                "https://jhonny-home-studio.web.app",
-                "https://jhonny-home-studio.firebaseapp.com",
-                "http://localhost:3000",
-                "http://localhost:5000",
-                "http://localhost:8080",
-                "http://localhost:5173"
-            )
+            .WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
