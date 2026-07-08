@@ -101,7 +101,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       aspectRatio: 1.1,
                       child: product.hasImage
                           ? Image.network(
-                              product.mainImageUrl,
+                              product.displayImageUrl,
                               fit: BoxFit.cover,
                             )
                           : const _DetailPlaceholder(),

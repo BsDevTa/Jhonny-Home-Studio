@@ -123,6 +123,24 @@ class AppSideMenu extends StatelessWidget {
               active: currentPath == AppRoutes.clientSettings,
               onTap: () => context.go(AppRoutes.clientSettings),
             ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    await context.read<AuthProvider>().logout();
+                    if (!context.mounted) {
+                      return;
+                    }
+                    context.go(AppRoutes.login);
+                  },
+                  icon: const Icon(Icons.logout, size: 18),
+                  label: const Text('Sair'),
+                ),
+              ),
+            ),
             const SizedBox(height: 10),
           ],
         ),

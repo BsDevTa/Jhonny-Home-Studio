@@ -1,3 +1,5 @@
+import { ApiConfig } from '../config/api-config';
+
 export interface ProductCategoryModel {
   id: string;
   name: string;
@@ -34,6 +36,41 @@ export interface ProductModel {
   images: ProductImageModel[];
   createdAt: string;
   updatedAt?: string | null;
+}
+
+export function resolveUrl(value?: string | null): string {
+  const url = (value ?? '').trim();
+  if (!url) {
+    return '';
+  }
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol) {
+      return url;
+    }
+  } catch {
+    // Treat as relative below.
+  }
+
+  const normalizedPath = url.startsWith('/') ? url : `/${url}`;
+  return `${ApiConfig.baseUrl}${normalizedPath}`;
+}
+
+export function getProductDisplayImageUrl(
+  product: Pick<ProductModel, 'mainImageUrl' | 'images'>,
+): string {
+  const mainImage = resolveUrl(product.mainImageUrl);
+  if (mainImage) {
+    return mainImage;
+  }
+
+  const mainImageFromList = product.images.find((image) => image.isMain)?.imageUrl ?? '';
+  if (mainImageFromList.trim()) {
+    return resolveUrl(mainImageFromList);
+  }
+
+  return resolveUrl(product.images[0]?.imageUrl);
 }
 
 export interface UpsertProductCategoryRequest {

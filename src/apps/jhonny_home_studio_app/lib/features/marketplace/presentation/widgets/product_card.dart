@@ -34,7 +34,7 @@ class ProductCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(13),
               child: product.hasImage
                   ? Image.network(
-                      product.mainImageUrl,
+                      product.displayImageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => const _ProductPlaceholder(),
                     )

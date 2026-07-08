@@ -23,17 +23,13 @@ class MainShell extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = AppBreakpoints.isDesktopWidth(
-          constraints.maxWidth,
-        );
+        final isDesktop = AppBreakpoints.isDesktopWidth(constraints.maxWidth);
         final showInsightPanel =
             currentPath == AppRoutes.home && constraints.maxWidth >= 1200;
         final content = Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: AppBreakpoints.maxContentWidth(
-                constraints.maxWidth,
-              ),
+              maxWidth: AppBreakpoints.maxContentWidth(constraints.maxWidth),
             ),
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 0),
@@ -244,16 +240,28 @@ class _PanelHeader extends StatelessWidget {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
+      onTap: () => context.go(AppRoutes.home),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: AppColors.goldLight,
+                size: 18,
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           const Text(
@@ -262,6 +270,15 @@ class _PanelHeader extends StatelessWidget {
               color: AppColors.textSecondary,
               fontSize: 12,
               height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Abrir o dashboard do cliente.',
+            style: TextStyle(
+              color: AppColors.goldLight,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

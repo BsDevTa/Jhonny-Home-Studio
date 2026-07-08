@@ -6,6 +6,7 @@ using JhonnyHomeStudio.Api.Middleware;
 using JhonnyHomeStudio.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -162,6 +163,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseForwardedHeaders();
 app.UseStaticFiles();
+
+var uploadsRoot = Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "uploads");
+Directory.CreateDirectory(uploadsRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRoot),
+    RequestPath = "/uploads"
+});
+
 app.UseRouting();
 app.UseCors("FlutterWeb");
 app.UseMiddleware<ExceptionHandlingMiddleware>();

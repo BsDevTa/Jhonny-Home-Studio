@@ -40,14 +40,14 @@ public sealed class MarketplaceController : ControllerBase
     public async Task<IActionResult> GetPublicProducts([FromQuery] Guid? categoryId = null, [FromQuery] bool? featured = null, [FromQuery] string? search = null)
     {
         var response = await _marketplaceService.GetProductsAsync(includeInactive: false, categoryId, featured, search);
-        return Ok(ApiResponse<IEnumerable<ProductResponse>>.SuccessResponse("Produtos localizados com sucesso.", response));
+        return Ok(ApiResponse<IEnumerable<ProductResponse>>.SuccessResponse("Produtos localizados com sucesso.", NormalizeProducts(response)));
     }
 
     [HttpGet("products/featured")]
     public async Task<IActionResult> GetFeaturedProducts()
     {
         var response = await _marketplaceService.GetProductsAsync(includeInactive: false, featured: true);
-        return Ok(ApiResponse<IEnumerable<ProductResponse>>.SuccessResponse("Produtos em destaque localizados com sucesso.", response));
+        return Ok(ApiResponse<IEnumerable<ProductResponse>>.SuccessResponse("Produtos em destaque localizados com sucesso.", NormalizeProducts(response)));
     }
 
     [HttpGet("products/{id:guid}")]
@@ -59,7 +59,7 @@ public sealed class MarketplaceController : ControllerBase
             return NotFound(ApiResponse<object>.FailureResponse("Produto não encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
-        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto localizado com sucesso.", response));
+        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto localizado com sucesso.", NormalizeProduct(response)));
     }
 
     [HttpGet("/api/admin/marketplace/categories")]
@@ -130,7 +130,7 @@ public sealed class MarketplaceController : ControllerBase
     public async Task<IActionResult> GetAdminProducts()
     {
         var response = await _marketplaceService.GetProductsAsync(includeInactive: true);
-        return Ok(ApiResponse<IEnumerable<ProductResponse>>.SuccessResponse("Produtos localizados com sucesso.", response));
+        return Ok(ApiResponse<IEnumerable<ProductResponse>>.SuccessResponse("Produtos localizados com sucesso.", NormalizeProducts(response)));
     }
 
     [HttpGet("/api/admin/marketplace/products/{id:guid}")]
@@ -143,7 +143,7 @@ public sealed class MarketplaceController : ControllerBase
             return NotFound(ApiResponse<object>.FailureResponse("Produto não encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
-        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto localizado com sucesso.", response));
+        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto localizado com sucesso.", NormalizeProduct(response)));
     }
 
     [HttpPost("/api/admin/marketplace/products")]
@@ -151,7 +151,7 @@ public sealed class MarketplaceController : ControllerBase
     public async Task<IActionResult> CreateProduct([FromBody] UpsertProductRequest request)
     {
         var response = await _marketplaceService.CreateProductAsync(request);
-        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto criado com sucesso.", response));
+        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto criado com sucesso.", NormalizeProduct(response)));
     }
 
     [HttpPut("/api/admin/marketplace/products/{id:guid}")]
@@ -159,7 +159,7 @@ public sealed class MarketplaceController : ControllerBase
     public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpsertProductRequest request)
     {
         var response = await _marketplaceService.UpdateProductAsync(id, request);
-        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto atualizado com sucesso.", response));
+        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto atualizado com sucesso.", NormalizeProduct(response)));
     }
 
     [HttpPatch("/api/admin/marketplace/products/{id:guid}/toggle-active")]
@@ -172,7 +172,7 @@ public sealed class MarketplaceController : ControllerBase
             return NotFound(ApiResponse<object>.FailureResponse("Produto não encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
-        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Status do produto atualizado com sucesso.", response));
+        return Ok(ApiResponse<ProductResponse>.SuccessResponse("Status do produto atualizado com sucesso.", NormalizeProduct(response)));
     }
 
     [HttpDelete("/api/admin/marketplace/products/{id:guid}")]
@@ -218,5 +218,36 @@ public sealed class MarketplaceController : ControllerBase
 
         var imageUrl = $"{Request.Scheme}://{Request.Host}/uploads/products/{fileName}";
         return Ok(ApiResponse<object>.SuccessResponse("Imagem enviada com sucesso.", new { imageUrl }));
+    }
+
+    private IEnumerable<ProductResponse> NormalizeProducts(IEnumerable<ProductResponse> products)
+    {
+        return products.Select(NormalizeProduct).ToArray();
+    }
+
+    private ProductResponse NormalizeProduct(ProductResponse product)
+    {
+        product.MainImageUrl = ResolveUrl(product.MainImageUrl);
+        product.Images = product.Images
+            .Select(image =>
+            {
+                image.ImageUrl = ResolveUrl(image.ImageUrl);
+                return image;
+            })
+            .ToArray();
+
+        return product;
+    }
+
+    private string ResolveUrl(string? value)
+    {
+        var url = value?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(url) || Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            return url;
+        }
+
+        var path = url.StartsWith('/') ? url : $"/{url}";
+        return $"{Request.Scheme}://{Request.Host}{path}";
     }
 }

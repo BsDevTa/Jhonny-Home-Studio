@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/utils/whatsapp_helper.dart';
 import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_empty_state.dart';
 import '../../../shared/widgets/premium_button.dart';
@@ -15,6 +15,7 @@ import '../../addresses/data/address_models.dart';
 import '../../addresses/data/addresses_api.dart';
 import '../../services/data/service_models.dart';
 import '../../services/data/services_api.dart';
+import '../../settings/presentation/app_settings_provider.dart';
 import '../data/appointment_models.dart';
 import '../data/appointments_api.dart';
 import 'widgets/available_slot_card.dart';
@@ -53,8 +54,6 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
   bool _isLoadingSlots = false;
   bool _isSaving = false;
   String? _errorMessage;
-
-  static const String _whatsAppPhoneNumber = '5571999999999';
 
   @override
   void initState() {
@@ -290,11 +289,16 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
   }
 
   Future<bool> _redirectToWhatsApp() async {
+    final settings = context.read<AppSettingsProvider>().settings;
     final service = _selectedService;
     final date = _selectedDate;
     final slot = _selectedSlot;
 
     if (service == null || date == null || slot?.startAt == null) {
+      return false;
+    }
+
+    if (!hasConfiguredWhatsAppNumber(settings.whatsAppNumber)) {
       return false;
     }
 
@@ -306,11 +310,7 @@ Olá! Gostaria de confirmar meu agendamento:
 ⏱️ Duração: ${service.estimatedDurationMinutes} min
 💰 Valor: ${_currencyFormat.format(service.price)}''';
 
-    final uri = Uri.parse(
-      'https://wa.me/$_whatsAppPhoneNumber?text=${Uri.encodeComponent(message)}',
-    );
-
-    return launchUrl(uri, mode: LaunchMode.externalApplication);
+    return openWhatsApp(phoneNumber: settings.whatsAppNumber, message: message);
   }
 
   Future<void> _goToAddresses() async {

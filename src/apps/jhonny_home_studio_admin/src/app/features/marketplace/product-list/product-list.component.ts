@@ -2,7 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { ProductModel } from '../../../core/models/marketplace.model';
+import { getProductDisplayImageUrl, ProductModel } from '../../../core/models/marketplace.model';
 import { MarketplaceService } from '../../../core/services/marketplace.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -12,8 +12,15 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink, ConfirmDialogComponent, EmptyStateComponent, LoadingComponent, StatusBadgeComponent],
-  templateUrl: './product-list.component.html'
+  imports: [
+    CurrencyPipe,
+    RouterLink,
+    ConfirmDialogComponent,
+    EmptyStateComponent,
+    LoadingComponent,
+    StatusBadgeComponent,
+  ],
+  templateUrl: './product-list.component.html',
 })
 export class ProductListComponent implements OnInit {
   readonly products = signal<ProductModel[]>([]);
@@ -38,14 +45,14 @@ export class ProductListComponent implements OnInit {
       error: (error: Error) => {
         this.error.set(error.message);
         this.loading.set(false);
-      }
+      },
     });
   }
 
   toggle(product: ProductModel): void {
     this.marketplace.toggleProductActive(product.id).subscribe({
       next: () => this.load(),
-      error: (error: Error) => this.error.set(error.message)
+      error: (error: Error) => this.error.set(error.message),
     });
   }
 
@@ -62,7 +69,11 @@ export class ProductListComponent implements OnInit {
       error: (error: Error) => {
         this.productToDelete.set(null);
         this.error.set(error.message);
-      }
+      },
     });
+  }
+
+  displayImageUrl(product: ProductModel): string {
+    return getProductDisplayImageUrl(product);
   }
 }

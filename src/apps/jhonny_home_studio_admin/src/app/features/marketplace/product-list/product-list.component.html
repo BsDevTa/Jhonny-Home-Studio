@@ -18,12 +18,16 @@
     @if (loading()) {
       <app-loading />
     } @else if (!products().length) {
-      <app-empty-state title="Nenhum produto cadastrado" description="Cadastre o primeiro produto da loja Beauty." />
+      <app-empty-state
+        title="Nenhum produto cadastrado"
+        description="Cadastre o primeiro produto da loja Beauty."
+      />
     } @else {
       <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
+              <th>Imagem</th>
               <th>Produto</th>
               <th>Categoria</th>
               <th>Preço</th>
@@ -36,13 +40,32 @@
             @for (product of products(); track product.id) {
               <tr>
                 <td>
-                  <strong>{{ product.name }}</strong><br />
+                  @if (product.mainImageUrl || product.images.length) {
+                    <img
+                      [src]="displayImageUrl(product)"
+                      [alt]="product.name"
+                      style="
+                        width: 54px;
+                        height: 54px;
+                        object-fit: cover;
+                        border-radius: 14px;
+                        border: 1px solid rgba(255, 255, 255, 0.08);
+                      "
+                    />
+                  } @else {
+                    <span class="muted">Sem imagem</span>
+                  }
+                </td>
+                <td>
+                  <strong>{{ product.name }}</strong
+                  ><br />
                   <small>{{ product.shortDescription || 'Sem descrição curta' }}</small>
                 </td>
                 <td>{{ product.productCategoryName }}</td>
                 <td>
                   @if (product.promotionalPrice) {
-                    <strong>{{ product.promotionalPrice | currency: 'BRL' }}</strong><br />
+                    <strong>{{ product.promotionalPrice | currency: 'BRL' }}</strong
+                    ><br />
                     <small>{{ product.price | currency: 'BRL' }}</small>
                   } @else {
                     {{ product.price | currency: 'BRL' }}
@@ -52,11 +75,25 @@
                 <td><app-status-badge [active]="product.isActive" /></td>
                 <td>
                   <div class="table-actions">
-                    <a class="secondary-button table-button" [routerLink]="['/marketplace/products', product.id, 'edit']">Editar</a>
-                    <button type="button" class="secondary-button table-button" (click)="toggle(product)">
+                    <a
+                      class="secondary-button table-button"
+                      [routerLink]="['/marketplace/products', product.id, 'edit']"
+                      >Editar</a
+                    >
+                    <button
+                      type="button"
+                      class="secondary-button table-button"
+                      (click)="toggle(product)"
+                    >
                       {{ product.isActive ? 'Desativar' : 'Ativar' }}
                     </button>
-                    <button type="button" class="danger-button table-button" (click)="productToDelete.set(product)">Excluir</button>
+                    <button
+                      type="button"
+                      class="danger-button table-button"
+                      (click)="productToDelete.set(product)"
+                    >
+                      Excluir
+                    </button>
                   </div>
                 </td>
               </tr>

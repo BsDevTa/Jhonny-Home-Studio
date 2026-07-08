@@ -73,23 +73,13 @@ class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return AdminScaffold(
-      title: 'Dashboard',
+      title: 'Painel Administrativo',
       child: RefreshIndicator(
         color: AppColors.gold,
         onRefresh: _load,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= 900;
-            return ListView(
-          padding: EdgeInsets.fromLTRB(
-            isDesktop ? 28 : 16,
-            isDesktop ? 28 : 18,
-            isDesktop ? 28 : 16,
-            28,
-          ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
           children: [
-            _DashboardHeader(isDesktop: isDesktop),
-            const SizedBox(height: 18),
             const Text(
               'Painel Administrativo',
               style: TextStyle(
@@ -117,8 +107,6 @@ class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
                 const SizedBox(height: 12),
               ],
               _MetricGrid(metrics: _metrics),
-              const SizedBox(height: 18),
-              _OperationsBoard(metrics: _metrics),
             ],
             const SizedBox(height: 22),
             const Text(
@@ -137,194 +125,7 @@ class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
               ),
             ),
           ],
-            );
-          },
         ),
-      ),
-    );
-  }
-}
-
-class _DashboardHeader extends StatelessWidget {
-  const _DashboardHeader({required this.isDesktop});
-
-  final bool isDesktop;
-
-  @override
-  Widget build(BuildContext context) {
-    return AdminMobileCard(
-      child: isDesktop
-          ? Row(
-              children: [
-                const Expanded(child: _DashboardHeaderCopy()),
-                const SizedBox(width: 18),
-                FilledButton.icon(
-                  onPressed: () =>
-                      context.go('${AppRoutes.adminMobile}/appointments'),
-                  icon: const Icon(Icons.calendar_month_outlined, size: 18),
-                  label: const Text('Abrir agenda'),
-                ),
-                const SizedBox(width: 10),
-                OutlinedButton.icon(
-                  onPressed: () => context.go(
-                    '${AppRoutes.adminMobile}/marketplace/products',
-                  ),
-                  icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                  label: const Text('Produtos'),
-                ),
-              ],
-            )
-          : const _DashboardHeaderCopy(),
-    );
-  }
-}
-
-class _DashboardHeaderCopy extends StatelessWidget {
-  const _DashboardHeaderCopy();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Painel Administrativo',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        SizedBox(height: 6),
-        Text(
-          'Visao executiva para agenda, clientes, produtos e conteudo.',
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13,
-            height: 1.35,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OperationsBoard extends StatelessWidget {
-  const _OperationsBoard({required this.metrics});
-
-  final _AdminMetrics metrics;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final twoColumns = constraints.maxWidth >= 780;
-        final cardWidth = twoColumns
-            ? (constraints.maxWidth - 12) / 2
-            : constraints.maxWidth;
-
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            SizedBox(
-              width: cardWidth,
-              child: _InsightCard(
-                title: 'Agenda de hoje',
-                icon: Icons.event_available_outlined,
-                lines: [
-                  '${metrics.appointmentsToday ?? '--'} horarios no dia',
-                  '${metrics.pendingAppointments ?? '--'} pendentes para revisar',
-                  '${metrics.confirmedAppointments ?? '--'} confirmados',
-                ],
-                action: 'Gerenciar agenda',
-                onTap: () => context.go('${AppRoutes.adminMobile}/appointments'),
-              ),
-            ),
-            SizedBox(
-              width: cardWidth,
-              child: _InsightCard(
-                title: 'Operacao comercial',
-                icon: Icons.query_stats_outlined,
-                lines: [
-                  '${metrics.customers ?? '--'} clientes cadastrados',
-                  '${metrics.activeProducts ?? '--'} produtos ativos',
-                  '${metrics.featuredProducts ?? '--'} destaques na loja',
-                ],
-                action: 'Abrir marketplace',
-                onTap: () => context.go('${AppRoutes.adminMobile}/marketplace'),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _InsightCard extends StatelessWidget {
-  const _InsightCard({
-    required this.title,
-    required this.icon,
-    required this.lines,
-    required this.action,
-    required this.onTap,
-  });
-
-  final String title;
-  final IconData icon;
-  final List<String> lines;
-  final String action;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AdminMobileCard(
-      onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: AppColors.gold, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...lines.map(
-            (line) => Padding(
-              padding: const EdgeInsets.only(bottom: 7),
-              child: Text(
-                line,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            action,
-            style: const TextStyle(
-              color: AppColors.goldLight,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
       ),
     );
   }

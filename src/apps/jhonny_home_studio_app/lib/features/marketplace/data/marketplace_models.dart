@@ -66,7 +66,29 @@ class ProductModel {
   double get currentPrice => promotionalPrice ?? price;
   bool get hasPromotionalPrice =>
       promotionalPrice != null && promotionalPrice! > 0;
-  bool get hasImage => mainImageUrl.trim().isNotEmpty;
+  String get displayImageUrl {
+    if (mainImageUrl.trim().isNotEmpty) {
+      return mainImageUrl.trim();
+    }
+
+    final mainImage = images
+        .where((image) => image.isMain)
+        .map((image) {
+          return image.imageUrl.trim();
+        })
+        .where((imageUrl) => imageUrl.isNotEmpty);
+
+    if (mainImage.isNotEmpty) {
+      return mainImage.first;
+    }
+
+    final firstImageUrl = images
+        .map((image) => image.imageUrl.trim())
+        .firstWhere((imageUrl) => imageUrl.isNotEmpty, orElse: () => '');
+    return firstImageUrl;
+  }
+
+  bool get hasImage => displayImageUrl.trim().isNotEmpty;
   bool get isAvailable => stockQuantity == null || stockQuantity! > 0;
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
