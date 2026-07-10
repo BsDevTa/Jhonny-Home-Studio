@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JhonnyHomeStudio.Domain", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JhonnyHomeStudio.Infrastructure", "JhonnyHomeStudio.Infrastructure\JhonnyHomeStudio.Infrastructure.csproj", "{5166870D-5080-4059-BD06-A3D07C96A83D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JhonnyHomeStudio.Tests", "JhonnyHomeStudio.Tests\JhonnyHomeStudio.Tests.csproj", "{545E2A35-89F7-4994-B1F2-8680FF468FDC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{5166870D-5080-4059-BD06-A3D07C96A83D}.Release|x64.Build.0 = Release|Any CPU
 		{5166870D-5080-4059-BD06-A3D07C96A83D}.Release|x86.ActiveCfg = Release|Any CPU
 		{5166870D-5080-4059-BD06-A3D07C96A83D}.Release|x86.Build.0 = Release|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Debug|x64.Build.0 = Debug|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Debug|x86.Build.0 = Debug|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Release|x64.ActiveCfg = Release|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Release|x64.Build.0 = Release|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Release|x86.ActiveCfg = Release|Any CPU
+		{545E2A35-89F7-4994-B1F2-8680FF468FDC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

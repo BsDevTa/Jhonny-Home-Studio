@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/media_url_resolver.dart';
 
 class StoryCircleItem extends StatelessWidget {
   const StoryCircleItem({
@@ -16,8 +17,9 @@ class StoryCircleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
-    final normalizedImageUrl = hasImage ? _normalizeImageUrl(imageUrl!) : null;
+    final resolvedImageUrl = resolveMediaUrl(imageUrl);
+    debugPrint('Story circle resolvedUrl: $resolvedImageUrl');
+    final hasImage = resolvedImageUrl.isNotEmpty;
 
     return InkWell(
       borderRadius: BorderRadius.circular(999),
@@ -52,11 +54,18 @@ class StoryCircleItem extends StatelessWidget {
                 child: ClipOval(
                   child: hasImage
                       ? Image.network(
-                          normalizedImageUrl!,
+                          resolvedImageUrl,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+
+                            return const _StoryPlaceholder();
+                          },
                           errorBuilder: (context, error, stackTrace) {
                             debugPrint(
-                              'Erro ao carregar story circle "$title" em $normalizedImageUrl: $error',
+                              'Erro ao carregar imagem do Story: $resolvedImageUrl | $error',
                             );
                             return const _StoryPlaceholder();
                           },
@@ -83,20 +92,6 @@ class StoryCircleItem extends StatelessWidget {
       ),
     );
   }
-}
-
-String _normalizeImageUrl(String value) {
-  final imageUrl = value.trim();
-  if (imageUrl.isEmpty) {
-    return imageUrl;
-  }
-
-  final parsed = Uri.tryParse(imageUrl);
-  if (parsed?.scheme == 'http') {
-    return parsed!.replace(scheme: 'https').toString();
-  }
-
-  return imageUrl;
 }
 
 class _StoryPlaceholder extends StatelessWidget {

@@ -6,6 +6,7 @@ using JhonnyHomeStudio.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace JhonnyHomeStudio.Infrastructure.Persistence;
 
@@ -43,6 +44,26 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();
         services.AddScoped<IMarketplaceService, MarketplaceService>();
+        services.AddScoped<IFileStorageService>(provider =>
+        {
+            var storageProvider = configuration["Storage:Provider"] ?? configuration["STORAGE_PROVIDER"] ?? string.Empty;
+            var hasRailwayBucketVariables =
+                !string.IsNullOrWhiteSpace(configuration["BUCKET"]) &&
+                !string.IsNullOrWhiteSpace(configuration["ENDPOINT"]);
+
+            if (storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase) ||
+                storageProvider.Equals("RailwayBucket", StringComparison.OrdinalIgnoreCase) ||
+                hasRailwayBucketVariables)
+            {
+                return new S3FileStorageService(
+                    configuration,
+                    provider.GetRequiredService<ILogger<S3FileStorageService>>());
+            }
+
+            return new LocalFileStorageService(
+                provider.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>(),
+                provider.GetRequiredService<ILogger<LocalFileStorageService>>());
+        });
 
         return services;
     }

@@ -13,7 +13,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, LoadingComponent],
   templateUrl: './story-form.component.html',
-  styleUrl: './story-form.component.scss'
+  styleUrl: './story-form.component.scss',
 })
 export class StoryFormComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
@@ -33,7 +33,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
     private readonly formBuilder: FormBuilder,
     private readonly router: Router,
     private readonly serviceService: ServiceService,
-    private readonly storyService: StoryService
+    private readonly storyService: StoryService,
   ) {
     this.form = this.formBuilder.nonNullable.group({
       title: ['', [Validators.required, Validators.maxLength(160)]],
@@ -43,7 +43,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
       displayOrder: [0, [Validators.required, Validators.min(0)]],
       startsAt: [''],
       endsAt: [''],
-      isActive: [true]
+      isActive: [true],
     });
   }
 
@@ -57,14 +57,14 @@ export class StoryFormComponent implements OnInit, OnDestroy {
         error: (error: Error) => {
           this.error.set(error.message);
           this.loading.set(false);
-        }
+        },
       });
       return;
     }
 
     forkJoin({
       services: this.serviceService.getAll(),
-      story: this.storyService.getById(this.storyId)
+      story: this.storyService.getById(this.storyId),
     }).subscribe({
       next: ({ services, story }) => {
         this.services.set(services);
@@ -76,7 +76,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
           displayOrder: story.displayOrder,
           startsAt: this.toLocalInput(story.startsAt),
           endsAt: this.toLocalInput(story.endsAt),
-          isActive: story.isActive
+          isActive: story.isActive,
         });
         this.imagePreviewUrl.set(story.imageUrl ?? '');
         this.loading.set(false);
@@ -84,7 +84,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
       error: (error: Error) => {
         this.error.set(error.message);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -103,6 +103,8 @@ export class StoryFormComponent implements OnInit, OnDestroy {
 
     this.revokeLocalPreview();
     this.localPreviewUrl = URL.createObjectURL(file);
+    console.debug('Arquivo selecionado:', file.name);
+    console.debug('Preview local:', this.localPreviewUrl);
     this.imagePreviewUrl.set(this.localPreviewUrl);
     this.selectedFileName.set(file.name);
     this.uploadingImage.set(true);
@@ -110,6 +112,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
 
     this.storyService.uploadImage(file).subscribe({
       next: ({ imageUrl }) => {
+        console.debug('URL definitiva recebida:', imageUrl);
         this.form.controls.imageUrl.setValue(imageUrl);
         this.revokeLocalPreview();
         this.imagePreviewUrl.set(imageUrl);
@@ -117,10 +120,11 @@ export class StoryFormComponent implements OnInit, OnDestroy {
       },
       error: (error: Error) => {
         this.revokeLocalPreview();
+        this.selectedFileName.set('');
         this.imagePreviewUrl.set(this.form.controls.imageUrl.value);
         this.error.set(error.message);
         this.uploadingImage.set(false);
-      }
+      },
     });
   }
 
@@ -135,6 +139,17 @@ export class StoryFormComponent implements OnInit, OnDestroy {
     }
 
     const value = this.form.getRawValue();
+    const uploadedUrl = value.imageUrl.trim();
+    if (uploadedUrl.startsWith('blob:')) {
+      this.error.set('A URL temporária de prévia não pode ser salva. Aguarde o upload concluir.');
+      return;
+    }
+
+    if (this.selectedFileName() && !uploadedUrl) {
+      this.error.set('A imagem foi selecionada, mas a URL do upload está vazia.');
+      return;
+    }
+
     if (value.startsAt && value.endsAt && new Date(value.endsAt) <= new Date(value.startsAt)) {
       this.error.set('A data final deve ser posterior à data inicial.');
       return;
@@ -145,13 +160,14 @@ export class StoryFormComponent implements OnInit, OnDestroy {
     const payload = {
       title: value.title.trim(),
       subtitle: value.subtitle.trim() || null,
-      imageUrl: value.imageUrl.trim() || null,
+      imageUrl: uploadedUrl || null,
       serviceId: value.serviceId || null,
       displayOrder: Number(value.displayOrder),
       startsAt: this.toIsoOrNull(value.startsAt),
       endsAt: this.toIsoOrNull(value.endsAt),
-      isActive: value.isActive
+      isActive: value.isActive,
     };
+    console.debug('Payload Story:', JSON.stringify(payload));
     const request = this.storyId
       ? this.storyService.update(this.storyId, payload)
       : this.storyService.create(payload);
@@ -161,7 +177,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
       error: (error: Error) => {
         this.error.set(error.message);
         this.saving.set(false);
-      }
+      },
     });
   }
 

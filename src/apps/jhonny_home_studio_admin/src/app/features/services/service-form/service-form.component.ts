@@ -13,7 +13,7 @@ import { LoadingComponent } from '../../../shared/components/loading/loading.com
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, LoadingComponent],
   templateUrl: './service-form.component.html',
-  styleUrl: './service-form.component.scss'
+  styleUrl: './service-form.component.scss',
 })
 export class ServiceFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -29,7 +29,7 @@ export class ServiceFormComponent implements OnInit {
     private readonly formBuilder: FormBuilder,
     private readonly router: Router,
     private readonly categoryService: CategoryService,
-    private readonly serviceService: ServiceService
+    private readonly serviceService: ServiceService,
   ) {
     this.form = this.formBuilder.nonNullable.group({
       serviceCategoryId: ['', [Validators.required]],
@@ -38,7 +38,7 @@ export class ServiceFormComponent implements OnInit {
       price: [0, [Validators.required, Validators.min(0.01)]],
       estimatedDurationMinutes: [60, [Validators.required, Validators.min(1)]],
       imageUrl: [''],
-      isActive: [true]
+      isActive: [true],
     });
   }
 
@@ -52,32 +52,32 @@ export class ServiceFormComponent implements OnInit {
         error: (error: Error) => {
           this.error.set(error.message);
           this.loading.set(false);
-        }
+        },
       });
       return;
     }
 
     forkJoin({
       categories: this.categoryService.getAll(),
-      service: this.serviceService.getById(this.serviceId)
+      service: this.serviceService.getById(this.serviceId),
     }).subscribe({
       next: ({ categories, service }) => {
         this.categories.set(categories);
         this.form.patchValue({
           serviceCategoryId: service.serviceCategoryId,
           name: service.name,
-          description: service.description,
+          description: this.optionalText(service.description ?? ''),
           price: service.price,
           estimatedDurationMinutes: service.estimatedDurationMinutes,
           imageUrl: service.imageUrl ?? '',
-          isActive: service.isActive
+          isActive: service.isActive,
         });
         this.loading.set(false);
       },
       error: (error: Error) => {
         this.error.set(error.message);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -90,13 +90,14 @@ export class ServiceFormComponent implements OnInit {
     this.saving.set(true);
     this.error.set('');
     const value = this.form.getRawValue();
+    const description = this.optionalText(value.description);
     const payload = {
       serviceCategoryId: value.serviceCategoryId,
       name: value.name.trim(),
-      description: value.description.trim(),
+      description,
       price: Number(value.price),
       estimatedDurationMinutes: Number(value.estimatedDurationMinutes),
-      imageUrl: value.imageUrl.trim() || null
+      imageUrl: value.imageUrl.trim() || null,
     };
     const request = this.serviceId
       ? this.serviceService.update(this.serviceId, { ...payload, isActive: value.isActive })
@@ -107,7 +108,12 @@ export class ServiceFormComponent implements OnInit {
       error: (error: Error) => {
         this.error.set(error.message);
         this.saving.set(false);
-      }
+      },
     });
+  }
+
+  private optionalText(value: string): string {
+    const text = value.trim();
+    return text.toLowerCase() === 'null' ? '' : text;
   }
 }

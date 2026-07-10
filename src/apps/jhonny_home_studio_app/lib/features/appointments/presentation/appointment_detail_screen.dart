@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/utils/appointment_status_helper.dart';
+import '../../../core/utils/service_presentation_formatter.dart';
 import '../../../core/utils/whatsapp_helper.dart';
 import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_card.dart';
@@ -29,7 +30,6 @@ class AppointmentDetailScreen extends StatefulWidget {
 class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   late final AppointmentsApi _appointmentsApi;
   final _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-  final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
   AppointmentModel? _appointment;
   bool _isLoading = true;
@@ -81,8 +81,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
         return;
       }
       setState(() {
-        _errorMessage =
-            'Não foi possível carregar os detalhes do agendamento.';
+        _errorMessage = 'Não foi possível carregar os detalhes do agendamento.';
       });
     } finally {
       if (mounted) {
@@ -301,15 +300,17 @@ Pode me orientar sobre a confirmação?''',
                                   ),
                           ),
                           _DetailRow(
-                            label: 'Preço',
-                            value: _currencyFormat.format(
+                            label: 'Preço a partir de',
+                            value: ServicePresentationFormatter.priceFrom(
                               appointment.servicePriceSnapshot,
                             ),
                           ),
                           _DetailRow(
-                            label: 'Duração',
+                            label: 'Tempo estimado',
                             value:
-                                '${appointment.estimatedDurationMinutesSnapshot} min',
+                                ServicePresentationFormatter.estimatedDuration(
+                                  appointment.estimatedDurationMinutesSnapshot,
+                                ),
                           ),
                           _DetailRow(
                             label: 'Endereço',

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { getAppointmentStatusLabel } from '../models/appointment.model';
+import { ServicePriceFormatter } from '../utils/service-price-formatter';
 
 export interface AppointmentStatusWhatsAppData {
   customerName: string;
@@ -24,7 +25,11 @@ export class WhatsAppService {
     }
 
     const message = this.buildAppointmentStatusMessage(data);
-    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+    window.open(
+      `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,
+      '_blank',
+      'noopener',
+    );
     return true;
   }
 
@@ -35,10 +40,10 @@ export class WhatsAppService {
       : new Intl.DateTimeFormat('pt-BR').format(scheduledAt);
     const time = Number.isNaN(scheduledAt.getTime())
       ? 'Não informado'
-      : new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(scheduledAt);
-    const value = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-      data.servicePrice
-    );
+      : new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(
+          scheduledAt,
+        );
+    const value = ServicePriceFormatter.startingAt(data.servicePrice);
     const name = data.customerName || 'cliente';
     const service = data.serviceName || 'Serviço não informado';
 

@@ -1,4 +1,4 @@
-import '../../../core/config/api_config.dart';
+import '../../../core/utils/media_url_resolver.dart';
 
 class ProductCategoryModel {
   const ProductCategoryModel({
@@ -28,7 +28,7 @@ class ProductImageModel {
 
   factory ProductImageModel.fromJson(Map<String, dynamic> json) {
     return ProductImageModel(
-      imageUrl: _resolveUrl(_readString(json, 'imageUrl')),
+      imageUrl: resolveMediaUrl(_readString(json, 'imageUrl')),
       isMain: _readBool(json, 'isMain'),
     );
   }
@@ -102,7 +102,7 @@ class ProductModel {
       shortDescription: _readString(json, 'shortDescription'),
       price: _readDouble(json, 'price'),
       promotionalPrice: _readNullableDouble(json, 'promotionalPrice'),
-      mainImageUrl: _resolveUrl(_readString(json, 'mainImageUrl')),
+      mainImageUrl: resolveMediaUrl(_readString(json, 'mainImageUrl')),
       isFeatured: _readBool(json, 'isFeatured'),
       stockQuantity: _readNullableInt(json, 'stockQuantity'),
       images: images is List
@@ -142,13 +142,4 @@ int? _readNullableInt(Map<String, dynamic> json, String key) {
   if (value is int) return value;
   if (value is num) return value.round();
   return int.tryParse(value.toString());
-}
-
-String _resolveUrl(String value) {
-  final url = value.trim();
-  if (url.isEmpty || Uri.tryParse(url)?.hasScheme == true) {
-    return url;
-  }
-  final path = url.startsWith('/') ? url : '/$url';
-  return '${ApiConfig.apiOrigin}$path';
 }

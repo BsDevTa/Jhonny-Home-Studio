@@ -132,6 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       debugPrint('Stories carregados: ${stories.length}');
+      for (final story in stories) {
+        debugPrint('Story ${story.title} | imageUrl=${story.imageUrl}');
+      }
       setState(() {
         _editorialStories = stories.take(8).toList(growable: false);
       });

@@ -14,7 +14,9 @@
   @if (successMessage()) {
     <div class="status-toast surface" role="status" aria-live="polite">
       <span>{{ successMessage() }}</span>
-      <button type="button" class="primary-button compact-button" (click)="sendWhatsApp()">Enviar WhatsApp</button>
+      <button type="button" class="primary-button compact-button" (click)="sendWhatsApp()">
+        Enviar WhatsApp
+      </button>
     </div>
   }
 
@@ -32,15 +34,48 @@
         </div>
 
         <dl>
-          <div><dt>Cliente</dt><dd>{{ item.customerName }}</dd></div>
-          <div><dt>Data</dt><dd>{{ item.scheduledAt | date: 'dd/MM/yyyy' }}</dd></div>
-          <div><dt>Horário</dt><dd>{{ item.scheduledAt | date: 'HH:mm' }}</dd></div>
-          <div><dt>Duração</dt><dd>{{ item.estimatedDurationMinutesSnapshot }} min</dd></div>
-          <div><dt>Preço</dt><dd>{{ item.servicePriceSnapshot | currency: 'BRL' }}</dd></div>
-          <div class="span-2"><dt>Endereço</dt><dd>{{ item.addressText }}</dd></div>
-          <div class="span-2"><dt>Observação do cliente</dt><dd>{{ item.customerNotes || 'Nenhuma observação informada.' }}</dd></div>
-          <div><dt>Criado em</dt><dd>{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
-          <div><dt>Atualizado em</dt><dd>{{ item.updatedAt ? (item.updatedAt | date: 'dd/MM/yyyy HH:mm') : 'Ainda não atualizado' }}</dd></div>
+          <div>
+            <dt>Cliente</dt>
+            <dd>{{ item.customerName }}</dd>
+          </div>
+          <div>
+            <dt>Data</dt>
+            <dd>{{ item.scheduledAt | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+          <div>
+            <dt>Horário</dt>
+            <dd>{{ item.scheduledAt | date: 'HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Tempo estimado</dt>
+            <dd>{{ item.estimatedDurationMinutesSnapshot | estimatedDuration }}</dd>
+          </div>
+          <div>
+            <dt>Preço a partir de</dt>
+            <dd>{{ item.servicePriceSnapshot | priceFrom }}</dd>
+          </div>
+          <div class="span-2">
+            <dt>Endereço</dt>
+            <dd>{{ item.addressText }}</dd>
+          </div>
+          <div class="span-2">
+            <dt>Observação do cliente</dt>
+            <dd>{{ item.customerNotes || 'Nenhuma observação informada.' }}</dd>
+          </div>
+          <div>
+            <dt>Criado em</dt>
+            <dd>{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Atualizado em</dt>
+            <dd>
+              {{
+                item.updatedAt
+                  ? (item.updatedAt | date: 'dd/MM/yyyy HH:mm')
+                  : 'Ainda não atualizado'
+              }}
+            </dd>
+          </div>
         </dl>
       </section>
 
@@ -76,8 +111,14 @@
         </div>
 
         <div class="field">
-          <label for="note">Observação interna / orientação <span class="muted">(opcional)</span></label>
-          <textarea id="note" [(ngModel)]="note" placeholder="Ex.: Cliente confirmou o horário por WhatsApp."></textarea>
+          <label for="note"
+            >Observação interna / orientação <span class="muted">(opcional)</span></label
+          >
+          <textarea
+            id="note"
+            [(ngModel)]="note"
+            placeholder="Ex.: Cliente confirmou o horário por WhatsApp."
+          ></textarea>
         </div>
 
         <button type="button" class="primary-button" [disabled]="saving()" (click)="updateStatus()">
@@ -99,7 +140,9 @@
         </dl>
 
         @if (lastWhatsAppStatus()) {
-          <button type="button" class="secondary-button compact-button" (click)="resendWhatsApp()">Reenviar WhatsApp</button>
+          <button type="button" class="secondary-button compact-button" (click)="resendWhatsApp()">
+            Reenviar WhatsApp
+          </button>
         }
       </section>
     </div>

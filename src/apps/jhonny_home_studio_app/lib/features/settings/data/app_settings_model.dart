@@ -1,5 +1,5 @@
-import '../../../core/config/api_config.dart';
 import '../../../core/constants/app_texts.dart';
+import '../../../core/utils/media_url_resolver.dart';
 
 class AppSettingsModel {
   const AppSettingsModel({
@@ -41,7 +41,7 @@ class AppSettingsModel {
       studioName: _readString(json, 'studioName', fallback: AppTexts.appName),
       subtitle: _readString(json, 'subtitle', fallback: AppTexts.appSubtitle),
       slogan: _readString(json, 'slogan', fallback: AppTexts.slogan),
-      logoUrl: _resolveUrl(_readString(json, 'logoUrl')),
+      logoUrl: resolveMediaUrl(_readString(json, 'logoUrl')),
       whatsAppNumber: _readString(json, 'whatsAppNumber'),
       instagramUrl: _readString(json, 'instagramUrl'),
       welcomeTitle: _readString(
@@ -70,14 +70,4 @@ String _readString(
 }) {
   final value = json[key]?.toString().trim() ?? '';
   return value.isEmpty ? fallback : value;
-}
-
-String _resolveUrl(String value) {
-  final url = value.trim();
-  if (url.isEmpty || Uri.tryParse(url)?.hasScheme == true) {
-    return url;
-  }
-
-  final path = url.startsWith('/') ? url : '/$url';
-  return '${ApiConfig.apiOrigin}$path';
 }

@@ -14,18 +14,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 var allowedOrigins = new[]
 {
-    "https://jhonny-home-studio.web.app",
-    "https://jhonny-home-studio.firebaseapp.com",
-
-    // Caso o Firebase esteja usando johnny ao invés de jhonny
     "https://johnny-home-studio.web.app",
     "https://johnny-home-studio.firebaseapp.com",
+
+    "https://jhonny-home-studio.web.app",
+    "https://jhonny-home-studio.firebaseapp.com",
 
     "http://localhost:3000",
     "http://localhost:5000",
     "http://localhost:8080",
-    "http://localhost:5173",
+    "http://localhost:5173"
 };
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FlutterWeb", policy =>
+    {
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
 {
@@ -50,6 +61,7 @@ builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
         };
     };
 });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -134,18 +146,6 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("FlutterWeb", policy =>
-    {
-        policy
-            .WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
-
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -161,24 +161,46 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseForwardedHeaders();
-app.UseStaticFiles();
+var webRoot = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(webRoot);
 
-var uploadsRoot = Path.Combine(app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot"), "uploads");
+var uploadsRoot = Path.Combine(webRoot, "uploads");
 Directory.CreateDirectory(uploadsRoot);
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(uploadsRoot),
-    RequestPath = "/uploads"
-});
+
+app.UseForwardedHeaders();
 
 app.UseRouting();
+
 app.UseCors("FlutterWeb");
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(webRoot),
+    OnPrepareResponse = context => AddStaticFileCorsHeaders(context.Context, allowedOrigins)
+});
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 await app.Services.SeedInitialDataAsync();
 
 app.Run();
+
+static void AddStaticFileCorsHeaders(HttpContext context, IReadOnlyCollection<string> allowedOrigins)
+{
+    context.Response.Headers["Cache-Control"] = "public,max-age=3600";
+
+    var origin = context.Request.Headers.Origin.ToString();
+    if (string.IsNullOrWhiteSpace(origin) || !allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+    {
+        return;
+    }
+
+    context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+    context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+    context.Response.Headers["Vary"] = "Origin";
+}

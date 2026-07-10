@@ -15,7 +15,10 @@
     @if (loading()) {
       <app-loading />
     } @else if (!services().length) {
-      <app-empty-state title="Nenhum serviço cadastrado" description="Cadastre o primeiro serviço para disponibilizá-lo no aplicativo." />
+      <app-empty-state
+        title="Nenhum serviço cadastrado"
+        description="Cadastre o primeiro serviço para disponibilizá-lo no aplicativo."
+      />
     } @else {
       <div class="table-wrap">
         <table class="data-table">
@@ -23,8 +26,8 @@
             <tr>
               <th>Serviço</th>
               <th>Categoria</th>
-              <th>Preço</th>
-              <th>Duração</th>
+              <th>Preço a partir de</th>
+              <th>Tempo estimado</th>
               <th>Status</th>
               <th>Ações</th>
             </tr>
@@ -32,18 +35,34 @@
           <tbody>
             @for (service of services(); track service.id) {
               <tr>
-                <td><strong>{{ service.name }}</strong></td>
+                <td>
+                  <strong>{{ service.name }}</strong>
+                </td>
                 <td>{{ service.serviceCategoryName }}</td>
-                <td>{{ service.price | currency: 'BRL' }}</td>
-                <td>{{ service.estimatedDurationMinutes }} min</td>
+                <td>{{ service.price | priceFrom }}</td>
+                <td>{{ service.estimatedDurationMinutes | estimatedDuration }}</td>
                 <td><app-status-badge [active]="service.isActive" /></td>
                 <td>
                   <div class="table-actions">
-                    <a class="secondary-button table-button" [routerLink]="['/services', service.id, 'edit']">Editar</a>
-                    <button type="button" class="secondary-button table-button" (click)="toggle(service)">
+                    <a
+                      class="secondary-button table-button"
+                      [routerLink]="['/services', service.id, 'edit']"
+                      >Editar</a
+                    >
+                    <button
+                      type="button"
+                      class="secondary-button table-button"
+                      (click)="toggle(service)"
+                    >
                       {{ service.isActive ? 'Desativar' : 'Ativar' }}
                     </button>
-                    <button type="button" class="danger-button table-button" (click)="serviceToDelete.set(service)">Excluir</button>
+                    <button
+                      type="button"
+                      class="danger-button table-button"
+                      (click)="serviceToDelete.set(service)"
+                    >
+                      Excluir
+                    </button>
                   </div>
                 </td>
               </tr>

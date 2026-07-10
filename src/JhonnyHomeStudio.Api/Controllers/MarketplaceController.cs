@@ -21,12 +21,17 @@ public sealed class MarketplaceController : ControllerBase
     };
 
     private readonly IMarketplaceService _marketplaceService;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IFileStorageService _fileStorage;
+    private readonly ILogger<MarketplaceController> _logger;
 
-    public MarketplaceController(IMarketplaceService marketplaceService, IWebHostEnvironment environment)
+    public MarketplaceController(
+        IMarketplaceService marketplaceService,
+        IFileStorageService fileStorage,
+        ILogger<MarketplaceController> logger)
     {
         _marketplaceService = marketplaceService;
-        _environment = environment;
+        _fileStorage = fileStorage;
+        _logger = logger;
     }
 
     [HttpGet("categories")]
@@ -207,17 +212,36 @@ public sealed class MarketplaceController : ControllerBase
             throw new ValidationAppException("Formato de imagem não permitido.");
         }
 
-        var webRootPath = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-        var productsPath = Path.Combine(webRootPath, "uploads", "products");
-        Directory.CreateDirectory(productsPath);
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var storedFile = await _fileStorage.SaveAsync(
+                stream,
+                file.FileName,
+                file.ContentType,
+                "uploads/products",
+                "product",
+                GetPublicOrigin());
 
-        var fileName = $"product_{Guid.NewGuid():N}{extension}";
-        var destinationPath = Path.Combine(productsPath, fileName);
-        await using var destination = System.IO.File.Create(destinationPath);
-        await file.CopyToAsync(destination);
-
-        var imageUrl = $"{Request.Scheme}://{Request.Host}/uploads/products/{fileName}";
-        return Ok(ApiResponse<object>.SuccessResponse("Imagem enviada com sucesso.", new { imageUrl }));
+            return Ok(ApiResponse<object>.SuccessResponse(
+                "Imagem enviada com sucesso.",
+                new
+                {
+                    success = storedFile.Exists,
+                    url = storedFile.PublicUrl,
+                    imageUrl = storedFile.PublicUrl,
+                    relativePath = storedFile.RelativePath,
+                    fileName = storedFile.FileName,
+                    contentType = storedFile.ContentType,
+                    sizeBytes = storedFile.SizeBytes,
+                    storageProvider = storedFile.StorageProvider
+                }));
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Falha ao salvar imagem do produto. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
+            throw new ValidationAppException("Não foi possível enviar a imagem.");
+        }
     }
 
     private IEnumerable<ProductResponse> NormalizeProducts(IEnumerable<ProductResponse> products)
@@ -248,6 +272,11 @@ public sealed class MarketplaceController : ControllerBase
         }
 
         var path = url.StartsWith('/') ? url : $"/{url}";
-        return $"{Request.Scheme}://{Request.Host}{path}";
+        return new Uri(GetPublicOrigin(), path).ToString();
+    }
+
+    private Uri GetPublicOrigin()
+    {
+        return new Uri($"{Request.Scheme}://{Request.Host}");
     }
 }

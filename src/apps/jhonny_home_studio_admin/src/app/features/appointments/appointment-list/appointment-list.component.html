@@ -10,7 +10,12 @@
   <section class="filters surface">
     <div class="field">
       <label for="appointment-date">Data</label>
-      <input id="appointment-date" type="date" [value]="selectedDate()" (change)="onDateChange($event)" />
+      <input
+        id="appointment-date"
+        type="date"
+        [value]="selectedDate()"
+        (change)="onDateChange($event)"
+      />
     </div>
     <div class="field">
       <label for="appointment-status">Status</label>
@@ -21,7 +26,9 @@
         }
       </select>
     </div>
-    <button type="button" class="secondary-button filters__clear" (click)="clearFilters()">Limpar filtros</button>
+    <button type="button" class="secondary-button filters__clear" (click)="clearFilters()">
+      Limpar filtros
+    </button>
   </section>
 
   @if (error()) {
@@ -31,8 +38,12 @@
   @if (successMessage()) {
     <div class="status-toast surface" role="status" aria-live="polite">
       <span>{{ successMessage() }}</span>
-      <button type="button" class="primary-button compact-button" (click)="sendWhatsApp()">Enviar WhatsApp</button>
-      <button type="button" class="secondary-button compact-button" (click)="dismissSuccess()">Fechar</button>
+      <button type="button" class="primary-button compact-button" (click)="sendWhatsApp()">
+        Enviar WhatsApp
+      </button>
+      <button type="button" class="secondary-button compact-button" (click)="dismissSuccess()">
+        Fechar
+      </button>
     </div>
   }
 
@@ -40,7 +51,10 @@
     <app-loading />
   } @else if (!filteredAppointments().length) {
     <section class="surface">
-      <app-empty-state title="Nenhum agendamento encontrado." description="Ajuste os filtros ou aguarde um novo agendamento." />
+      <app-empty-state
+        title="Nenhum agendamento encontrado."
+        description="Ajuste os filtros ou aguarde um novo agendamento."
+      />
     </section>
   } @else {
     <div class="appointment-list">
@@ -63,12 +77,16 @@
             <div class="appointment-card__meta">
               <span>{{ appointment.scheduledAt | date: 'dd/MM/yyyy' }}</span>
               <span>{{ appointment.scheduledAt | date: 'HH:mm' }}</span>
-              <span>{{ appointment.estimatedDurationMinutesSnapshot }} min</span>
-              <span>{{ appointment.servicePriceSnapshot | currency: 'BRL' }}</span>
+              <span>{{ appointment.estimatedDurationMinutesSnapshot | estimatedDuration }}</span>
+              <span>{{ appointment.servicePriceSnapshot | priceFrom }}</span>
             </div>
 
             <div class="appointment-card__actions">
-              <a class="secondary-button compact-button" [routerLink]="['/appointments', appointment.id]">Ver detalhes</a>
+              <a
+                class="secondary-button compact-button"
+                [routerLink]="['/appointments', appointment.id]"
+                >Ver detalhes</a
+              >
               @for (action of actionsFor(appointment.status); track action.status) {
                 <button
                   type="button"

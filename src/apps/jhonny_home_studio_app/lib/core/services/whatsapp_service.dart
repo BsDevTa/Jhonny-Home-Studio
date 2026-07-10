@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 
 import '../utils/appointment_status_helper.dart';
+import '../utils/service_presentation_formatter.dart';
 import '../utils/whatsapp_helper.dart';
 
 class WhatsAppServiceResult {
@@ -64,10 +65,7 @@ class WhatsAppService {
     final time = scheduledAt == null
         ? 'Não informado'
         : DateFormat('HH:mm').format(scheduledAt.toLocal());
-    final value = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$',
-    ).format(servicePrice);
+    final value = ServicePresentationFormatter.priceFrom(servicePrice);
     final name = customerName.trim().isEmpty ? 'cliente' : customerName.trim();
     final service = serviceName.trim().isEmpty
         ? 'Serviço não informado'

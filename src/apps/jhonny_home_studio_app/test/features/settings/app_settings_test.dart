@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jhonny_home_studio_app/core/config/api_config.dart';
 import 'package:jhonny_home_studio_app/core/constants/app_texts.dart';
 import 'package:jhonny_home_studio_app/features/settings/data/app_settings_model.dart';
 import 'package:jhonny_home_studio_app/features/settings/presentation/app_settings_provider.dart';
@@ -18,7 +19,7 @@ void main() {
       'logoUrl': '/uploads/logo.png',
     });
 
-    expect(settings.logoUrl, 'http://localhost:5299/uploads/logo.png');
+    expect(settings.logoUrl, '${ApiConfig.apiOrigin}/uploads/logo.png');
   });
 
   test('mantém fallback local quando carregamento remoto falha', () async {

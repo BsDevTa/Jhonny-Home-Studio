@@ -27,19 +27,30 @@ void main() {
     );
   });
 
-  test('usa mediaUrl quando imageUrl não vem no payload', () {
+  test('usa mediaUrl como fallback quando imageUrl não vem no payload', () {
     final story = StoryModel.fromJson({
       'id': 'story-2b',
       'title': 'Destaque',
       'mediaUrl': '/uploads/stories/story.webp',
     });
 
-    expect(story.imageUrl, isEmpty);
+    expect(story.imageUrl, '${ApiConfig.apiOrigin}/uploads/stories/story.webp');
     expect(story.mediaUrl, '${ApiConfig.apiOrigin}/uploads/stories/story.webp');
     expect(
       story.visualUrl,
       '${ApiConfig.apiOrigin}/uploads/stories/story.webp',
     );
+  });
+
+  test('aceita PascalCase e url legado como fallback de mídia', () {
+    final story = StoryModel.fromJson({
+      'id': 'story-2c',
+      'title': 'Destaque',
+      'ImageUrl': '',
+      'url': '/uploads/stories/story.jpeg',
+    });
+
+    expect(story.imageUrl, '${ApiConfig.apiOrigin}/uploads/stories/story.jpeg');
   });
 
   test('mantém placeholder disponível quando story não possui imagem', () {

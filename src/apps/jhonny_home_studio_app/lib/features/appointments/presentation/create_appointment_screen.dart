@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/utils/service_presentation_formatter.dart';
 import '../../../core/utils/whatsapp_helper.dart';
 import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_empty_state.dart';
@@ -39,7 +40,6 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
   late final AddressesApi _addressesApi;
 
   final _dateFormat = DateFormat('dd/MM/yyyy');
-  final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
   List<ServiceModel> _services = const [];
   List<AddressModel> _addresses = const [];
@@ -307,8 +307,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
 Olá! Gostaria de confirmar meu agendamento:
 ✂️ Serviço: ${service.name}
 📅 Data: ${_dateFormat.format(date)} às ${DateFormat('HH:mm').format(slot!.startAt!)}
-⏱️ Duração: ${service.estimatedDurationMinutes} min
-💰 Valor: ${_currencyFormat.format(service.price)}''';
+⏱️ Tempo estimado: ${ServicePresentationFormatter.estimatedDuration(service.estimatedDurationMinutes)}
+💰 Valor a partir de: ${ServicePresentationFormatter.priceFrom(service.price)}''';
 
     return openWhatsApp(phoneNumber: settings.whatsAppNumber, message: message);
   }
@@ -420,7 +420,7 @@ Olá! Gostaria de confirmar meu agendamento:
                               if (_selectedService != null) ...[
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${_currencyFormat.format(_selectedService!.price)} • ${_selectedService!.estimatedDurationMinutes} min',
+                                  '${ServicePresentationFormatter.priceFrom(_selectedService!.price)} • ${ServicePresentationFormatter.estimatedDuration(_selectedService!.estimatedDurationMinutes)}',
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 12,
@@ -617,7 +617,6 @@ Olá! Gostaria de confirmar meu agendamento:
                                   address: _selectedAddress,
                                   date: _selectedDate,
                                   slot: _selectedSlot,
-                                  currencyFormat: _currencyFormat,
                                   dateFormat: _dateFormat,
                                 ),
                               ),
@@ -907,7 +906,6 @@ class _ConfirmationSummary extends StatelessWidget {
     required this.address,
     required this.date,
     required this.slot,
-    required this.currencyFormat,
     required this.dateFormat,
   });
 
@@ -915,7 +913,6 @@ class _ConfirmationSummary extends StatelessWidget {
   final AddressModel? address;
   final DateTime? date;
   final AvailableSlotModel? slot;
-  final NumberFormat currencyFormat;
   final DateFormat dateFormat;
 
   @override
@@ -923,10 +920,12 @@ class _ConfirmationSummary extends StatelessWidget {
     final serviceName = service?.name ?? 'Selecione um serviço';
     final servicePrice = service == null
         ? '—'
-        : currencyFormat.format(service!.price);
+        : ServicePresentationFormatter.priceFrom(service!.price);
     final serviceDuration = service == null
         ? '—'
-        : '${service!.estimatedDurationMinutes} min';
+        : ServicePresentationFormatter.estimatedDuration(
+            service!.estimatedDurationMinutes,
+          );
     final addressText = address?.fullAddress ?? 'Selecione um endereço';
     final dateText = date == null
         ? 'Selecione uma data'
@@ -958,11 +957,17 @@ class _ConfirmationSummary extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _SummaryPill(label: 'Preço', value: servicePrice),
+                child: _SummaryPill(
+                  label: 'Preço a partir de',
+                  value: servicePrice,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _SummaryPill(label: 'Duração', value: serviceDuration),
+                child: _SummaryPill(
+                  label: 'Tempo estimado',
+                  value: serviceDuration,
+                ),
               ),
             ],
           ),

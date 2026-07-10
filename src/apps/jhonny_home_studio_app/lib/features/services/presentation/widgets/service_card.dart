@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/utils/service_presentation_formatter.dart';
 import '../../data/service_models.dart';
 import '../../../../../shared/widgets/premium_card.dart';
 
 class ServiceCard extends StatelessWidget {
-  ServiceCard({
+  const ServiceCard({
     super.key,
     required this.service,
     required this.onDetailsPressed,
-  }) : _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+  });
 
   final ServiceModel service;
   final VoidCallback onDetailsPressed;
-  final NumberFormat _currencyFormat;
 
   @override
   Widget build(BuildContext context) {
@@ -80,17 +79,19 @@ class ServiceCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            service.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              height: 1.35,
-              fontSize: 13,
+          if (service.description.trim().isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              service.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                height: 1.35,
+                fontSize: 13,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -98,11 +99,13 @@ class ServiceCard extends StatelessWidget {
             children: [
               _InfoPill(
                 icon: Icons.payments_outlined,
-                label: _currencyFormat.format(service.price),
+                label: ServicePresentationFormatter.priceFrom(service.price),
               ),
               _InfoPill(
                 icon: Icons.schedule_outlined,
-                label: '${service.estimatedDurationMinutes} min',
+                label: ServicePresentationFormatter.estimatedDuration(
+                  service.estimatedDurationMinutes,
+                ),
               ),
             ],
           ),

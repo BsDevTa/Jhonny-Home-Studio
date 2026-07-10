@@ -4,6 +4,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/routes/app_routes.dart';
+import '../../../core/utils/media_url_resolver.dart';
 import '../data/story_model.dart';
 
 class StoryViewerScreen extends StatelessWidget {
@@ -120,14 +121,18 @@ class _StoryBackdropState extends State<_StoryBackdrop> {
   void initState() {
     super.initState();
     if (widget.story.isVideo && widget.story.hasMedia) {
-      _controller =
-          VideoPlayerController.networkUrl(Uri.parse(widget.story.mediaUrl))
-            ..setLooping(true)
-            ..initialize().then((_) {
-              if (!mounted) return;
-              _controller?.play();
-              setState(() {});
-            });
+      final mediaUrl = resolveMediaUrl(widget.story.mediaUrl);
+      debugPrint('Story viewer resolvedUrl: $mediaUrl');
+      if (mediaUrl.isEmpty) {
+        return;
+      }
+      _controller = VideoPlayerController.networkUrl(Uri.parse(mediaUrl))
+        ..setLooping(true)
+        ..initialize().then((_) {
+          if (!mounted) return;
+          _controller?.play();
+          setState(() {});
+        });
     }
   }
 
@@ -152,7 +157,8 @@ class _StoryBackdropState extends State<_StoryBackdrop> {
       );
     }
 
-    final imageUrl = widget.story.visualUrl.trim();
+    final imageUrl = resolveMediaUrl(widget.story.visualUrl);
+    debugPrint('Story viewer resolvedUrl: $imageUrl');
     if (imageUrl.isEmpty) {
       return const _StoryVisualPlaceholder();
     }
@@ -160,10 +166,15 @@ class _StoryBackdropState extends State<_StoryBackdrop> {
     return Image.network(
       imageUrl,
       fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return const _StoryVisualPlaceholder();
+      },
       errorBuilder: (context, error, stackTrace) {
-        debugPrint(
-          'Erro ao carregar story ${widget.story.id} em $imageUrl: $error',
-        );
+        debugPrint('Erro ao carregar imagem do Story: $imageUrl | $error');
         return const _StoryVisualPlaceholder();
       },
     );

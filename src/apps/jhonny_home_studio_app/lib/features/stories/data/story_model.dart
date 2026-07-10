@@ -1,4 +1,4 @@
-import '../../../core/config/api_config.dart';
+import '../../../core/utils/media_url_resolver.dart';
 
 class StoryModel {
   StoryModel({
@@ -30,16 +30,29 @@ class StoryModel {
   String get visualUrl => hasImage ? imageUrl : mediaUrl;
 
   factory StoryModel.fromJson(Map<String, dynamic> json) {
+    final imageUrl = readMediaUrl(json, const [
+      'imageUrl',
+      'ImageUrl',
+      'mediaUrl',
+      'MediaUrl',
+      'url',
+      'fileUrl',
+    ]);
+    final mediaUrl = readMediaUrl(json, const [
+      'mediaUrl',
+      'MediaUrl',
+      'imageUrl',
+      'ImageUrl',
+      'url',
+      'fileUrl',
+    ]);
+
     return StoryModel(
       id: _readString(json, 'id'),
       title: _readString(json, 'title'),
       subtitle: _readString(json, 'subtitle'),
-      imageUrl: _resolveMediaUrl(_readString(json, 'imageUrl')),
-      mediaUrl: _resolveMediaUrl(
-        _readString(json, 'mediaUrl').isEmpty
-            ? _readString(json, 'imageUrl')
-            : _readString(json, 'mediaUrl'),
-      ),
+      imageUrl: imageUrl,
+      mediaUrl: mediaUrl,
       mediaType: _readMediaType(json),
       serviceId: _readString(json, 'serviceId'),
       serviceName: _readString(json, 'serviceName'),
@@ -59,25 +72,6 @@ String _readMediaType(Map<String, dynamic> json) {
   return RegExp(r'\.(mp4|mov|webm)(\?|$)', caseSensitive: false).hasMatch(url)
       ? 'Video'
       : 'Image';
-}
-
-String _resolveMediaUrl(String value) {
-  final imageUrl = value.trim();
-  if (imageUrl.isEmpty) {
-    return imageUrl;
-  }
-
-  final parsed = Uri.tryParse(imageUrl);
-  if (parsed?.scheme == 'http') {
-    return parsed!.replace(scheme: 'https').toString();
-  }
-
-  if (parsed?.hasScheme == true) {
-    return imageUrl;
-  }
-
-  final path = imageUrl.startsWith('/') ? imageUrl : '/$imageUrl';
-  return '${ApiConfig.apiOrigin}$path';
 }
 
 String _readString(Map<String, dynamic> json, String key) {

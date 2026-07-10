@@ -1,3 +1,6 @@
+import '../../../core/utils/media_url_resolver.dart';
+import '../../../core/utils/service_presentation_formatter.dart';
+
 class ServiceCategoryModel {
   ServiceCategoryModel({
     required this.id,
@@ -15,7 +18,9 @@ class ServiceCategoryModel {
     return ServiceCategoryModel(
       id: _readString(json, 'id'),
       name: _readString(json, 'name'),
-      description: _readString(json, 'description'),
+      description: ServicePresentationFormatter.sanitizeNullableText(
+        _readString(json, 'description'),
+      ),
       isActive: _readBool(json, 'isActive', defaultValue: true),
     );
   }
@@ -65,7 +70,7 @@ class ServiceModel {
       description: _readString(json, 'description'),
       price: _readDouble(json, 'price'),
       estimatedDurationMinutes: _readInt(json, 'estimatedDurationMinutes'),
-      imageUrl: _readString(json, 'imageUrl'),
+      imageUrl: resolveMediaUrl(_readString(json, 'imageUrl')),
       isActive: _readBool(json, 'isActive', defaultValue: true),
     );
   }
@@ -79,13 +84,17 @@ String _readString(
 }) {
   final directValue = json[key];
   if (directValue != null && directValue.toString().isNotEmpty) {
-    return directValue.toString();
+    return ServicePresentationFormatter.sanitizeNullableText(
+      directValue.toString(),
+    );
   }
 
   if (fallback != null) {
     final candidate = fallback[fallbackKey ?? key];
     if (candidate != null && candidate.toString().isNotEmpty) {
-      return candidate.toString();
+      return ServicePresentationFormatter.sanitizeNullableText(
+        candidate.toString(),
+      );
     }
   }
 

@@ -29,19 +29,24 @@ public sealed class StoriesController : ControllerBase
     };
 
     private readonly IStoryService _storyService;
-    private readonly IWebHostEnvironment _environment;
+    private readonly IFileStorageService _fileStorage;
+    private readonly ILogger<StoriesController> _logger;
 
-    public StoriesController(IStoryService storyService, IWebHostEnvironment environment)
+    public StoriesController(
+        IStoryService storyService,
+        IFileStorageService fileStorage,
+        ILogger<StoriesController> logger)
     {
         _storyService = storyService;
-        _environment = environment;
+        _fileStorage = fileStorage;
+        _logger = logger;
     }
 
     [HttpGet("active")]
     public async Task<IActionResult> GetActive()
     {
         var response = await _storyService.GetActiveAsync();
-        return Ok(ApiResponse<IEnumerable<StoryResponse>>.SuccessResponse("Stories ativos localizados com sucesso.", response));
+        return Ok(ApiResponse<IEnumerable<StoryResponse>>.SuccessResponse("Stories ativos localizados com sucesso.", NormalizeStories(response)));
     }
 
     [HttpGet("{id:guid}")]
@@ -53,7 +58,7 @@ public sealed class StoriesController : ControllerBase
             return NotFound(ApiResponse<object>.FailureResponse("Story não encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
-        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story localizado com sucesso.", response));
+        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story localizado com sucesso.", NormalizeStory(response)));
     }
 
     [HttpGet("/api/admin/stories")]
@@ -61,7 +66,7 @@ public sealed class StoriesController : ControllerBase
     public async Task<IActionResult> GetAllAdmin()
     {
         var response = await _storyService.GetAllAsync();
-        return Ok(ApiResponse<IEnumerable<StoryResponse>>.SuccessResponse("Stories localizados com sucesso.", response));
+        return Ok(ApiResponse<IEnumerable<StoryResponse>>.SuccessResponse("Stories localizados com sucesso.", NormalizeStories(response)));
     }
 
     [HttpGet("/api/admin/stories/{id:guid}")]
@@ -74,7 +79,7 @@ public sealed class StoriesController : ControllerBase
             return NotFound(ApiResponse<object>.FailureResponse("Story não encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
-        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story localizado com sucesso.", response));
+        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story localizado com sucesso.", NormalizeStory(response)));
     }
 
     [HttpPost("/api/admin/stories/upload-image")]
@@ -97,25 +102,26 @@ public sealed class StoriesController : ControllerBase
             throw new ValidationAppException("Formato de imagem não permitido.");
         }
 
-        var webRootPath = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-        var storiesPath = Path.Combine(webRootPath, "uploads", "stories");
-        Directory.CreateDirectory(storiesPath);
-
-        var fileName = $"story_{Guid.NewGuid():N}{extension}";
-        var destinationPath = Path.Combine(storiesPath, fileName);
-
         try
         {
-            await using var destination = System.IO.File.Create(destinationPath);
-            await file.CopyToAsync(destination);
+            await using var stream = file.OpenReadStream();
+            var storedFile = await _fileStorage.SaveAsync(
+                stream,
+                file.FileName,
+                file.ContentType,
+                "uploads/stories",
+                "story",
+                GetPublicOrigin());
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                "Imagem enviada com sucesso.",
+                BuildUploadResponse(storedFile, "Image")));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            _logger.LogError(exception, "Falha ao salvar imagem do story. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
             throw new ValidationAppException("Não foi possível enviar a imagem.");
         }
-
-        var imageUrl = $"{Request.Scheme}://{Request.Host}/uploads/stories/{fileName}";
-        return Ok(ApiResponse<object>.SuccessResponse("Imagem enviada com sucesso.", new { imageUrl }));
     }
 
     [HttpPost("/api/admin/stories/upload-media")]
@@ -140,26 +146,27 @@ public sealed class StoriesController : ControllerBase
             throw new ValidationAppException("Formato de mídia não permitido.");
         }
 
-        var webRootPath = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
-        var storiesPath = Path.Combine(webRootPath, "uploads", "stories");
-        Directory.CreateDirectory(storiesPath);
-
-        var fileName = $"story_{Guid.NewGuid():N}{extension}";
-        var destinationPath = Path.Combine(storiesPath, fileName);
-
         try
         {
-            await using var destination = System.IO.File.Create(destinationPath);
-            await file.CopyToAsync(destination);
+            await using var stream = file.OpenReadStream();
+            var storedFile = await _fileStorage.SaveAsync(
+                stream,
+                file.FileName,
+                file.ContentType,
+                "uploads/stories",
+                "story",
+                GetPublicOrigin());
+
+            var mediaType = isVideo ? "Video" : "Image";
+            return Ok(ApiResponse<object>.SuccessResponse(
+                "Mídia enviada com sucesso.",
+                BuildUploadResponse(storedFile, mediaType)));
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            _logger.LogError(exception, "Falha ao salvar mídia do story. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
             throw new ValidationAppException("Não foi possível enviar a mídia.");
         }
-
-        var mediaUrl = $"{Request.Scheme}://{Request.Host}/uploads/stories/{fileName}";
-        var mediaType = isVideo ? "Video" : "Image";
-        return Ok(ApiResponse<object>.SuccessResponse("Mídia enviada com sucesso.", new { mediaUrl, mediaType, imageUrl = mediaUrl }));
     }
 
     [HttpPost("/api/admin/stories")]
@@ -168,7 +175,7 @@ public sealed class StoriesController : ControllerBase
     {
         var adminUserId = User.GetUserIdOrThrow();
         var response = await _storyService.CreateAsync(adminUserId, request);
-        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story criado com sucesso.", response));
+        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story criado com sucesso.", NormalizeStory(response)));
     }
 
     [HttpPut("/api/admin/stories/{id:guid}")]
@@ -176,7 +183,7 @@ public sealed class StoriesController : ControllerBase
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStoryRequest request)
     {
         var response = await _storyService.UpdateAsync(id, request);
-        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story atualizado com sucesso.", response));
+        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Story atualizado com sucesso.", NormalizeStory(response)));
     }
 
     [HttpPatch("/api/admin/stories/{id:guid}/toggle-active")]
@@ -189,7 +196,7 @@ public sealed class StoriesController : ControllerBase
             return NotFound(ApiResponse<object>.FailureResponse("Story não encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
-        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Status do story atualizado com sucesso.", response));
+        return Ok(ApiResponse<StoryResponse>.SuccessResponse("Status do story atualizado com sucesso.", NormalizeStory(response)));
     }
 
     [HttpDelete("/api/admin/stories/{id:guid}")]
@@ -203,5 +210,50 @@ public sealed class StoriesController : ControllerBase
         }
 
         return Ok(ApiResponse<object>.SuccessResponse("Story removido com sucesso.", new { id }));
+    }
+
+    private Uri GetPublicOrigin()
+    {
+        return new Uri($"{Request.Scheme}://{Request.Host}");
+    }
+
+    private IEnumerable<StoryResponse> NormalizeStories(IEnumerable<StoryResponse> stories)
+    {
+        return stories.Select(NormalizeStory).ToArray();
+    }
+
+    private StoryResponse NormalizeStory(StoryResponse story)
+    {
+        story.ImageUrl = ResolveUrl(story.ImageUrl);
+        return story;
+    }
+
+    private string? ResolveUrl(string? value)
+    {
+        var url = value?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(url) || Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            return value;
+        }
+
+        var path = url.StartsWith('/') ? url : $"/{url}";
+        return new Uri(GetPublicOrigin(), path).ToString();
+    }
+
+    private static object BuildUploadResponse(StoredFileResponse storedFile, string mediaType)
+    {
+        return new
+        {
+            success = storedFile.Exists,
+            url = storedFile.PublicUrl,
+            imageUrl = storedFile.PublicUrl,
+            mediaUrl = storedFile.PublicUrl,
+            relativePath = storedFile.RelativePath,
+            fileName = storedFile.FileName,
+            contentType = storedFile.ContentType,
+            sizeBytes = storedFile.SizeBytes,
+            mediaType,
+            storageProvider = storedFile.StorageProvider
+        };
     }
 }

@@ -12,6 +12,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/whatsapp_service.dart';
 import '../../../core/utils/appointment_status_helper.dart';
+import '../../../core/utils/service_presentation_formatter.dart';
 import '../../../shared/responsive/app_breakpoints.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../../settings/presentation/app_settings_provider.dart';
@@ -227,7 +228,7 @@ class _ItemCard extends StatelessWidget {
   String get subtitle => switch (type) {
     AdminListType.categories => _text(item, 'description'),
     AdminListType.services =>
-      '${_text(item, 'serviceCategoryName')} · R\$ ${_text(item, 'price')}',
+      '${_text(item, 'serviceCategoryName')} · ${ServicePresentationFormatter.priceFrom(num.tryParse(_text(item, 'price')) ?? 0)}',
     AdminListType.appointments =>
       '${_date(item['scheduledAt'])} · ${_statusLabel(_text(item, 'status'))}',
     AdminListType.customers =>
@@ -433,7 +434,9 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
     if (widget.id != null) {
       final x = await api.getService(widget.id!);
       name.text = _text(x, 'name');
-      description.text = _text(x, 'description');
+      description.text = ServicePresentationFormatter.sanitizeNullableText(
+        _text(x, 'description'),
+      );
       price.text = _text(x, 'price');
       duration.text = _text(x, 'estimatedDurationMinutes');
       imageUrl.text = _text(x, 'imageUrl');
@@ -458,11 +461,13 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
     title: widget.id == null ? 'Novo serviço' : 'Editar serviço',
     saving: saving,
     onSave: () async {
+      final sanitizedDescription =
+          ServicePresentationFormatter.sanitizeNullableText(description.text);
       setState(() => saving = true);
       await _api(context).saveService(widget.id, {
         'serviceCategoryId': categoryId,
         'name': name.text,
-        'description': description.text,
+        'description': sanitizedDescription,
         'price': double.tryParse(price.text.replaceAll(',', '.')) ?? 0,
         'estimatedDurationMinutes': int.tryParse(duration.text) ?? 0,
         'imageUrl': imageUrl.text,
@@ -500,13 +505,17 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       TextField(
         controller: price,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'Preço'),
+        decoration: const InputDecoration(labelText: 'Preço a partir de'),
       ),
       const SizedBox(height: 12),
       TextField(
         controller: duration,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'Duração em minutos'),
+        decoration: const InputDecoration(
+          labelText: 'Tempo estimado em minutos',
+          helperText:
+              'Informe em minutos. O cliente visualizará como estimativa em horas.',
+        ),
       ),
       const SizedBox(height: 12),
       TextField(
@@ -628,11 +637,18 @@ class _AdminAppointmentDetailScreenState
                     ),
                     _Info(
                       'Preço',
-                      'R\$ ${_text(item, 'servicePriceSnapshot')}',
+                      ServicePresentationFormatter.priceFrom(
+                        num.tryParse(_text(item, 'servicePriceSnapshot')) ?? 0,
+                      ),
                     ),
                     _Info(
-                      'Duração',
-                      '${_text(item, 'estimatedDurationMinutesSnapshot')} min',
+                      'Tempo estimado',
+                      ServicePresentationFormatter.estimatedDuration(
+                        int.tryParse(
+                              _text(item, 'estimatedDurationMinutesSnapshot'),
+                            ) ??
+                            0,
+                      ),
                     ),
                     _Info('Observação', _text(item, 'customerNotes')),
                   ],
@@ -806,10 +822,20 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
     setState(() => uploading = true);
     try {
       final bytes = await file.readAsBytes();
+      debugPrint('Arquivo selecionado: ${file.name}');
+      debugPrint('Preview local: bytes=${bytes.length}');
       final result = await api.uploadStoryMedia(bytes, fileName: file.name);
+      final uploadedUrl = readUploadUrl(result);
+      debugPrint('URL definitiva recebida: $uploadedUrl');
+      if (uploadedUrl.isEmpty) {
+        throw ApiException(
+          message: 'Upload concluído, mas a API não retornou a URL da mídia.',
+        );
+      }
+
       if (!mounted) return;
       setState(() {
-        mediaUrl.text = _text(result, 'mediaUrl');
+        mediaUrl.text = uploadedUrl;
         mediaPreviewBytes = bytes;
         mediaPreviewName = file.name;
         mediaPreviewIsVideo = video;
@@ -838,16 +864,34 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
     title: widget.id == null ? 'Novo story' : 'Editar story',
     saving: saving,
     onSave: () async {
+      final uploadedUrl = mediaUrl.text.trim();
+      if (uploadedUrl.startsWith('blob:')) {
+        _showMessage(
+          'A URL temporária de prévia não pode ser salva. Aguarde o upload concluir.',
+        );
+        return;
+      }
+
+      if (mediaPreviewName.isNotEmpty && uploadedUrl.isEmpty) {
+        _showMessage(
+          'A mídia foi selecionada, mas a URL do upload está vazia.',
+        );
+        return;
+      }
+
+      final payload = {
+        'title': title.text,
+        'subtitle': subtitle.text,
+        'imageUrl': uploadedUrl,
+        'serviceId': serviceId.isEmpty ? null : serviceId,
+        'displayOrder': int.tryParse(order.text) ?? 0,
+        'isActive': active,
+      };
+      debugPrint('Payload Story: $payload');
+
       setState(() => saving = true);
       try {
-        await _api(context).saveStory(widget.id, {
-          'title': title.text,
-          'subtitle': subtitle.text,
-          'imageUrl': mediaUrl.text,
-          'serviceId': serviceId.isEmpty ? null : serviceId,
-          'displayOrder': int.tryParse(order.text) ?? 0,
-          'isActive': active,
-        });
+        await _api(context).saveStory(widget.id, payload);
         if (mounted) this.context.pop();
       } catch (error) {
         if (!mounted) return;
@@ -1547,7 +1591,9 @@ class _AdminNavigationPanel extends StatelessWidget {
                   icon: Icons.spa_outlined,
                   title: 'Servicos',
                   path: '${AppRoutes.adminMobile}/services',
-                  selected: path.startsWith('${AppRoutes.adminMobile}/services'),
+                  selected: path.startsWith(
+                    '${AppRoutes.adminMobile}/services',
+                  ),
                   closeOnTap: false,
                 ),
                 _AdminDrawerItem(
@@ -1593,7 +1639,9 @@ class _AdminNavigationPanel extends StatelessWidget {
                   icon: Icons.settings_outlined,
                   title: 'Configuracoes',
                   path: '${AppRoutes.adminMobile}/settings',
-                  selected: path.startsWith('${AppRoutes.adminMobile}/settings'),
+                  selected: path.startsWith(
+                    '${AppRoutes.adminMobile}/settings',
+                  ),
                   closeOnTap: false,
                 ),
               ],
@@ -1691,13 +1739,15 @@ class _AdminTopBar extends StatelessWidget {
             ),
           ),
           OutlinedButton.icon(
-            onPressed: () => context.go('${AppRoutes.adminMobile}/appointments'),
+            onPressed: () =>
+                context.go('${AppRoutes.adminMobile}/appointments'),
             icon: const Icon(Icons.calendar_month_outlined, size: 18),
             label: const Text('Agenda'),
           ),
           const SizedBox(width: 10),
           FilledButton.icon(
-            onPressed: () => context.go('${AppRoutes.adminMobile}/services/new'),
+            onPressed: () =>
+                context.go('${AppRoutes.adminMobile}/services/new'),
             icon: const Icon(Icons.add_rounded, size: 18),
             label: const Text('Novo servico'),
           ),

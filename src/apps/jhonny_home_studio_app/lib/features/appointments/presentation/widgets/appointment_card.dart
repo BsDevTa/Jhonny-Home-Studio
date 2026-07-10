@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/service_presentation_formatter.dart';
 import '../../data/appointment_models.dart';
 import '../../../../shared/widgets/premium_card.dart';
 import '../../../../shared/widgets/premium_status_badge.dart';
@@ -12,14 +13,12 @@ class AppointmentCard extends StatelessWidget {
     required this.appointment,
     required this.onDetails,
     this.onCancel,
-  }) : _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$'),
-       _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
+  }) : _dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
   final AppointmentListModel appointment;
   final VoidCallback onDetails;
   final VoidCallback? onCancel;
 
-  final NumberFormat _currencyFormat;
   final DateFormat _dateFormat;
 
   @override
@@ -60,10 +59,14 @@ class AppointmentCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _InfoTag(
-                label: _currencyFormat.format(appointment.servicePriceSnapshot),
+                label: ServicePresentationFormatter.priceFrom(
+                  appointment.servicePriceSnapshot,
+                ),
               ),
               _InfoTag(
-                label: '${appointment.estimatedDurationMinutesSnapshot} min',
+                label: ServicePresentationFormatter.estimatedDuration(
+                  appointment.estimatedDurationMinutesSnapshot,
+                ),
               ),
             ],
           ),

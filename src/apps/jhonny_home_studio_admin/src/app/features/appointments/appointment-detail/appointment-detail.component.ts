@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -8,20 +8,30 @@ import {
   appointmentStatusOptions,
   AppointmentStatusAction,
   getAppointmentStatusLabel,
-  getAppointmentStatusActions
+  getAppointmentStatusActions,
 } from '../../../core/models/appointment.model';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { WhatsAppService } from '../../../core/services/whatsapp.service';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { EstimatedDurationPipe } from '../../../shared/pipes/estimated-duration.pipe';
+import { PriceFromPipe } from '../../../shared/pipes/price-from.pipe';
 import { AppointmentStatusBadgeComponent } from '../widgets/appointment-status-badge/appointment-status-badge.component';
 
 @Component({
   selector: 'app-appointment-detail',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, FormsModule, RouterLink, LoadingComponent, AppointmentStatusBadgeComponent],
+  imports: [
+    DatePipe,
+    FormsModule,
+    RouterLink,
+    LoadingComponent,
+    EstimatedDurationPipe,
+    PriceFromPipe,
+    AppointmentStatusBadgeComponent,
+  ],
   templateUrl: './appointment-detail.component.html',
-  styleUrl: './appointment-detail.component.scss'
+  styleUrl: './appointment-detail.component.scss',
 })
 export class AppointmentDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -39,7 +49,7 @@ export class AppointmentDetailComponent implements OnInit {
   constructor(
     private readonly appointmentService: AppointmentService,
     private readonly settingsService: SettingsService,
-    private readonly whatsAppService: WhatsAppService
+    private readonly whatsAppService: WhatsAppService,
   ) {}
 
   ngOnInit(): void {
@@ -59,7 +69,7 @@ export class AppointmentDetailComponent implements OnInit {
       error: (error: Error) => {
         this.error.set(error.message);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -96,7 +106,7 @@ export class AppointmentDetailComponent implements OnInit {
       error: (error: Error) => {
         this.error.set(error.message);
         this.saving.set(false);
-      }
+      },
     });
   }
 
@@ -121,7 +131,7 @@ export class AppointmentDetailComponent implements OnInit {
           serviceName: appointment.serviceName,
           scheduledAt: appointment.scheduledAt,
           servicePrice: appointment.servicePriceSnapshot,
-          status: statusToSend
+          status: statusToSend,
         });
 
         if (!opened) {
@@ -132,7 +142,7 @@ export class AppointmentDetailComponent implements OnInit {
         this.lastWhatsAppStatus.set(statusToSend);
         this.successMessage.set('');
       },
-      error: (error: Error) => this.error.set(error.message)
+      error: (error: Error) => this.error.set(error.message),
     });
   }
 

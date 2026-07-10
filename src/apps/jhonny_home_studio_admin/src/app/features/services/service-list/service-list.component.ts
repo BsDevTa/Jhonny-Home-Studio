@@ -1,4 +1,3 @@
-import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -7,14 +6,24 @@ import { ServiceService } from '../../../core/services/service.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
+import { EstimatedDurationPipe } from '../../../shared/pipes/estimated-duration.pipe';
+import { PriceFromPipe } from '../../../shared/pipes/price-from.pipe';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-service-list',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink, ConfirmDialogComponent, EmptyStateComponent, LoadingComponent, StatusBadgeComponent],
+  imports: [
+    RouterLink,
+    ConfirmDialogComponent,
+    EmptyStateComponent,
+    LoadingComponent,
+    EstimatedDurationPipe,
+    PriceFromPipe,
+    StatusBadgeComponent,
+  ],
   templateUrl: './service-list.component.html',
-  styleUrl: './service-list.component.scss'
+  styleUrl: './service-list.component.scss',
 })
 export class ServiceListComponent implements OnInit {
   readonly services = signal<StudioService[]>([]);
@@ -40,7 +49,7 @@ export class ServiceListComponent implements OnInit {
       error: (error: Error) => {
         this.error.set(error.message);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -52,7 +61,7 @@ export class ServiceListComponent implements OnInit {
 
     request.subscribe({
       next: () => this.load(),
-      error: (error: Error) => this.error.set(error.message)
+      error: (error: Error) => this.error.set(error.message),
     });
   }
 
@@ -70,7 +79,7 @@ export class ServiceListComponent implements OnInit {
       error: (error: Error) => {
         this.serviceToDelete.set(null);
         this.error.set(error.message);
-      }
+      },
     });
   }
 }

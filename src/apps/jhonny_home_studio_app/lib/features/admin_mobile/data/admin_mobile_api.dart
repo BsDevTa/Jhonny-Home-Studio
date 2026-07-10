@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../core/config/api_config.dart';
@@ -87,7 +87,10 @@ class AdminMobileApi {
       bytes: bytes,
       fileName: fileName,
     );
-    return _asMap(response['data']);
+    debugPrint('Resposta completa upload-media: $response');
+    final normalized = _normalizeUploadResponse(_asMap(response['data']));
+    debugPrint('URL definitiva recebida: ${readUploadUrl(normalized)}');
+    return normalized;
   }
 
   Future<Map<String, dynamic>> getSettings() => _getObject('/admin/settings');
@@ -226,13 +229,30 @@ dynamic _decodeBody(String body) {
 
 Map<String, dynamic> _normalizeUploadResponse(Map<String, dynamic> value) {
   final normalized = Map<String, dynamic>.from(value);
-  for (final key in ['imageUrl', 'mediaUrl', 'url']) {
+  final uploadedUrl = readUploadUrl(normalized);
+  if (uploadedUrl.isNotEmpty) {
+    normalized['imageUrl'] = uploadedUrl;
+    normalized['mediaUrl'] = uploadedUrl;
+  }
+
+  for (final key in ['imageUrl', 'mediaUrl', 'url', 'fileUrl']) {
     final raw = normalized[key];
     if (raw is String && raw.isNotEmpty) {
       normalized[key] = _ensureHttps(raw);
     }
   }
   return normalized;
+}
+
+String readUploadUrl(Map<String, dynamic> value) {
+  for (final key in const ['imageUrl', 'mediaUrl', 'url', 'fileUrl']) {
+    final raw = value[key]?.toString().trim() ?? '';
+    if (raw.isNotEmpty) {
+      return _ensureHttps(raw);
+    }
+  }
+
+  return '';
 }
 
 String _ensureHttps(String value) {

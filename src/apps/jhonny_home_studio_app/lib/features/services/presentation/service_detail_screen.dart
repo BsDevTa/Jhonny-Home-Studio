@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/utils/service_presentation_formatter.dart';
 import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_empty_state.dart';
@@ -24,7 +24,6 @@ class ServiceDetailScreen extends StatefulWidget {
 
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   late final ServicesApi _servicesApi;
-  final _currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
   ServiceModel? _service;
   bool _isLoading = true;
@@ -187,46 +186,51 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                   children: [
                                     _MetaChip(
                                       icon: Icons.payments_outlined,
-                                      label: _currencyFormat.format(
-                                        _service!.price,
-                                      ),
+                                      label:
+                                          ServicePresentationFormatter.priceFrom(
+                                            _service!.price,
+                                          ),
                                     ),
                                     _MetaChip(
                                       icon: Icons.schedule_outlined,
                                       label:
-                                          '${_service!.estimatedDurationMinutes} min',
+                                          ServicePresentationFormatter.estimatedDuration(
+                                            _service!.estimatedDurationMinutes,
+                                          ),
                                     ),
                                   ],
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          PremiumCard(
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Descrição',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
+                          if (_service!.description.trim().isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            PremiumCard(
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Descrição',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _service!.description,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    height: 1.45,
-                                    fontSize: 13,
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    _service!.description,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      height: 1.45,
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                           const SizedBox(height: 12),
                           LayoutBuilder(
                             builder: (context, constraints) {
@@ -236,18 +240,22 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                   children: [
                                     Expanded(
                                       child: _InfoTile(
-                                        label: 'Preço',
-                                        value: _currencyFormat.format(
-                                          _service!.price,
-                                        ),
+                                        label: 'Preço a partir de',
+                                        value:
+                                            ServicePresentationFormatter.priceFrom(
+                                              _service!.price,
+                                            ),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: _InfoTile(
-                                        label: 'Duração',
+                                        label: 'Tempo estimado',
                                         value:
-                                            '${_service!.estimatedDurationMinutes} min',
+                                            ServicePresentationFormatter.estimatedDuration(
+                                              _service!
+                                                  .estimatedDurationMinutes,
+                                            ),
                                       ),
                                     ),
                                   ],
@@ -257,16 +265,19 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                               return Column(
                                 children: [
                                   _InfoTile(
-                                    label: 'Preço',
-                                    value: _currencyFormat.format(
-                                      _service!.price,
-                                    ),
+                                    label: 'Preço a partir de',
+                                    value:
+                                        ServicePresentationFormatter.priceFrom(
+                                          _service!.price,
+                                        ),
                                   ),
                                   const SizedBox(height: 10),
                                   _InfoTile(
-                                    label: 'Duração',
+                                    label: 'Tempo estimado',
                                     value:
-                                        '${_service!.estimatedDurationMinutes} min',
+                                        ServicePresentationFormatter.estimatedDuration(
+                                          _service!.estimatedDurationMinutes,
+                                        ),
                                   ),
                                 ],
                               );

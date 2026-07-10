@@ -38,14 +38,18 @@
 
         <div class="field span-2">
           <label for="description">Descrição</label>
-          <textarea id="description" formControlName="description" placeholder="Descreva a experiência oferecida."></textarea>
+          <textarea
+            id="description"
+            formControlName="description"
+            placeholder="Descreva a experiência oferecida."
+          ></textarea>
           @if (form.controls.description.touched && form.controls.description.invalid) {
             <span class="field-error">Informe a descrição do serviço.</span>
           }
         </div>
 
         <div class="field">
-          <label for="price">Preço</label>
+          <label for="price">Preço a partir de</label>
           <input id="price" type="number" min="0.01" step="0.01" formControlName="price" />
           @if (form.controls.price.touched && form.controls.price.invalid) {
             <span class="field-error">Informe um preço válido.</span>
@@ -53,9 +57,21 @@
         </div>
 
         <div class="field">
-          <label for="duration">Duração estimada em minutos</label>
-          <input id="duration" type="number" min="1" step="1" formControlName="estimatedDurationMinutes" />
-          @if (form.controls.estimatedDurationMinutes.touched && form.controls.estimatedDurationMinutes.invalid) {
+          <label for="duration">Tempo estimado em minutos</label>
+          <input
+            id="duration"
+            type="number"
+            min="1"
+            step="1"
+            formControlName="estimatedDurationMinutes"
+          />
+          <small class="field-help"
+            >Informe em minutos. O cliente visualizará como estimativa em horas.</small
+          >
+          @if (
+            form.controls.estimatedDurationMinutes.touched &&
+            form.controls.estimatedDurationMinutes.invalid
+          ) {
             <span class="field-error">Informe a duração estimada.</span>
           }
         </div>
