@@ -6,7 +6,6 @@ import { ServiceService } from '../../../core/services/service.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { LoadingComponent } from '../../../shared/components/loading/loading.component';
-import { EstimatedDurationPipe } from '../../../shared/pipes/estimated-duration.pipe';
 import { PriceFromPipe } from '../../../shared/pipes/price-from.pipe';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 
@@ -18,7 +17,6 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
     ConfirmDialogComponent,
     EmptyStateComponent,
     LoadingComponent,
-    EstimatedDurationPipe,
     PriceFromPipe,
     StatusBadgeComponent,
   ],

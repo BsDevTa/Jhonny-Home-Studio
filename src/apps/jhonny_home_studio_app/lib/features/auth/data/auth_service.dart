@@ -39,13 +39,27 @@ class AuthService {
 
   Future<bool> isLoggedIn() async {
     final token = await _tokenStorage.getToken();
-    return token != null && token.isNotEmpty;
+    final user = await _tokenStorage.getUser();
+    if (token == null || token.isEmpty || user == null) {
+      return false;
+    }
+
+    if (user.isExpired) {
+      await logout();
+      return false;
+    }
+
+    return true;
   }
 
   Future<AuthUser?> restoreUser() async {
     final token = await _tokenStorage.getToken();
     final user = await _tokenStorage.getUser();
     if (token == null || token.isEmpty || user == null) {
+      return null;
+    }
+    if (user.isExpired) {
+      await logout();
       return null;
     }
     return user;

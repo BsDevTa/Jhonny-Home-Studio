@@ -54,7 +54,6 @@ class AppointmentModel {
     required this.addressText,
     required this.scheduledAt,
     required this.servicePriceSnapshot,
-    required this.estimatedDurationMinutesSnapshot,
     required this.status,
     required this.customerNotes,
     required this.createdAt,
@@ -70,7 +69,6 @@ class AppointmentModel {
   final String addressText;
   final DateTime? scheduledAt;
   final double servicePriceSnapshot;
-  final int estimatedDurationMinutesSnapshot;
   final String status;
   final String customerNotes;
   final DateTime? createdAt;
@@ -87,10 +85,6 @@ class AppointmentModel {
       addressText: _readString(json, 'addressText'),
       scheduledAt: _readDate(json, 'scheduledAt'),
       servicePriceSnapshot: _readDouble(json, 'servicePriceSnapshot'),
-      estimatedDurationMinutesSnapshot: _readInt(
-        json,
-        'estimatedDurationMinutesSnapshot',
-      ),
       status: _readString(json, 'status'),
       customerNotes: _readString(json, 'customerNotes'),
       createdAt: _readDate(json, 'createdAt'),
@@ -107,7 +101,6 @@ class AppointmentListModel {
     required this.scheduledAt,
     required this.status,
     required this.servicePriceSnapshot,
-    required this.estimatedDurationMinutesSnapshot,
   });
 
   final String id;
@@ -116,7 +109,6 @@ class AppointmentListModel {
   final DateTime? scheduledAt;
   final String status;
   final double servicePriceSnapshot;
-  final int estimatedDurationMinutesSnapshot;
 
   factory AppointmentListModel.fromJson(Map<String, dynamic> json) {
     return AppointmentListModel(
@@ -126,10 +118,6 @@ class AppointmentListModel {
       scheduledAt: _readDate(json, 'scheduledAt'),
       status: _readString(json, 'status'),
       servicePriceSnapshot: _readDouble(json, 'servicePriceSnapshot'),
-      estimatedDurationMinutesSnapshot: _readInt(
-        json,
-        'estimatedDurationMinutesSnapshot',
-      ),
     );
   }
 }
@@ -140,20 +128,6 @@ String _readString(Map<String, dynamic> json, String key) {
     return '';
   }
   return value.toString();
-}
-
-int _readInt(Map<String, dynamic> json, String key) {
-  final value = json[key];
-  if (value is int) {
-    return value;
-  }
-  if (value is double) {
-    return value.round();
-  }
-  if (value is String) {
-    return int.tryParse(value) ?? 0;
-  }
-  return 0;
 }
 
 double _readDouble(Map<String, dynamic> json, String key) {

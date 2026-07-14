@@ -4,9 +4,6 @@ namespace JhonnyHomeStudio.Domain.Entities;
 
 public sealed class Product : Entity
 {
-    public Guid ProductCategoryId { get; set; }
-    public ProductCategory ProductCategory { get; set; } = null!;
-
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string? ShortDescription { get; set; }

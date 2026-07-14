@@ -306,13 +306,6 @@ Pode me orientar sobre a confirmação?''',
                             ),
                           ),
                           _DetailRow(
-                            label: 'Tempo estimado',
-                            value:
-                                ServicePresentationFormatter.estimatedDuration(
-                                  appointment.estimatedDurationMinutesSnapshot,
-                                ),
-                          ),
-                          _DetailRow(
                             label: 'Endereço',
                             value: appointment.addressText,
                           ),

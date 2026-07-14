@@ -12,19 +12,6 @@ class AdminMobileApi {
 
   final ApiClient _api;
 
-  Future<List<Map<String, dynamic>>> getCategories() =>
-      _getList('/admin/service-categories');
-  Future<Map<String, dynamic>> getCategory(String id) =>
-      _getObject('/service-categories/$id');
-  Future<void> saveCategory(String? id, Map<String, dynamic> data) => id == null
-      ? _post('/admin/service-categories', data)
-      : _put('/admin/service-categories/$id', data);
-  Future<void> toggleCategory(String id, bool active) => _patch(
-    '/admin/service-categories/$id/${active ? 'activate' : 'deactivate'}',
-  );
-  Future<void> deleteCategory(String id) =>
-      _delete('/admin/service-categories/$id');
-
   Future<List<Map<String, dynamic>>> getServices() =>
       _getList('/admin/services');
   Future<Map<String, dynamic>> getService(String id) =>
@@ -112,18 +99,6 @@ class AdminMobileApi {
   Future<void> deleteBlockedDate(String id) =>
       _delete('/admin/availability/blocked-dates/$id');
 
-  Future<List<Map<String, dynamic>>> getMarketplaceCategories() =>
-      _getList('/admin/marketplace/categories');
-  Future<Map<String, dynamic>> getMarketplaceCategory(String id) =>
-      _getObject('/admin/marketplace/categories/$id');
-  Future<void> saveMarketplaceCategory(String? id, Map<String, dynamic> data) =>
-      id == null
-      ? _post('/admin/marketplace/categories', data)
-      : _put('/admin/marketplace/categories/$id', data);
-  Future<void> toggleMarketplaceCategory(String id) =>
-      _patch('/admin/marketplace/categories/$id/toggle-active');
-  Future<void> deleteMarketplaceCategory(String id) =>
-      _delete('/admin/marketplace/categories/$id');
   Future<List<Map<String, dynamic>>> getMarketplaceProducts() =>
       _getList('/admin/marketplace/products');
   Future<Map<String, dynamic>> getMarketplaceProduct(String id) =>
@@ -150,6 +125,11 @@ class AdminMobileApi {
       request.headers['Authorization'] = 'Bearer $token';
     }
     request.headers['Accept'] = 'application/json';
+    if (kDebugMode) {
+      debugPrint(
+        '[AdminMobileApi] POST $uri tokenStored=${_maskToken(token)} authorization=${_maskAuthorization(request.headers['Authorization'])}',
+      );
+    }
 
     request.files.add(
       http.MultipartFile.fromBytes('file', bytes, filename: fileName),
@@ -267,4 +247,29 @@ String _ensureHttps(String value) {
   }
 
   return text;
+}
+
+String _maskAuthorization(String? authorization) {
+  if (authorization == null || authorization.isEmpty) {
+    return '<missing>';
+  }
+
+  const prefix = 'Bearer ';
+  if (!authorization.startsWith(prefix)) {
+    return '<present non-bearer>';
+  }
+
+  return 'Bearer ${_maskToken(authorization.substring(prefix.length))}';
+}
+
+String _maskToken(String? token) {
+  if (token == null || token.isEmpty) {
+    return '<empty>';
+  }
+
+  if (token.length <= 16) {
+    return '$token(len=${token.length})';
+  }
+
+  return '${token.substring(0, 12)}...${token.substring(token.length - 8)}(len=${token.length})';
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/utils/service_presentation_formatter.dart';
-import '../../data/service_models.dart';
 import '../../../../../shared/widgets/premium_card.dart';
+import '../../data/service_models.dart';
 
 class ServiceCard extends StatelessWidget {
   const ServiceCard({
@@ -36,13 +36,6 @@ class ServiceCard extends StatelessWidget {
                     color: AppColors.gold.withValues(alpha: 0.16),
                     width: 0.6,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.background.withValues(alpha: 0.45),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: const Icon(
                   Icons.spa_rounded,
@@ -52,29 +45,13 @@ class ServiceCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      service.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      service.serviceCategoryName.isEmpty
-                          ? 'Categoria não informada'
-                          : service.serviceCategoryName,
-                      style: const TextStyle(
-                        color: AppColors.goldSoft,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  service.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],
@@ -93,21 +70,9 @@ class ServiceCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _InfoPill(
-                icon: Icons.payments_outlined,
-                label: ServicePresentationFormatter.priceFrom(service.price),
-              ),
-              _InfoPill(
-                icon: Icons.schedule_outlined,
-                label: ServicePresentationFormatter.estimatedDuration(
-                  service.estimatedDurationMinutes,
-                ),
-              ),
-            ],
+          _InfoPill(
+            icon: Icons.payments_outlined,
+            label: ServicePresentationFormatter.priceFrom(service.price),
           ),
           const SizedBox(height: 12),
           SizedBox(

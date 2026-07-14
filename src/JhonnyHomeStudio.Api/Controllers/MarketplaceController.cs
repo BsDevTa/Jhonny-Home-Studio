@@ -34,17 +34,10 @@ public sealed class MarketplaceController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet("categories")]
-    public async Task<IActionResult> GetPublicCategories()
-    {
-        var response = await _marketplaceService.GetCategoriesAsync(includeInactive: false);
-        return Ok(ApiResponse<IEnumerable<ProductCategoryResponse>>.SuccessResponse("Categorias da loja localizadas com sucesso.", response));
-    }
-
     [HttpGet("products")]
-    public async Task<IActionResult> GetPublicProducts([FromQuery] Guid? categoryId = null, [FromQuery] bool? featured = null, [FromQuery] string? search = null)
+    public async Task<IActionResult> GetPublicProducts([FromQuery] bool? featured = null, [FromQuery] string? search = null)
     {
-        var response = await _marketplaceService.GetProductsAsync(includeInactive: false, categoryId, featured, search);
+        var response = await _marketplaceService.GetProductsAsync(includeInactive: false, featured, search);
         return Ok(ApiResponse<IEnumerable<ProductResponse>>.SuccessResponse("Produtos localizados com sucesso.", NormalizeProducts(response)));
     }
 
@@ -61,73 +54,10 @@ public sealed class MarketplaceController : ControllerBase
         var response = await _marketplaceService.GetProductByIdAsync(id, includeInactive: false);
         if (response is null)
         {
-            return NotFound(ApiResponse<object>.FailureResponse("Produto não encontrado.", new[] { "Verifique o identificador informado." }));
+            return NotFound(ApiResponse<object>.FailureResponse("Produto nao encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
         return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto localizado com sucesso.", NormalizeProduct(response)));
-    }
-
-    [HttpGet("/api/admin/marketplace/categories")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetAdminCategories()
-    {
-        var response = await _marketplaceService.GetCategoriesAsync(includeInactive: true);
-        return Ok(ApiResponse<IEnumerable<ProductCategoryResponse>>.SuccessResponse("Categorias localizadas com sucesso.", response));
-    }
-
-    [HttpGet("/api/admin/marketplace/categories/{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetAdminCategoryById(Guid id)
-    {
-        var response = await _marketplaceService.GetCategoryByIdAsync(id, includeInactive: true);
-        if (response is null)
-        {
-            return NotFound(ApiResponse<object>.FailureResponse("Categoria não encontrada.", new[] { "Verifique o identificador informado." }));
-        }
-
-        return Ok(ApiResponse<ProductCategoryResponse>.SuccessResponse("Categoria localizada com sucesso.", response));
-    }
-
-    [HttpPost("/api/admin/marketplace/categories")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> CreateCategory([FromBody] UpsertProductCategoryRequest request)
-    {
-        var response = await _marketplaceService.CreateCategoryAsync(request);
-        return Ok(ApiResponse<ProductCategoryResponse>.SuccessResponse("Categoria criada com sucesso.", response));
-    }
-
-    [HttpPut("/api/admin/marketplace/categories/{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] UpsertProductCategoryRequest request)
-    {
-        var response = await _marketplaceService.UpdateCategoryAsync(id, request);
-        return Ok(ApiResponse<ProductCategoryResponse>.SuccessResponse("Categoria atualizada com sucesso.", response));
-    }
-
-    [HttpPatch("/api/admin/marketplace/categories/{id:guid}/toggle-active")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ToggleCategory(Guid id)
-    {
-        var response = await _marketplaceService.ToggleCategoryAsync(id);
-        if (response is null)
-        {
-            return NotFound(ApiResponse<object>.FailureResponse("Categoria não encontrada.", new[] { "Verifique o identificador informado." }));
-        }
-
-        return Ok(ApiResponse<ProductCategoryResponse>.SuccessResponse("Status da categoria atualizado com sucesso.", response));
-    }
-
-    [HttpDelete("/api/admin/marketplace/categories/{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> DeleteCategory(Guid id)
-    {
-        var deleted = await _marketplaceService.DeleteCategoryAsync(id);
-        if (!deleted)
-        {
-            return NotFound(ApiResponse<object>.FailureResponse("Categoria não encontrada.", new[] { "Verifique o identificador informado." }));
-        }
-
-        return Ok(ApiResponse<object>.SuccessResponse("Categoria removida com sucesso.", new { id }));
     }
 
     [HttpGet("/api/admin/marketplace/products")]
@@ -145,7 +75,7 @@ public sealed class MarketplaceController : ControllerBase
         var response = await _marketplaceService.GetProductByIdAsync(id, includeInactive: true);
         if (response is null)
         {
-            return NotFound(ApiResponse<object>.FailureResponse("Produto não encontrado.", new[] { "Verifique o identificador informado." }));
+            return NotFound(ApiResponse<object>.FailureResponse("Produto nao encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
         return Ok(ApiResponse<ProductResponse>.SuccessResponse("Produto localizado com sucesso.", NormalizeProduct(response)));
@@ -174,7 +104,7 @@ public sealed class MarketplaceController : ControllerBase
         var response = await _marketplaceService.ToggleProductAsync(id);
         if (response is null)
         {
-            return NotFound(ApiResponse<object>.FailureResponse("Produto não encontrado.", new[] { "Verifique o identificador informado." }));
+            return NotFound(ApiResponse<object>.FailureResponse("Produto nao encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
         return Ok(ApiResponse<ProductResponse>.SuccessResponse("Status do produto atualizado com sucesso.", NormalizeProduct(response)));
@@ -187,7 +117,7 @@ public sealed class MarketplaceController : ControllerBase
         var deleted = await _marketplaceService.DeleteProductAsync(id);
         if (!deleted)
         {
-            return NotFound(ApiResponse<object>.FailureResponse("Produto não encontrado.", new[] { "Verifique o identificador informado." }));
+            return NotFound(ApiResponse<object>.FailureResponse("Produto nao encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
         return Ok(ApiResponse<object>.SuccessResponse("Produto removido com sucesso.", new { id }));
@@ -199,17 +129,17 @@ public sealed class MarketplaceController : ControllerBase
     {
         if (file is null || file.Length == 0)
         {
-            throw new ValidationAppException("Arquivo não enviado.");
+            throw new ValidationAppException("Arquivo nao enviado.");
         }
         if (file.Length > MaxImageSizeBytes)
         {
-            throw new ValidationAppException("Imagem muito grande. O limite é 5MB.");
+            throw new ValidationAppException("Imagem muito grande. O limite e 5MB.");
         }
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (!AllowedImageExtensions.Contains(extension))
         {
-            throw new ValidationAppException("Formato de imagem não permitido.");
+            throw new ValidationAppException("Formato de imagem nao permitido.");
         }
 
         try
@@ -240,7 +170,7 @@ public sealed class MarketplaceController : ControllerBase
         catch (Exception exception)
         {
             _logger.LogError(exception, "Falha ao salvar imagem do produto. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
-            throw new ValidationAppException("Não foi possível enviar a imagem.");
+            throw new ValidationAppException("Nao foi possivel enviar a imagem.");
         }
     }
 

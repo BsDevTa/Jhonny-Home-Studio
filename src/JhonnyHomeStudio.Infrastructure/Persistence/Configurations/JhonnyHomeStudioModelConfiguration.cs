@@ -54,22 +54,10 @@ public static class JhonnyHomeStudioModelConfiguration
             entity.Property(x => x.ReferencePoint).HasMaxLength(200);
         });
 
-        modelBuilder.Entity<ServiceCategory>(entity =>
-        {
-            entity.HasIndex(x => x.Name).IsUnique();
-            entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(400);
-        });
-
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.HasOne(x => x.ServiceCategory)
-                .WithMany(x => x.Services)
-                .HasForeignKey(x => x.ServiceCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             entity.Property(x => x.Name).HasMaxLength(160).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(1000).IsRequired();
+            entity.Property(x => x.Description).HasMaxLength(1000);
             entity.Property(x => x.ImageUrl).HasMaxLength(500);
             entity.Property(x => x.Price).HasPrecision(18, 2);
         });
@@ -198,20 +186,8 @@ public static class JhonnyHomeStudioModelConfiguration
             entity.Property(x => x.Description).HasMaxLength(220).IsRequired();
         });
 
-        modelBuilder.Entity<ProductCategory>(entity =>
-        {
-            entity.HasIndex(x => x.Name).IsUnique();
-            entity.Property(x => x.Name).HasMaxLength(140).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(500);
-        });
-
         modelBuilder.Entity<Product>(entity =>
         {
-            entity.HasOne(x => x.ProductCategory)
-                .WithMany(x => x.Products)
-                .HasForeignKey(x => x.ProductCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             entity.Property(x => x.Name).HasMaxLength(180).IsRequired();
             entity.Property(x => x.Description).HasMaxLength(2000).IsRequired();
             entity.Property(x => x.ShortDescription).HasMaxLength(300);

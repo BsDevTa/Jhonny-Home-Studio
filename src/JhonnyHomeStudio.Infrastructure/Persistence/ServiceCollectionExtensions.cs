@@ -31,10 +31,16 @@ public static class ServiceCollectionExtensions
                 : 120
         };
         services.AddSingleton(jwtSettings);
+        var schedulingSettings = new AppointmentSchedulingSettings
+        {
+            DefaultDurationMinutes = int.TryParse(configuration["Scheduling:DefaultAppointmentDurationMinutes"], out var defaultDurationMinutes)
+                ? defaultDurationMinutes
+                : 60
+        };
+        services.AddSingleton(schedulingSettings);
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
         services.AddScoped<IServiceService, ServiceService>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IAddressService, AddressService>();

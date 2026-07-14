@@ -7,7 +7,6 @@ import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../data/service_models.dart';
 import '../data/services_api.dart';
-import 'widgets/category_chip.dart';
 import 'widgets/service_card.dart';
 
 class ServicesScreen extends StatefulWidget {
@@ -20,78 +19,28 @@ class ServicesScreen extends StatefulWidget {
 class _ServicesScreenState extends State<ServicesScreen> {
   late final ServicesApi _servicesApi;
 
-  List<ServiceCategoryModel> _categories = const [];
   List<ServiceModel> _services = const [];
   bool _isLoading = true;
   String? _errorMessage;
-  String? _selectedCategoryId;
 
   @override
   void initState() {
     super.initState();
     _servicesApi = ServicesApi(apiClient: context.read<ApiClient>());
-    _loadInitialData();
+    _loadServices();
   }
 
-  Future<void> _loadInitialData() async {
+  Future<void> _loadServices() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final results = await Future.wait([
-        _servicesApi.getActiveCategories(),
-        _servicesApi.getActiveServices(),
-      ]);
-
+      final services = await _servicesApi.getActiveServices();
       if (!mounted) {
         return;
       }
-
-      setState(() {
-        _categories = results[0] as List<ServiceCategoryModel>;
-        _services = results[1] as List<ServiceModel>;
-      });
-    } on ApiException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _errorMessage = error.message;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _errorMessage = 'Não foi possível carregar os serviços agora.';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _filterByCategory(String? categoryId) async {
-    setState(() {
-      _isLoading = true;
-      _selectedCategoryId = categoryId;
-      _errorMessage = null;
-    });
-
-    try {
-      final services = categoryId == null
-          ? await _servicesApi.getActiveServices()
-          : await _servicesApi.getServicesByCategory(categoryId);
-
-      if (!mounted) {
-        return;
-      }
-
       setState(() {
         _services = services;
       });
@@ -107,7 +56,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         return;
       }
       setState(() {
-        _errorMessage = 'Não foi possível filtrar os serviços agora.';
+        _errorMessage = 'Nao foi possivel carregar os servicos agora.';
       });
     } finally {
       if (mounted) {
@@ -140,13 +89,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
         child: SafeArea(
           child: RefreshIndicator(
             color: AppColors.gold,
-            onRefresh: _loadInitialData,
+            onRefresh: _loadServices,
             child: ListView(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 const Text(
-                  'Nossos serviços',
+                  'Nossos servicos',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
@@ -155,34 +104,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Escolha a experiência ideal para o seu momento.',
+                  'Escolha a experiencia ideal para o seu momento.',
                   style: TextStyle(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 48,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        return CategoryChip(
-                          label: 'Todos',
-                          selected: _selectedCategoryId == null,
-                          onTap: () => _filterByCategory(null),
-                        );
-                      }
-
-                      final category = _categories[index - 1];
-                      return CategoryChip(
-                        label: category.name,
-                        selected: _selectedCategoryId == category.id,
-                        onTap: () => _filterByCategory(category.id),
-                      );
-                    },
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(width: 10),
-                    itemCount: _categories.length + 1,
-                  ),
                 ),
                 const SizedBox(height: 24),
                 if (_isLoading)
@@ -195,15 +118,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 else if (_errorMessage != null)
                   _EmptyState(
                     icon: Icons.error_outline,
-                    title: 'Não foi possível carregar',
+                    title: 'Nao foi possivel carregar',
                     message: _errorMessage!,
                     actionLabel: 'Tentar novamente',
-                    onAction: _loadInitialData,
+                    onAction: _loadServices,
                   )
                 else if (_services.isEmpty)
                   const _EmptyState(
                     icon: Icons.cut_outlined,
-                    title: 'Nenhum serviço disponível',
+                    title: 'Nenhum servico disponivel',
                     message: 'Tente novamente em instantes.',
                   )
                 else

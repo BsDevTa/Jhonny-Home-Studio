@@ -62,7 +62,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         return;
       }
       setState(() {
-        _errorMessage = 'Não foi possível carregar os detalhes do serviço.';
+        _errorMessage = 'Nao foi possivel carregar os detalhes do servico.';
       });
     } finally {
       if (mounted) {
@@ -76,11 +76,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   void _goToCreateAppointment() {
     final serviceId = _service?.id;
     if (serviceId == null || serviceId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Agendamento será implementado na próxima etapa.'),
-        ),
-      );
       return;
     }
 
@@ -105,19 +100,15 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         child: SafeArea(
           child: _isLoading
               ? const Center(
-                  child: SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      color: AppColors.gold,
-                      strokeWidth: 2,
-                    ),
+                  child: CircularProgressIndicator(
+                    color: AppColors.gold,
+                    strokeWidth: 2,
                   ),
                 )
               : _errorMessage != null
               ? _DetailMessage(
                   icon: Icons.error_outline,
-                  title: 'Detalhes indisponíveis',
+                  title: 'Detalhes indisponiveis',
                   message: _errorMessage!,
                   actionLabel: 'Tentar novamente',
                   onAction: _loadService,
@@ -125,8 +116,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               : _service == null
               ? const _DetailMessage(
                   icon: Icons.cut_outlined,
-                  title: 'Serviço não encontrado',
-                  message: 'O serviço solicitado não está disponível.',
+                  title: 'Servico nao encontrado',
+                  message: 'O servico solicitado nao esta disponivel.',
                 )
               : SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -138,22 +129,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _PageHeader(
-                            title: 'Detalhes do serviço',
-                            subtitle:
-                                'Tudo o que importa, em uma leitura limpa e objetiva.',
+                            title: 'Detalhes do servico',
+                            subtitle: 'Tudo o que importa, em uma leitura limpa e objetiva.',
                             onBack: () => context.pop(),
                           ),
                           const SizedBox(height: 12),
                           PremiumCard(
                             padding: const EdgeInsets.all(14),
-                            gradient: const LinearGradient(
-                              colors: [
-                                AppColors.surface,
-                                AppColors.surfaceElevated,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -168,37 +150,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                                     height: 1.15,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _service!.serviceCategoryName.isEmpty
-                                      ? 'Categoria não informada'
-                                      : _service!.serviceCategoryName,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
                                 const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    _MetaChip(
-                                      icon: Icons.payments_outlined,
-                                      label:
-                                          ServicePresentationFormatter.priceFrom(
-                                            _service!.price,
-                                          ),
-                                    ),
-                                    _MetaChip(
-                                      icon: Icons.schedule_outlined,
-                                      label:
-                                          ServicePresentationFormatter.estimatedDuration(
-                                            _service!.estimatedDurationMinutes,
-                                          ),
-                                    ),
-                                  ],
+                                _MetaChip(
+                                  icon: Icons.payments_outlined,
+                                  label: ServicePresentationFormatter.priceFrom(
+                                    _service!.price,
+                                  ),
                                 ),
                               ],
                             ),
@@ -207,82 +164,16 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                             const SizedBox(height: 12),
                             PremiumCard(
                               padding: const EdgeInsets.all(14),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Descrição',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _service!.description,
-                                    style: const TextStyle(
-                                      color: AppColors.textPrimary,
-                                      height: 1.45,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                _service!.description,
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  height: 1.45,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ],
-                          const SizedBox(height: 12),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              final wide = constraints.maxWidth >= 520;
-                              if (wide) {
-                                return Row(
-                                  children: [
-                                    Expanded(
-                                      child: _InfoTile(
-                                        label: 'Preço a partir de',
-                                        value:
-                                            ServicePresentationFormatter.priceFrom(
-                                              _service!.price,
-                                            ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _InfoTile(
-                                        label: 'Tempo estimado',
-                                        value:
-                                            ServicePresentationFormatter.estimatedDuration(
-                                              _service!
-                                                  .estimatedDurationMinutes,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }
-
-                              return Column(
-                                children: [
-                                  _InfoTile(
-                                    label: 'Preço a partir de',
-                                    value:
-                                        ServicePresentationFormatter.priceFrom(
-                                          _service!.price,
-                                        ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  _InfoTile(
-                                    label: 'Tempo estimado',
-                                    value:
-                                        ServicePresentationFormatter.estimatedDuration(
-                                          _service!.estimatedDurationMinutes,
-                                        ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
                           const SizedBox(height: 14),
                           SizedBox(
                             height: 48,
@@ -316,16 +207,7 @@ class _HeroImage extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: 1.08,
         child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.surfaceElevated,
-                AppColors.surface.withValues(alpha: 0.92),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+          color: AppColors.surfaceElevated,
           child: hasImage
               ? Image.network(
                   service.imageUrl,
@@ -368,47 +250,6 @@ class _FallbackHero extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.6),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-            ),
-          ),
-        ],
       ),
     );
   }

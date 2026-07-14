@@ -9,5 +9,4 @@ public sealed class AppointmentListResponse
     public DateTime ScheduledAt { get; set; }
     public string Status { get; set; } = string.Empty;
     public decimal ServicePriceSnapshot { get; set; }
-    public int EstimatedDurationMinutesSnapshot { get; set; }
 }

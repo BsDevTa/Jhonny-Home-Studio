@@ -307,7 +307,6 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
 Olá! Gostaria de confirmar meu agendamento:
 ✂️ Serviço: ${service.name}
 📅 Data: ${_dateFormat.format(date)} às ${DateFormat('HH:mm').format(slot!.startAt!)}
-⏱️ Tempo estimado: ${ServicePresentationFormatter.estimatedDuration(service.estimatedDurationMinutes)}
 💰 Valor a partir de: ${ServicePresentationFormatter.priceFrom(service.price)}''';
 
     return openWhatsApp(phoneNumber: settings.whatsAppNumber, message: message);
@@ -420,7 +419,7 @@ Olá! Gostaria de confirmar meu agendamento:
                               if (_selectedService != null) ...[
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${ServicePresentationFormatter.priceFrom(_selectedService!.price)} • ${ServicePresentationFormatter.estimatedDuration(_selectedService!.estimatedDurationMinutes)}',
+                              ServicePresentationFormatter.priceFrom(_selectedService!.price),
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 12,
@@ -921,11 +920,6 @@ class _ConfirmationSummary extends StatelessWidget {
     final servicePrice = service == null
         ? '—'
         : ServicePresentationFormatter.priceFrom(service!.price);
-    final serviceDuration = service == null
-        ? '—'
-        : ServicePresentationFormatter.estimatedDuration(
-            service!.estimatedDurationMinutes,
-          );
     final addressText = address?.fullAddress ?? 'Selecione um endereço';
     final dateText = date == null
         ? 'Selecione uma data'
@@ -960,13 +954,6 @@ class _ConfirmationSummary extends StatelessWidget {
                 child: _SummaryPill(
                   label: 'Preço a partir de',
                   value: servicePrice,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _SummaryPill(
-                  label: 'Tempo estimado',
-                  value: serviceDuration,
                 ),
               ),
             ],

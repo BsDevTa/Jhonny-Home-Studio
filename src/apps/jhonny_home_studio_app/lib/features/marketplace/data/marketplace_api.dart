@@ -6,26 +6,11 @@ class MarketplaceApi {
 
   final ApiClient _apiClient;
 
-  Future<List<ProductCategoryModel>> getCategories() async {
-    final response = await _apiClient.getJson('/marketplace/categories');
-    final data = response['data'];
-    return data is List
-        ? data
-              .whereType<Map<String, dynamic>>()
-              .map(ProductCategoryModel.fromJson)
-              .toList(growable: false)
-        : const [];
-  }
-
   Future<List<ProductModel>> getProducts({
-    String? categoryId,
     bool? featured,
     String? search,
   }) async {
     final query = <String, String>{};
-    if (categoryId != null && categoryId.isNotEmpty) {
-      query['categoryId'] = categoryId;
-    }
     if (featured != null) {
       query['featured'] = featured.toString();
     }

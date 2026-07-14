@@ -48,6 +48,9 @@ class AuthUser {
   final String email;
   final String role;
 
+  bool get isExpired =>
+      expiresAt == null || !expiresAt!.toUtc().isAfter(DateTime.now().toUtc());
+
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       token: json['token']?.toString() ?? '',

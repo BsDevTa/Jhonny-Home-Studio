@@ -1,10 +1,12 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'dart:typed_data';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
@@ -32,7 +34,7 @@ String _date(dynamic value) {
       : DateFormat('dd/MM/yyyy HH:mm').format(parsed.toLocal());
 }
 
-enum AdminListType { categories, services, appointments, customers, stories }
+enum AdminListType { services, appointments, customers, stories }
 
 class AdminListScreen extends StatefulWidget {
   const AdminListScreen({super.key, required this.type});
@@ -51,7 +53,6 @@ class _AdminListScreenState extends State<AdminListScreen> {
   List<Map<String, dynamic>> items = [];
 
   String get title => switch (widget.type) {
-    AdminListType.categories => 'Categorias',
     AdminListType.services => 'Serviços',
     AdminListType.appointments => 'Agenda',
     AdminListType.customers => 'Clientes',
@@ -59,7 +60,6 @@ class _AdminListScreenState extends State<AdminListScreen> {
   };
 
   bool get canCreate =>
-      widget.type == AdminListType.categories ||
       widget.type == AdminListType.services ||
       widget.type == AdminListType.stories;
 
@@ -77,7 +77,6 @@ class _AdminListScreenState extends State<AdminListScreen> {
     try {
       final api = _api(context);
       items = await switch (widget.type) {
-        AdminListType.categories => api.getCategories(),
         AdminListType.services => api.getServices(),
         AdminListType.appointments => api.getAppointments(),
         AdminListType.customers => api.getCustomers(),
@@ -218,7 +217,6 @@ class _ItemCard extends StatelessWidget {
   String get id =>
       _text(item, type == AdminListType.customers ? 'customerId' : 'id');
   String get title => switch (type) {
-    AdminListType.categories => _text(item, 'name'),
     AdminListType.services => _text(item, 'name'),
     AdminListType.appointments =>
       '${_text(item, 'customerName')} · ${_text(item, 'serviceName')}',
@@ -226,9 +224,8 @@ class _ItemCard extends StatelessWidget {
     AdminListType.stories => _text(item, 'title'),
   };
   String get subtitle => switch (type) {
-    AdminListType.categories => _text(item, 'description'),
     AdminListType.services =>
-      '${_text(item, 'serviceCategoryName')} · ${ServicePresentationFormatter.priceFrom(num.tryParse(_text(item, 'price')) ?? 0)}',
+      ServicePresentationFormatter.priceFrom(num.tryParse(_text(item, 'price')) ?? 0),
     AdminListType.appointments =>
       '${_date(item['scheduledAt'])} · ${_statusLabel(_text(item, 'status'))}',
     AdminListType.customers =>
@@ -242,7 +239,6 @@ class _ItemCard extends StatelessWidget {
     return AdminMobileCard(
       onTap: () async {
         final path = switch (type) {
-          AdminListType.categories => '/admin-mobile/categories/$id/edit',
           AdminListType.services => '/admin-mobile/services/$id/edit',
           AdminListType.appointments => '/admin-mobile/appointments/$id',
           AdminListType.customers => '/admin-mobile/customers/$id',
@@ -287,9 +283,6 @@ class _ItemCard extends StatelessWidget {
                 final isActive = _flag(item, 'isActive');
                 if (action == 'toggle') {
                   switch (type) {
-                    case AdminListType.categories:
-                      await api.toggleCategory(id, !isActive);
-                      break;
                     case AdminListType.services:
                       await api.toggleService(id, !isActive);
                       break;
@@ -304,9 +297,6 @@ class _ItemCard extends StatelessWidget {
                   }
                 } else if (action == 'delete') {
                   switch (type) {
-                    case AdminListType.categories:
-                      await api.deleteCategory(id);
-                      break;
                     case AdminListType.services:
                       await api.deleteService(id);
                       break;
@@ -337,75 +327,6 @@ class _ItemCard extends StatelessWidget {
   }
 }
 
-class AdminCategoryFormScreen extends StatefulWidget {
-  const AdminCategoryFormScreen({super.key, this.id});
-  final String? id;
-  @override
-  State<AdminCategoryFormScreen> createState() =>
-      _AdminCategoryFormScreenState();
-}
-
-class _AdminCategoryFormScreenState extends State<AdminCategoryFormScreen> {
-  final name = TextEditingController();
-  final description = TextEditingController();
-  bool active = true, saving = false;
-  @override
-  void initState() {
-    super.initState();
-    if (widget.id != null) _load();
-  }
-
-  Future<void> _load() async {
-    final x = await _api(context).getCategory(widget.id!);
-    if (!mounted) return;
-    setState(() {
-      name.text = _text(x, 'name');
-      description.text = _text(x, 'description');
-      active = _flag(x, 'isActive', true);
-    });
-  }
-
-  @override
-  void dispose() {
-    name.dispose();
-    description.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => _SimpleFormScaffold(
-    title: widget.id == null ? 'Nova categoria' : 'Editar categoria',
-    saving: saving,
-    onSave: () async {
-      setState(() => saving = true);
-      await _api(context).saveCategory(widget.id, {
-        'name': name.text,
-        'description': description.text,
-        if (widget.id != null) 'isActive': active,
-      });
-      if (mounted) this.context.pop();
-    },
-    children: [
-      TextField(
-        controller: name,
-        decoration: const InputDecoration(labelText: 'Nome'),
-      ),
-      const SizedBox(height: 12),
-      TextField(
-        controller: description,
-        maxLines: 3,
-        decoration: const InputDecoration(labelText: 'Descrição'),
-      ),
-      if (widget.id != null)
-        SwitchListTile(
-          value: active,
-          onChanged: (v) => setState(() => active = v),
-          title: const Text('Ativa'),
-        ),
-    ],
-  );
-}
-
 class AdminServiceFormScreen extends StatefulWidget {
   const AdminServiceFormScreen({super.key, this.id});
   final String? id;
@@ -417,10 +338,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
   final name = TextEditingController(),
       description = TextEditingController(),
       price = TextEditingController(),
-      duration = TextEditingController(),
       imageUrl = TextEditingController();
-  List<Map<String, dynamic>> categories = [];
-  String categoryId = '';
   bool active = true, saving = false;
   @override
   void initState() {
@@ -430,7 +348,6 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
 
   Future<void> _load() async {
     final api = _api(context);
-    categories = await api.getCategories();
     if (widget.id != null) {
       final x = await api.getService(widget.id!);
       name.text = _text(x, 'name');
@@ -438,9 +355,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
         _text(x, 'description'),
       );
       price.text = _text(x, 'price');
-      duration.text = _text(x, 'estimatedDurationMinutes');
       imageUrl.text = _text(x, 'imageUrl');
-      categoryId = _text(x, 'serviceCategoryId');
       active = _flag(x, 'isActive', true);
     }
     if (mounted) setState(() {});
@@ -451,7 +366,6 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
     name.dispose();
     description.dispose();
     price.dispose();
-    duration.dispose();
     imageUrl.dispose();
     super.dispose();
   }
@@ -463,34 +377,30 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
     onSave: () async {
       final sanitizedDescription =
           ServicePresentationFormatter.sanitizeNullableText(description.text);
-      setState(() => saving = true);
-      await _api(context).saveService(widget.id, {
-        'serviceCategoryId': categoryId,
-        'name': name.text,
-        'description': sanitizedDescription,
+      final Map<String, dynamic> payload = {
+        'name': name.text.trim(),
+        'description': sanitizedDescription.isEmpty
+            ? null
+            : sanitizedDescription,
         'price': double.tryParse(price.text.replaceAll(',', '.')) ?? 0,
-        'estimatedDurationMinutes': int.tryParse(duration.text) ?? 0,
-        'imageUrl': imageUrl.text,
-        if (widget.id != null) 'isActive': active,
-      });
-      if (mounted) this.context.pop();
+        'imageUrl': imageUrl.text.trim().isEmpty ? null : imageUrl.text.trim(),
+        'isActive': widget.id == null ? true : active,
+      };
+      debugPrint('Payload serviço: ${jsonEncode(payload)}');
+      setState(() => saving = true);
+      try {
+        await _api(context).saveService(widget.id, payload);
+        if (mounted) this.context.pop();
+      } catch (error) {
+        if (!mounted) return;
+        _showMessage(_readServiceSaveError(error));
+      } finally {
+        if (mounted) {
+          setState(() => saving = false);
+        }
+      }
     },
     children: [
-      DropdownButtonFormField<String>(
-        initialValue: categoryId.isEmpty ? null : categoryId,
-        decoration: const InputDecoration(labelText: 'Categoria'),
-        items: categories
-            .where((x) => _flag(x, 'isActive', true))
-            .map(
-              (x) => DropdownMenuItem(
-                value: _text(x, 'id'),
-                child: Text(_text(x, 'name')),
-              ),
-            )
-            .toList(),
-        onChanged: (v) => categoryId = v ?? '',
-      ),
-      const SizedBox(height: 12),
       TextField(
         controller: name,
         decoration: const InputDecoration(labelText: 'Nome'),
@@ -509,16 +419,6 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       ),
       const SizedBox(height: 12),
       TextField(
-        controller: duration,
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'Tempo estimado em minutos',
-          helperText:
-              'Informe em minutos. O cliente visualizará como estimativa em horas.',
-        ),
-      ),
-      const SizedBox(height: 12),
-      TextField(
         controller: imageUrl,
         decoration: const InputDecoration(labelText: 'URL da imagem'),
       ),
@@ -530,6 +430,56 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
         ),
     ],
   );
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _readServiceSaveError(Object error) {
+    final apiError = _apiException(error);
+    final message = _readApiError(
+      error,
+      fallback: 'Nao foi possivel salvar o servico. Tente novamente.',
+    );
+
+    if (apiError?.statusCode == 401) {
+      return 'Sessao expirada. Faca login novamente.';
+    }
+
+    if (apiError?.statusCode == 400) {
+      return message;
+    }
+
+    return message;
+  }
+
+  String _readApiError(
+    Object error, {
+    String fallback = 'Nao foi possivel concluir a operacao.',
+  }) {
+    final apiError = _apiException(error);
+    if (apiError != null) {
+      if (apiError.errors.isNotEmpty) {
+        return apiError.errors.join(' ');
+      }
+      if (apiError.message.isNotEmpty) {
+        return apiError.message;
+      }
+    }
+    return fallback;
+  }
+
+  ApiException? _apiException(Object error) {
+    if (error is ApiException) {
+      return error;
+    }
+    if (error is DioException && error.error is ApiException) {
+      return error.error! as ApiException;
+    }
+    return null;
+  }
 }
 
 class AdminAppointmentDetailScreen extends StatefulWidget {
@@ -639,15 +589,6 @@ class _AdminAppointmentDetailScreenState
                       'Preço',
                       ServicePresentationFormatter.priceFrom(
                         num.tryParse(_text(item, 'servicePriceSnapshot')) ?? 0,
-                      ),
-                    ),
-                    _Info(
-                      'Tempo estimado',
-                      ServicePresentationFormatter.estimatedDuration(
-                        int.tryParse(
-                              _text(item, 'estimatedDurationMinutesSnapshot'),
-                            ) ??
-                            0,
                       ),
                     ),
                     _Info('Observação', _text(item, 'customerNotes')),
@@ -1597,15 +1538,6 @@ class _AdminNavigationPanel extends StatelessWidget {
                   closeOnTap: false,
                 ),
                 _AdminDrawerItem(
-                  icon: Icons.category_outlined,
-                  title: 'Categorias',
-                  path: '${AppRoutes.adminMobile}/categories',
-                  selected: path.startsWith(
-                    '${AppRoutes.adminMobile}/categories',
-                  ),
-                  closeOnTap: false,
-                ),
-                _AdminDrawerItem(
                   icon: Icons.workspace_premium_outlined,
                   title: 'Clube VIP',
                   path: AppRoutes.adminMobile,
@@ -1959,14 +1891,6 @@ class _AdminDrawer extends StatelessWidget {
                     path: '${AppRoutes.adminMobile}/services',
                     selected: path.startsWith(
                       '${AppRoutes.adminMobile}/services',
-                    ),
-                  ),
-                  _AdminDrawerItem(
-                    icon: Icons.category_outlined,
-                    title: 'Categorias',
-                    path: '${AppRoutes.adminMobile}/categories',
-                    selected: path.startsWith(
-                      '${AppRoutes.adminMobile}/categories',
                     ),
                   ),
                   _AdminDrawerItem(

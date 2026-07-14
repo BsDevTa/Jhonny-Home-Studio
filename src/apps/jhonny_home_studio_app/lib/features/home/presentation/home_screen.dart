@@ -15,7 +15,6 @@ import '../../loyalty/data/loyalty_model.dart';
 import '../../marketplace/presentation/widgets/beauty_store_card.dart';
 import '../../services/data/service_models.dart';
 import '../../services/data/services_api.dart';
-import '../../services/presentation/widgets/category_chip.dart';
 import '../../services/presentation/widgets/service_story_item.dart';
 import '../../stories/data/stories_api.dart';
 import '../../stories/data/story_model.dart';
@@ -38,16 +37,13 @@ class _HomeScreenState extends State<HomeScreen> {
   late final StoriesApi _storiesApi;
   late final LoyaltyApi _loyaltyApi;
 
-  List<ServiceCategoryModel> _categories = const [];
   List<ServiceModel> _services = const [];
   List<StoryModel> _editorialStories = const [];
   LoyaltyModel _loyalty = LoyaltyModel.empty;
   bool _isLoadingStories = true;
   bool _isLoadingServices = true;
-  bool _isLoadingCategories = true;
   bool _isLoadingHomeData = false;
   String? _errorMessage;
-  String? _selectedCategoryId;
 
   @override
   void initState() {
@@ -79,14 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoadingHomeData = true;
       _isLoadingStories = true;
       _isLoadingServices = true;
-      _isLoadingCategories = true;
       _errorMessage = null;
     });
 
     try {
       await Future.wait([
-        _loadCategories(),
-        _loadServices(updateSelectedCategory: false),
+        _loadServices(),
         _loadEditorialStories(),
         _loadLoyalty(),
         if (refreshSettings) context.read<AppSettingsProvider>().loadSettings(),
@@ -101,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoadingHomeData = false;
           _isLoadingStories = false;
           _isLoadingServices = false;
-          _isLoadingCategories = false;
         });
       }
     }
@@ -156,51 +149,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadCategories() async {
+  Future<void> _loadServices() async {
     try {
-      final categories = await _servicesApi.getActiveCategories();
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _categories = categories;
-      });
-    } on ApiException catch (error) {
-      debugPrint('Erro ao carregar Home: ${error.message}');
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _errorMessage = error.message;
-      });
-    } catch (error) {
-      debugPrint('Erro ao carregar Home: $error');
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _errorMessage = 'Não foi possível carregar as categorias agora.';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingCategories = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _loadServices({
-    String? categoryId,
-    bool updateSelectedCategory = true,
-  }) async {
-    try {
-      final services = categoryId == null
-          ? await _servicesApi.getActiveServices()
-          : await _servicesApi.getServicesByCategory(categoryId);
+      final services = await _servicesApi.getActiveServices();
 
       if (!mounted) {
         return;
@@ -209,9 +160,6 @@ class _HomeScreenState extends State<HomeScreen> {
       debugPrint('Serviços carregados: ${services.length}');
       setState(() {
         _services = services;
-        if (updateSelectedCategory) {
-          _selectedCategoryId = categoryId;
-        }
       });
     } on ApiException catch (error) {
       debugPrint('Erro ao carregar Home: ${error.message}');
@@ -238,16 +186,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
-  }
-
-  Future<void> _selectCategory(String? categoryId) async {
-    setState(() {
-      _isLoadingServices = true;
-      _errorMessage = null;
-      _selectedCategoryId = categoryId;
-    });
-
-    await _loadServices(categoryId: categoryId, updateSelectedCategory: false);
   }
 
   void _openServiceDetails(ServiceModel service) {
@@ -383,17 +321,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         _InlineNotice(message: _errorMessage!),
                       ],
                       const SizedBox(height: 22),
-                      const Text(
-                        'Categorias',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(height: 34, child: _buildCategories()),
-                      const SizedBox(height: 22),
                       PremiumExperienceCard(
                         loyalty: _loyalty,
                         onVip: () => context.push(AppRoutes.vip),
@@ -482,39 +409,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategories() {
-    if (_isLoadingCategories && _categories.isEmpty) {
-      return ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) => const _CategorySkeleton(),
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemCount: 4,
-      );
-    }
-
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          return CategoryChip(
-            label: 'Todos',
-            selected: _selectedCategoryId == null,
-            onTap: () => _selectCategory(null),
-          );
-        }
-
-        final category = _categories[index - 1];
-        return CategoryChip(
-          label: category.name,
-          selected: _selectedCategoryId == category.id,
-          onTap: () => _selectCategory(category.id),
-        );
-      },
-      separatorBuilder: (context, index) => const SizedBox(width: 8),
-      itemCount: _categories.length + 1,
-    );
-  }
 }
 
 class _DesktopDashboardStrip extends StatelessWidget {
@@ -616,22 +510,6 @@ class _ServiceStoriesMessage extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _CategorySkeleton extends StatelessWidget {
-  const _CategorySkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 72,
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.72)),
       ),
     );
   }

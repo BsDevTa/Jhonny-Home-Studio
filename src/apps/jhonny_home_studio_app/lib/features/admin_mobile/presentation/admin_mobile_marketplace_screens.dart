@@ -112,7 +112,7 @@ class _AdminMarketplaceProductListScreenState
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${_text(product, 'productCategoryName')} · R\$ ${_text(product, 'price')}',
+                            'R\$ ${_text(product, 'price')}',
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 12,
@@ -191,12 +191,8 @@ class _AdminMarketplaceProductFormScreenState
   final price = TextEditingController();
   final promotionalPrice = TextEditingController();
   final imageUrl = TextEditingController();
-  List<Map<String, dynamic>> categories = [];
-  String categoryId = '';
-  String categoriesError = '';
   bool active = true;
   bool featured = false;
-  bool loadingCategories = true;
   bool saving = false;
   bool uploading = false;
 
@@ -208,7 +204,6 @@ class _AdminMarketplaceProductFormScreenState
 
   Future<void> _load() async {
     final api = _api(context);
-    await _loadCategories(api);
     if (widget.id != null) {
       try {
         final product = await api.getMarketplaceProduct(widget.id!);
@@ -218,7 +213,6 @@ class _AdminMarketplaceProductFormScreenState
         price.text = _text(product, 'price');
         promotionalPrice.text = _text(product, 'promotionalPrice');
         imageUrl.text = _text(product, 'mainImageUrl');
-        categoryId = _text(product, 'productCategoryId');
         active = _flag(product, 'isActive');
         featured = _flag(product, 'isFeatured');
       } catch (error) {
@@ -227,45 +221,6 @@ class _AdminMarketplaceProductFormScreenState
       }
     }
     if (mounted) setState(() {});
-  }
-
-  Future<void> _loadCategories(AdminMobileApi api) async {
-    debugPrint('Carregando categorias marketplace...');
-    if (mounted) {
-      setState(() {
-        loadingCategories = true;
-        categoriesError = '';
-      });
-    }
-    try {
-      final loadedCategories = await api.getMarketplaceCategories();
-      debugPrint('Categorias carregadas: ${loadedCategories.length}');
-      if (!mounted) return;
-      setState(() {
-        categories = loadedCategories;
-        categoriesError = '';
-      });
-    } catch (error) {
-      debugPrint('Erro ao carregar categorias: $error');
-      if (!mounted) return;
-      setState(() {
-        categories = [];
-        categoriesError = _readApiError(
-          error,
-          fallback: 'Nao foi possivel carregar as categorias.',
-        );
-      });
-    } finally {
-      if (mounted) {
-        setState(() => loadingCategories = false);
-      }
-    }
-  }
-
-  Future<void> _createCategoryAndReload() async {
-    await context.push('/admin-mobile/marketplace/categories/new');
-    if (!mounted) return;
-    await _loadCategories(_api(context));
   }
 
   Future<void> _pick(ImageSource source) async {
@@ -295,15 +250,9 @@ class _AdminMarketplaceProductFormScreenState
   }
 
   Future<void> _save() async {
-    if (categoryId.isEmpty) {
-      _showMessage('Selecione uma categoria para o produto.');
-      return;
-    }
-
     setState(() => saving = true);
 
     final payload = {
-      'productCategoryId': categoryId,
       'name': name.text.trim(),
       'shortDescription': shortDescription.text.trim(),
       'description': description.text.trim(),
@@ -365,13 +314,6 @@ class _AdminMarketplaceProductFormScreenState
       error,
       fallback: 'Nao foi possivel salvar o produto. Tente novamente.',
     );
-    final normalized = message.toLowerCase();
-
-    if (normalized.contains('categoria') ||
-        normalized.contains('productcategoryid')) {
-      return 'Selecione uma categoria para o produto.';
-    }
-
     if (apiError?.statusCode == 400) {
       return message;
     }
@@ -426,47 +368,6 @@ class _AdminMarketplaceProductFormScreenState
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          DropdownButtonFormField<String>(
-            initialValue: categoryId.isEmpty ? null : categoryId,
-            dropdownColor: AppColors.surfaceElevated,
-            iconEnabledColor: AppColors.gold,
-            style: const TextStyle(color: AppColors.textPrimary),
-            decoration: const InputDecoration(labelText: 'Categoria'),
-            items: categories
-                .map(
-                  (category) => DropdownMenuItem(
-                    value: _text(category, 'id'),
-                    child: Text(_text(category, 'name')),
-                  ),
-                )
-                .toList(),
-            hint: const Text(
-              'Selecione uma categoria',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            onChanged: loadingCategories || categories.isEmpty
-                ? null
-                : (value) => setState(() => categoryId = value ?? ''),
-          ),
-          if (loadingCategories) ...[
-            const SizedBox(height: 8),
-            const LinearProgressIndicator(color: AppColors.gold),
-          ],
-          if (!loadingCategories && categories.isEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              categoriesError.isNotEmpty
-                  ? categoriesError
-                  : 'Nenhuma categoria da loja cadastrada. Cadastre uma categoria antes de criar produtos.',
-              style: const TextStyle(color: AppColors.error),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _createCategoryAndReload,
-              icon: const Icon(Icons.add),
-              label: const Text('Cadastrar categoria da loja'),
-            ),
-          ],
           const SizedBox(height: 12),
           TextField(
             controller: name,
@@ -529,10 +430,7 @@ class _AdminMarketplaceProductFormScreenState
           ),
           const SizedBox(height: 16),
           FilledButton(
-            onPressed:
-                saving || uploading || loadingCategories || categories.isEmpty
-                ? null
-                : _save,
+            onPressed: saving || uploading ? null : _save,
             child: Text(saving ? 'Salvando...' : 'Salvar produto'),
           ),
         ],

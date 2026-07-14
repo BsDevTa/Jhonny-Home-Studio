@@ -38,10 +38,8 @@ class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
         api.getAppointments(),
         api.getCustomers(),
         api.getServices(),
-        api.getCategories(),
         api.getStories(),
         api.getMarketplaceProducts(),
-        api.getMarketplaceCategories(),
       ]);
 
       if (!mounted) {
@@ -53,10 +51,8 @@ class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
           appointments: values[0],
           customers: values[1],
           services: values[2],
-          serviceCategories: values[3],
-          stories: values[4],
-          products: values[5],
-          productCategories: values[6],
+          stories: values[3],
+          products: values[4],
         );
       });
     } catch (error) {
@@ -90,7 +86,7 @@ class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Gestão rápida do estúdio pelo celular.',
+              'Gestao rapida do estudio pelo celular.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 18),
@@ -103,14 +99,14 @@ class _AdminMobileHomeScreenState extends State<AdminMobileHomeScreen> {
               )
             else ...[
               if (_error.isNotEmpty) ...[
-                _AdminNotice(message: 'Algumas métricas não carregaram.'),
+                const _AdminNotice(message: 'Algumas metricas nao carregaram.'),
                 const SizedBox(height: 12),
               ],
               _MetricGrid(metrics: _metrics),
             ],
             const SizedBox(height: 22),
             const Text(
-              'Módulos administrativos',
+              'Modulos administrativos',
               style: TextStyle(
                 color: AppColors.champagne,
                 fontSize: 17,
@@ -145,9 +141,7 @@ class _MetricGrid extends StatelessWidget {
       _MetricItem('Clientes cadastrados', metrics.customers),
       _MetricItem('Produtos ativos', metrics.activeProducts),
       _MetricItem('Produtos em destaque', metrics.featuredProducts),
-      _MetricItem('Categorias da loja', metrics.productCategories),
-      _MetricItem('Serviços ativos', metrics.activeServices),
-      _MetricItem('Categorias de serviço', metrics.serviceCategories),
+      _MetricItem('Servicos ativos', metrics.activeServices),
       _MetricItem('Stories ativos', metrics.activeStories),
     ];
 
@@ -281,9 +275,7 @@ class _AdminMetrics {
     required this.customers,
     required this.activeProducts,
     required this.featuredProducts,
-    required this.productCategories,
     required this.activeServices,
-    required this.serviceCategories,
     required this.activeStories,
   });
 
@@ -293,9 +285,7 @@ class _AdminMetrics {
   final int? customers;
   final int? activeProducts;
   final int? featuredProducts;
-  final int? productCategories;
   final int? activeServices;
-  final int? serviceCategories;
   final int? activeStories;
 
   factory _AdminMetrics.empty() {
@@ -306,9 +296,7 @@ class _AdminMetrics {
       customers: null,
       activeProducts: null,
       featuredProducts: null,
-      productCategories: null,
       activeServices: null,
-      serviceCategories: null,
       activeStories: null,
     );
   }
@@ -317,10 +305,8 @@ class _AdminMetrics {
     required List<Map<String, dynamic>> appointments,
     required List<Map<String, dynamic>> customers,
     required List<Map<String, dynamic>> services,
-    required List<Map<String, dynamic>> serviceCategories,
     required List<Map<String, dynamic>> stories,
     required List<Map<String, dynamic>> products,
-    required List<Map<String, dynamic>> productCategories,
   }) {
     final today = DateTime.now();
     final todayAppointments = appointments.where((appointment) {
@@ -346,9 +332,7 @@ class _AdminMetrics {
       featuredProducts: products
           .where((product) => _boolValue(product, 'isFeatured'))
           .length,
-      productCategories: productCategories.length,
       activeServices: services.where(_isActive).length,
-      serviceCategories: serviceCategories.length,
       activeStories: stories.where(_isActive).length,
     );
   }
@@ -384,50 +368,38 @@ const _adminModules = [
     Icons.people_outline,
   ),
   _AdminModule(
-    'Serviços',
-    'Edite catálogo, preço e duração.',
+    'Servicos',
+    'Edite catalogo, preco, imagem e status.',
     '${AppRoutes.adminMobile}/services',
     Icons.spa_outlined,
   ),
   _AdminModule(
-    'Categorias de Serviços',
-    'Organize os tipos de serviço.',
-    '${AppRoutes.adminMobile}/categories',
-    Icons.category_outlined,
-  ),
-  _AdminModule(
     'Marketplace / Loja',
-    'Visão geral da loja assistida.',
+    'Visao geral da loja assistida.',
     '${AppRoutes.adminMobile}/marketplace',
     Icons.storefront_outlined,
   ),
   _AdminModule(
-    'Categorias da Loja',
-    'Organize linhas e famílias de produto.',
-    '${AppRoutes.adminMobile}/marketplace/categories',
-    Icons.local_offer_outlined,
-  ),
-  _AdminModule(
     'Produtos da Loja',
-    'Cadastre produtos, preços e destaques.',
+    'Cadastre produtos, precos e destaques.',
     '${AppRoutes.adminMobile}/marketplace/products',
     Icons.shopping_bag_outlined,
   ),
   _AdminModule(
     'Stories',
-    'Publique fotos e vídeos de divulgação.',
+    'Publique fotos e videos de divulgacao.',
     '${AppRoutes.adminMobile}/stories',
     Icons.auto_awesome_outlined,
   ),
   _AdminModule(
-    'Configurações',
+    'Configuracoes',
     'Atualize marca, WhatsApp e mensagens.',
     '${AppRoutes.adminMobile}/settings',
     Icons.settings_outlined,
   ),
   _AdminModule(
     'Disponibilidade',
-    'Horários, slots e datas bloqueadas.',
+    'Horarios, slots e datas bloqueadas.',
     '${AppRoutes.adminMobile}/availability',
     Icons.schedule_outlined,
   ),

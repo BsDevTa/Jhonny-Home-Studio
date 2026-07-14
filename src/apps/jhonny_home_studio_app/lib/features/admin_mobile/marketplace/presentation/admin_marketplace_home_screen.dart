@@ -24,22 +24,14 @@ class AdminMarketplaceHomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Gerencie categorias e produtos da loja.',
+            'Gerencie os produtos da loja.',
             style: TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 18),
           _MarketplaceAreaCard(
-            icon: Icons.category_outlined,
-            title: 'Categorias da Loja',
-            subtitle:
-                'Cadastre categorias como shampoos, máscaras, óleos e kits pós-loiro.',
-            action: 'Gerenciar categorias',
-            onTap: () => context.push('/admin-mobile/marketplace/categories'),
-          ),
-          _MarketplaceAreaCard(
             icon: Icons.shopping_bag_outlined,
             title: 'Produtos da Loja',
-            subtitle: 'Cadastre os produtos que aparecerão no app do cliente.',
+            subtitle: 'Cadastre os produtos que aparecerao no app do cliente.',
             action: 'Gerenciar produtos',
             onTap: () => context.push('/admin-mobile/marketplace/products'),
           ),

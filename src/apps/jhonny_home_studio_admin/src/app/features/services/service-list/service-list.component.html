@@ -1,10 +1,10 @@
 <section class="page">
   <header class="page-header">
     <div>
-      <h1 class="page-title">Serviços</h1>
-      <p class="page-subtitle">Gerencie preços, duração e disponibilidade.</p>
+      <h1 class="page-title">Servicos</h1>
+      <p class="page-subtitle">Gerencie precos e disponibilidade.</p>
     </div>
-    <a routerLink="/services/new" class="primary-button">Novo serviço</a>
+    <a routerLink="/services/new" class="primary-button">Novo servico</a>
   </header>
 
   @if (error()) {
@@ -16,20 +16,18 @@
       <app-loading />
     } @else if (!services().length) {
       <app-empty-state
-        title="Nenhum serviço cadastrado"
-        description="Cadastre o primeiro serviço para disponibilizá-lo no aplicativo."
+        title="Nenhum servico cadastrado"
+        description="Cadastre o primeiro servico para disponibiliza-lo no aplicativo."
       />
     } @else {
       <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Serviço</th>
-              <th>Categoria</th>
-              <th>Preço a partir de</th>
-              <th>Tempo estimado</th>
+              <th>Servico</th>
+              <th>Preco a partir de</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th>Acoes</th>
             </tr>
           </thead>
           <tbody>
@@ -38,9 +36,7 @@
                 <td>
                   <strong>{{ service.name }}</strong>
                 </td>
-                <td>{{ service.serviceCategoryName }}</td>
                 <td>{{ service.price | priceFrom }}</td>
-                <td>{{ service.estimatedDurationMinutes | estimatedDuration }}</td>
                 <td><app-status-badge [active]="service.isActive" /></td>
                 <td>
                   <div class="table-actions">
@@ -76,8 +72,8 @@
 
 <app-confirm-dialog
   [open]="!!serviceToDelete()"
-  title="Excluir serviço?"
-  [description]="'O serviço ' + (serviceToDelete()?.name ?? '') + ' será removido do catálogo.'"
+  title="Excluir servico?"
+  [description]="'O servico ' + (serviceToDelete()?.name ?? '') + ' sera removido do catalogo.'"
   confirmLabel="Excluir"
   (canceled)="serviceToDelete.set(null)"
   (confirmed)="confirmDelete()"

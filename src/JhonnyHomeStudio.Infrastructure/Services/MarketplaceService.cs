@@ -16,102 +16,9 @@ public sealed class MarketplaceService : IMarketplaceService
         _dbContext = dbContext;
     }
 
-    public async Task<IEnumerable<ProductCategoryResponse>> GetCategoriesAsync(bool includeInactive)
-    {
-        var query = _dbContext.ProductCategories.AsNoTracking().AsQueryable();
-        if (!includeInactive)
-        {
-            query = query.Where(x => x.IsActive);
-        }
-
-        return await query
-            .OrderBy(x => x.DisplayOrder)
-            .ThenBy(x => x.Name)
-            .Select(x => ToCategoryResponse(x))
-            .ToListAsync();
-    }
-
-    public async Task<ProductCategoryResponse?> GetCategoryByIdAsync(Guid id, bool includeInactive)
-    {
-        var query = _dbContext.ProductCategories.AsNoTracking().Where(x => x.Id == id);
-        if (!includeInactive)
-        {
-            query = query.Where(x => x.IsActive);
-        }
-
-        return await query.Select(x => ToCategoryResponse(x)).FirstOrDefaultAsync();
-    }
-
-    public async Task<ProductCategoryResponse> CreateCategoryAsync(UpsertProductCategoryRequest request)
-    {
-        ValidateCategory(request);
-        await EnsureCategoryNameIsUniqueAsync(request.Name);
-
-        var entity = new ProductCategory
-        {
-            Name = request.Name.Trim(),
-            Description = NormalizeOptional(request.Description),
-            DisplayOrder = request.DisplayOrder,
-            IsActive = request.IsActive
-        };
-
-        _dbContext.ProductCategories.Add(entity);
-        await _dbContext.SaveChangesAsync();
-        return ToCategoryResponse(entity);
-    }
-
-    public async Task<ProductCategoryResponse> UpdateCategoryAsync(Guid id, UpsertProductCategoryRequest request)
-    {
-        ValidateCategory(request);
-        var entity = await _dbContext.ProductCategories.FirstOrDefaultAsync(x => x.Id == id)
-            ?? throw new ValidationAppException("Categoria não encontrada.", new[] { "Verifique o identificador informado." });
-
-        await EnsureCategoryNameIsUniqueAsync(request.Name, id);
-        entity.Name = request.Name.Trim();
-        entity.Description = NormalizeOptional(request.Description);
-        entity.DisplayOrder = request.DisplayOrder;
-        entity.IsActive = request.IsActive;
-        entity.UpdatedAt = DateTime.UtcNow;
-
-        await _dbContext.SaveChangesAsync();
-        return ToCategoryResponse(entity);
-    }
-
-    public async Task<ProductCategoryResponse?> ToggleCategoryAsync(Guid id)
-    {
-        var entity = await _dbContext.ProductCategories.FirstOrDefaultAsync(x => x.Id == id);
-        if (entity is null)
-        {
-            return null;
-        }
-
-        entity.IsActive = !entity.IsActive;
-        entity.UpdatedAt = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync();
-        return ToCategoryResponse(entity);
-    }
-
-    public async Task<bool> DeleteCategoryAsync(Guid id)
-    {
-        var entity = await _dbContext.ProductCategories.FirstOrDefaultAsync(x => x.Id == id);
-        if (entity is null)
-        {
-            return false;
-        }
-
-        entity.IsActive = false;
-        entity.UpdatedAt = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync();
-        return true;
-    }
-
-    public async Task<IEnumerable<ProductResponse>> GetProductsAsync(bool includeInactive, Guid? categoryId = null, bool? featured = null, string? search = null)
+    public async Task<IEnumerable<ProductResponse>> GetProductsAsync(bool includeInactive, bool? featured = null, string? search = null)
     {
         var query = ProductsQuery(includeInactive);
-        if (categoryId.HasValue)
-        {
-            query = query.Where(x => x.ProductCategoryId == categoryId.Value);
-        }
         if (featured.HasValue)
         {
             query = query.Where(x => x.IsFeatured == featured.Value);
@@ -139,7 +46,7 @@ public sealed class MarketplaceService : IMarketplaceService
 
     public async Task<ProductResponse> CreateProductAsync(UpsertProductRequest request)
     {
-        await ValidateProductAsync(request);
+        ValidateProduct(request);
         var entity = new Product();
         ApplyProduct(entity, request);
 
@@ -150,11 +57,11 @@ public sealed class MarketplaceService : IMarketplaceService
 
     public async Task<ProductResponse> UpdateProductAsync(Guid id, UpsertProductRequest request)
     {
-        await ValidateProductAsync(request);
+        ValidateProduct(request);
         var entity = await _dbContext.Products
             .Include(x => x.Images)
             .FirstOrDefaultAsync(x => x.Id == id)
-            ?? throw new ValidationAppException("Produto não encontrado.", new[] { "Verifique o identificador informado." });
+            ?? throw new ValidationAppException("Produto nao encontrado.", new[] { "Verifique o identificador informado." });
 
         ApplyProduct(entity, request);
         entity.UpdatedAt = DateTime.UtcNow;
@@ -200,13 +107,12 @@ public sealed class MarketplaceService : IMarketplaceService
     {
         var query = _dbContext.Products
             .AsNoTracking()
-            .Include(x => x.ProductCategory)
             .Include(x => x.Images)
             .AsQueryable();
 
         if (!includeInactive)
         {
-            query = query.Where(x => x.IsActive && x.ProductCategory.IsActive);
+            query = query.Where(x => x.IsActive);
         }
 
         return query;
@@ -215,52 +121,41 @@ public sealed class MarketplaceService : IMarketplaceService
     private async Task<ProductResponse> GetProductByIdRequiredAsync(Guid id)
     {
         return await GetProductByIdAsync(id, includeInactive: true)
-            ?? throw new ValidationAppException("Produto não encontrado.", new[] { "Verifique o identificador informado." });
+            ?? throw new ValidationAppException("Produto nao encontrado.", new[] { "Verifique o identificador informado." });
     }
 
-    private async Task ValidateProductAsync(UpsertProductRequest request)
+    private static void ValidateProduct(UpsertProductRequest request)
     {
         var errors = new List<string>();
-        if (request.ProductCategoryId == Guid.Empty)
-        {
-            errors.Add("Categoria é obrigatória.");
-        }
         if (string.IsNullOrWhiteSpace(request.Name))
         {
-            errors.Add("Nome é obrigatório.");
+            errors.Add("Nome e obrigatorio.");
         }
         if (string.IsNullOrWhiteSpace(request.Description))
         {
-            errors.Add("Descrição é obrigatória.");
+            errors.Add("Descricao e obrigatoria.");
         }
         if (request.Price <= 0)
         {
-            errors.Add("Preço deve ser maior que zero.");
+            errors.Add("Preco deve ser maior que zero.");
         }
         if (request.PromotionalPrice.HasValue && request.PromotionalPrice.Value <= 0)
         {
-            errors.Add("Preço promocional deve ser maior que zero.");
+            errors.Add("Preco promocional deve ser maior que zero.");
         }
         if (request.PromotionalPrice.HasValue && request.PromotionalPrice.Value >= request.Price)
         {
-            errors.Add("Preço promocional deve ser menor que o preço normal.");
+            errors.Add("Preco promocional deve ser menor que o preco normal.");
         }
 
         if (errors.Count > 0)
         {
-            throw new ValidationAppException("Dados inválidos.", errors);
-        }
-
-        var categoryExists = await _dbContext.ProductCategories.AnyAsync(x => x.Id == request.ProductCategoryId);
-        if (!categoryExists)
-        {
-            throw new ValidationAppException("Categoria inválida.", new[] { "A categoria informada não existe." });
+            throw new ValidationAppException("Dados invalidos.", errors);
         }
     }
 
     private static void ApplyProduct(Product entity, UpsertProductRequest request)
     {
-        entity.ProductCategoryId = request.ProductCategoryId;
         entity.Name = request.Name.Trim();
         entity.Description = request.Description.Trim();
         entity.ShortDescription = NormalizeOptional(request.ShortDescription);
@@ -306,41 +201,9 @@ public sealed class MarketplaceService : IMarketplaceService
         return images;
     }
 
-    private async Task EnsureCategoryNameIsUniqueAsync(string name, Guid? id = null)
-    {
-        var normalizedName = name.Trim().ToLowerInvariant();
-        var exists = await _dbContext.ProductCategories.AnyAsync(x => x.Name.ToLower() == normalizedName && (!id.HasValue || x.Id != id.Value));
-        if (exists)
-        {
-            throw new ConflictAppException("Categoria já cadastrada.", new[] { "Já existe uma categoria de produto com este nome." });
-        }
-    }
-
-    private static void ValidateCategory(UpsertProductCategoryRequest request)
-    {
-        if (string.IsNullOrWhiteSpace(request.Name))
-        {
-            throw new ValidationAppException("Dados inválidos.", new[] { "Nome é obrigatório." });
-        }
-    }
-
     private static string? NormalizeOptional(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-    }
-
-    private static ProductCategoryResponse ToCategoryResponse(ProductCategory entity)
-    {
-        return new ProductCategoryResponse
-        {
-            Id = entity.Id,
-            Name = entity.Name,
-            Description = entity.Description,
-            DisplayOrder = entity.DisplayOrder,
-            IsActive = entity.IsActive,
-            CreatedAt = entity.CreatedAt,
-            UpdatedAt = entity.UpdatedAt
-        };
     }
 
     private static ProductResponse ToProductResponse(Product entity)
@@ -348,8 +211,6 @@ public sealed class MarketplaceService : IMarketplaceService
         return new ProductResponse
         {
             Id = entity.Id,
-            ProductCategoryId = entity.ProductCategoryId,
-            ProductCategoryName = entity.ProductCategory.Name,
             Name = entity.Name,
             Description = entity.Description,
             ShortDescription = entity.ShortDescription,

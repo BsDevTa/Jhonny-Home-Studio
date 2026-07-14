@@ -9,21 +9,6 @@ void main() {
     );
   });
 
-  test('formata duracao como estimativa em horas', () {
-    expect(
-      ServicePresentationFormatter.estimatedDuration(300),
-      'Estimativa de 5 horas',
-    );
-    expect(
-      ServicePresentationFormatter.estimatedDuration(90),
-      'Estimativa de 1h30',
-    );
-    expect(
-      ServicePresentationFormatter.estimatedDuration(30),
-      'Estimativa de 30 minutos',
-    );
-  });
-
   test('sanitiza string null literal', () {
     expect(ServicePresentationFormatter.sanitizeNullableText('null'), '');
     expect(ServicePresentationFormatter.sanitizeNullableText('  Null  '), '');

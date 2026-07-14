@@ -124,6 +124,33 @@ builder.Services.AddAuthentication(options =>
 
     options.Events = new JwtBearerEvents
     {
+        OnMessageReceived = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("JwtDiagnostics");
+            logger.LogInformation(
+                "JWT request {Method} {Path} Authorization={Authorization}",
+                context.Request.Method,
+                context.Request.Path,
+                MaskAuthorization(context.Request.Headers.Authorization.ToString()));
+
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices
+                .GetRequiredService<ILoggerFactory>()
+                .CreateLogger("JwtDiagnostics");
+            logger.LogWarning(
+                context.Exception,
+                "JWT authentication failed for {Method} {Path} Authorization={Authorization}",
+                context.Request.Method,
+                context.Request.Path,
+                MaskAuthorization(context.Request.Headers.Authorization.ToString()));
+
+            return Task.CompletedTask;
+        },
         OnChallenge = async context =>
         {
             context.HandleResponse();
@@ -203,4 +230,26 @@ static void AddStaticFileCorsHeaders(HttpContext context, IReadOnlyCollection<st
     context.Response.Headers["Access-Control-Allow-Origin"] = origin;
     context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
     context.Response.Headers["Vary"] = "Origin";
+}
+
+static string MaskAuthorization(string? authorization)
+{
+    if (string.IsNullOrWhiteSpace(authorization))
+    {
+        return "<missing>";
+    }
+
+    const string prefix = "Bearer ";
+    if (!authorization.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+    {
+        return "<present non-bearer>";
+    }
+
+    var token = authorization[prefix.Length..];
+    if (token.Length <= 16)
+    {
+        return $"Bearer {token}(len={token.Length})";
+    }
+
+    return $"Bearer {token[..12]}...{token[^8..]}(len={token.Length})";
 }

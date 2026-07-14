@@ -406,9 +406,6 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<Guid>("ProductCategoryId")
-                        .HasColumnType("uuid");
-
                     b.Property<decimal?>("PromotionalPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -425,44 +422,7 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductCategoryId");
-
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.ProductCategory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(140)
-                        .HasColumnType("character varying(140)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("ProductCategories");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.ProductImage", b =>
@@ -508,12 +468,8 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
-
-                    b.Property<int>("EstimatedDurationMinutes")
-                        .HasColumnType("integer");
 
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(500)
@@ -531,49 +487,12 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
-                    b.Property<Guid>("ServiceCategoryId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ServiceCategoryId");
 
                     b.ToTable("Services");
-                });
-
-            modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.ServiceCategory", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(400)
-                        .HasColumnType("character varying(400)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("ServiceCategories");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Story", b =>
@@ -887,17 +806,6 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Product", b =>
-                {
-                    b.HasOne("JhonnyHomeStudio.Domain.Entities.ProductCategory", "ProductCategory")
-                        .WithMany("Products")
-                        .HasForeignKey("ProductCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ProductCategory");
-                });
-
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.ProductImage", b =>
                 {
                     b.HasOne("JhonnyHomeStudio.Domain.Entities.Product", "Product")
@@ -907,17 +815,6 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Service", b =>
-                {
-                    b.HasOne("JhonnyHomeStudio.Domain.Entities.ServiceCategory", "ServiceCategory")
-                        .WithMany("Services")
-                        .HasForeignKey("ServiceCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ServiceCategory");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Story", b =>
@@ -980,21 +877,11 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     b.Navigation("Images");
                 });
 
-            modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.ProductCategory", b =>
-                {
-                    b.Navigation("Products");
-                });
-
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Service", b =>
                 {
                     b.Navigation("Appointments");
 
                     b.Navigation("Stories");
-                });
-
-            modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.ServiceCategory", b =>
-                {
-                    b.Navigation("Services");
                 });
 
             modelBuilder.Entity("JhonnyHomeStudio.Domain.Entities.Story", b =>

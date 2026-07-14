@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../config/api_config.dart';
 import '../errors/api_exception.dart';
@@ -31,9 +31,25 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          if (kDebugMode) {
+            final authorization = options.headers['Authorization']?.toString();
+            debugPrint(
+              '[ApiClient] ${options.method} ${options.uri} tokenStored=${_maskToken(token)} authorization=${_maskAuthorization(authorization)}',
+            );
+          }
           handler.next(options);
         },
-        onError: (error, handler) {
+        onError: (error, handler) async {
+          if (kDebugMode) {
+            final authorization =
+                error.requestOptions.headers['Authorization']?.toString();
+            debugPrint(
+              '[ApiClient] ERROR ${error.response?.statusCode} ${error.requestOptions.method} ${error.requestOptions.uri} authorization=${_maskAuthorization(authorization)}',
+            );
+          }
+          if (error.response?.statusCode == 401) {
+            await _tokenStorage.deleteToken();
+          }
           handler.reject(_buildDioException(error));
         },
       ),
@@ -178,5 +194,30 @@ class ApiClient {
       case DioExceptionType.unknown:
         return 'Erro inesperado de rede.';
     }
+  }
+
+  String _maskAuthorization(String? authorization) {
+    if (authorization == null || authorization.isEmpty) {
+      return '<missing>';
+    }
+
+    const prefix = 'Bearer ';
+    if (!authorization.startsWith(prefix)) {
+      return '<present non-bearer>';
+    }
+
+    return 'Bearer ${_maskToken(authorization.substring(prefix.length))}';
+  }
+
+  String _maskToken(String? token) {
+    if (token == null || token.isEmpty) {
+      return '<empty>';
+    }
+
+    if (token.length <= 16) {
+      return '$token(len=${token.length})';
+    }
+
+    return '${token.substring(0, 12)}...${token.substring(token.length - 8)}(len=${token.length})';
   }
 }

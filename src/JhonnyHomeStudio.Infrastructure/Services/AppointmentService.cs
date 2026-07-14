@@ -3,6 +3,7 @@ using JhonnyHomeStudio.Application.Common.Dtos.Customers;
 using JhonnyHomeStudio.Application.Common.Dtos.Addresses;
 using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Services;
+using JhonnyHomeStudio.Application.Common.Settings;
 using JhonnyHomeStudio.Domain.Entities;
 using JhonnyHomeStudio.Domain.Enums;
 using JhonnyHomeStudio.Infrastructure.Persistence;
@@ -24,11 +25,16 @@ public sealed class AppointmentService : IAppointmentService
 
     private readonly JhonnyHomeStudioDbContext _dbContext;
     private readonly ILoyaltyService _loyaltyService;
+    private readonly AppointmentSchedulingSettings _schedulingSettings;
 
-    public AppointmentService(JhonnyHomeStudioDbContext dbContext, ILoyaltyService loyaltyService)
+    public AppointmentService(
+        JhonnyHomeStudioDbContext dbContext,
+        ILoyaltyService loyaltyService,
+        AppointmentSchedulingSettings schedulingSettings)
     {
         _dbContext = dbContext;
         _loyaltyService = loyaltyService;
+        _schedulingSettings = schedulingSettings;
     }
 
     public async Task<AppointmentResponse> CreateMyAppointmentAsync(Guid userId, CreateAppointmentRequest request)
@@ -39,11 +45,12 @@ public sealed class AppointmentService : IAppointmentService
         var service = await GetActiveServiceAsync(request.ServiceId);
         var address = await GetOwnedAddressAsync(customer.Id, request.AddressId);
         var scheduledLocal = NormalizeLocalDateTime(request.ScheduledAt);
+        var appointmentDurationMinutes = GetDefaultAppointmentDurationMinutes();
 
-        await ValidateScheduledAvailabilityAsync(scheduledLocal, service.EstimatedDurationMinutes);
+        await ValidateScheduledAvailabilityAsync(scheduledLocal, appointmentDurationMinutes);
 
         var scheduledStartUtc = ToUtc(scheduledLocal);
-        var scheduledEndUtc = ToUtc(scheduledLocal.AddMinutes(service.EstimatedDurationMinutes));
+        var scheduledEndUtc = ToUtc(scheduledLocal.AddMinutes(appointmentDurationMinutes));
 
         await EnsureNoConflictAsync(scheduledLocal, scheduledStartUtc, scheduledEndUtc);
 
@@ -54,7 +61,7 @@ public sealed class AppointmentService : IAppointmentService
             AddressId = address.Id,
             ScheduledAtUtc = scheduledStartUtc,
             ServicePriceSnapshot = service.Price,
-            EstimatedDurationMinutesSnapshot = service.EstimatedDurationMinutes,
+            EstimatedDurationMinutesSnapshot = appointmentDurationMinutes,
             Status = AppointmentStatus.Pending,
             CustomerNotes = string.IsNullOrWhiteSpace(request.CustomerNotes) ? null : request.CustomerNotes.Trim()
         };
@@ -94,8 +101,7 @@ public sealed class AppointmentService : IAppointmentService
                 ServiceName = x.Service.Name,
                 ScheduledAt = x.ScheduledAtUtc,
                 Status = x.Status.ToString(),
-                ServicePriceSnapshot = x.ServicePriceSnapshot,
-                EstimatedDurationMinutesSnapshot = x.EstimatedDurationMinutesSnapshot
+                ServicePriceSnapshot = x.ServicePriceSnapshot
             })
             .ToListAsync();
     }
@@ -181,8 +187,7 @@ public sealed class AppointmentService : IAppointmentService
                 ServiceName = x.Service.Name,
                 ScheduledAt = x.ScheduledAtUtc,
                 Status = x.Status.ToString(),
-                ServicePriceSnapshot = x.ServicePriceSnapshot,
-                EstimatedDurationMinutesSnapshot = x.EstimatedDurationMinutesSnapshot
+                ServicePriceSnapshot = x.ServicePriceSnapshot
             })
             .ToListAsync();
     }
@@ -234,7 +239,7 @@ public sealed class AppointmentService : IAppointmentService
 
     public async Task<IEnumerable<AvailableSlotResponse>> GetAvailableSlotsAsync(Guid serviceId, DateTime date)
     {
-        var service = await GetActiveServiceAsync(serviceId);
+        await GetActiveServiceAsync(serviceId);
         var localDate = date.Date;
 
         if (localDate < DateTime.Now.Date)
@@ -255,14 +260,15 @@ public sealed class AppointmentService : IAppointmentService
             return slots;
         }
 
+        var appointmentDurationMinutes = GetDefaultAppointmentDurationMinutes();
         var start = localDate.Add(businessHour.StartTime.ToTimeSpan());
-        var latestStart = localDate.Add(businessHour.EndTime.ToTimeSpan()).AddMinutes(-service.EstimatedDurationMinutes);
+        var latestStart = localDate.Add(businessHour.EndTime.ToTimeSpan()).AddMinutes(-appointmentDurationMinutes);
         var slotStep = TimeSpan.FromMinutes(businessHour.SlotIntervalMinutes);
         var existingAppointments = await GetBlockingAppointmentsInUtcRangeAsync(localDate);
 
         for (var slotStart = start; slotStart <= latestStart; slotStart = slotStart.Add(slotStep))
         {
-            var slotEnd = slotStart.AddMinutes(service.EstimatedDurationMinutes);
+            var slotEnd = slotStart.AddMinutes(appointmentDurationMinutes);
             var slotStartUtc = ToUtc(slotStart);
             var slotEndUtc = ToUtc(slotEnd);
             var blockedByStatus = existingAppointments.Any(x => IsBlockingStatus(x.Status) && Overlaps(slotStartUtc, slotEndUtc, x.ScheduledAtUtc, x.ScheduledAtUtc.AddMinutes(x.EstimatedDurationMinutesSnapshot)));
@@ -327,7 +333,6 @@ public sealed class AppointmentService : IAppointmentService
     {
         var service = await _dbContext.Services
             .AsNoTracking()
-            .Include(x => x.ServiceCategory)
             .FirstOrDefaultAsync(x => x.Id == serviceId);
 
         if (service is null)
@@ -335,7 +340,7 @@ public sealed class AppointmentService : IAppointmentService
             throw new ValidationAppException("Serviço inválido.", new[] { "O serviço informado não existe." });
         }
 
-        if (!service.IsActive || !service.ServiceCategory.IsActive)
+        if (!service.IsActive)
         {
             throw new ValidationAppException("Serviço indisponível.", new[] { "O serviço informado está inativo." });
         }
@@ -535,6 +540,13 @@ public sealed class AppointmentService : IAppointmentService
         return (startLocal.ToUniversalTime(), endLocal.ToUniversalTime());
     }
 
+    private int GetDefaultAppointmentDurationMinutes()
+    {
+        return _schedulingSettings.DefaultDurationMinutes > 0
+            ? _schedulingSettings.DefaultDurationMinutes
+            : 60;
+    }
+
     private static System.Linq.Expressions.Expression<Func<Appointment, AppointmentResponse>> ToResponseProjection()
     {
         return x => new AppointmentResponse
@@ -549,7 +561,6 @@ public sealed class AppointmentService : IAppointmentService
             AddressText = x.Address.Street + ", " + x.Address.Number + " - " + x.Address.Neighborhood + ", " + x.Address.City + "/" + x.Address.State + ", CEP " + x.Address.ZipCode,
             ScheduledAt = x.ScheduledAtUtc,
             ServicePriceSnapshot = x.ServicePriceSnapshot,
-            EstimatedDurationMinutesSnapshot = x.EstimatedDurationMinutesSnapshot,
             Status = x.Status.ToString(),
             CustomerNotes = x.CustomerNotes,
             CreatedAt = x.CreatedAt,

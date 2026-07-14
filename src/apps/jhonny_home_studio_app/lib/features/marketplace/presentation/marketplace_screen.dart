@@ -10,7 +10,6 @@ import '../../../shared/widgets/premium_section_header.dart';
 import '../data/marketplace_api.dart';
 import '../data/marketplace_models.dart';
 import 'widgets/product_card.dart';
-import 'widgets/product_category_chip.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -23,11 +22,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   late final MarketplaceApi _api;
   final _searchController = TextEditingController();
 
-  List<ProductCategoryModel> _categories = const [];
   List<ProductModel> _products = const [];
   bool _loading = true;
   String? _error;
-  String? _categoryId;
 
   @override
   void initState() {
@@ -48,21 +45,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       _error = null;
     });
     try {
-      final results = await Future.wait([
-        _api.getCategories(),
-        _api.getProducts(
-          categoryId: _categoryId,
-          search: _searchController.text,
-        ),
-      ]);
+      final products = await _api.getProducts(search: _searchController.text);
       if (!mounted) return;
       setState(() {
-        _categories = results[0] as List<ProductCategoryModel>;
-        _products = results[1] as List<ProductModel>;
+        _products = products;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Não foi possível carregar a loja agora.');
+      setState(() => _error = 'Nao foi possivel carregar a loja agora.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -125,9 +115,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 final regularProducts = allProducts
                     .where((product) => !featuredIds.contains(product.id))
                     .toList(growable: false);
-                final emptyMessage = _categoryId == null
-                    ? 'Nenhum produto disponível no momento.'
-                    : 'Nenhum produto encontrado nesta categoria.';
 
                 return ListView(
                   padding: EdgeInsets.fromLTRB(
@@ -138,7 +125,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   ),
                   children: [
                     const Text(
-                      'LOJA - VOCÊ MAIS BEAUTIFUL.',
+                      'LOJA - VOCE MAIS BEAUTIFUL.',
                       style: TextStyle(
                         color: AppColors.goldLight,
                         fontSize: 22,
@@ -147,7 +134,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Beleza premium também no cuidado diário.',
+                      'Beleza premium tambem no cuidado diario.',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 18),
@@ -163,36 +150,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      height: 40,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return ProductCategoryChip(
-                              label: 'Todos',
-                              selected: _categoryId == null,
-                              onTap: () {
-                                _categoryId = null;
-                                _load();
-                              },
-                            );
-                          }
-                          final category = _categories[index - 1];
-                          return ProductCategoryChip(
-                            label: category.name,
-                            selected: _categoryId == category.id,
-                            onTap: () {
-                              _categoryId = category.id;
-                              _load();
-                            },
-                          );
-                        },
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        itemCount: _categories.length + 1,
-                      ),
-                    ),
                     const SizedBox(height: 18),
                     if (_loading)
                       const Center(
@@ -201,7 +158,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     else if (_error != null)
                       _Notice(message: _error!, onRetry: _load)
                     else if (allProducts.isEmpty)
-                      _Notice(message: emptyMessage)
+                      const _Notice(message: 'Nenhum produto disponivel no momento.')
                     else ...[
                       if (featuredProducts.isNotEmpty) ...[
                         PremiumSectionHeader(

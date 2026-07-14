@@ -54,18 +54,18 @@ class ProductCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3),
-          Text(
-            product.shortDescription.isEmpty
-                ? product.productCategoryName
-                : product.shortDescription,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              height: 1.25,
+          if (product.shortDescription.isNotEmpty) ...[
+            Text(
+              product.shortDescription,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                height: 1.25,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 8),
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,

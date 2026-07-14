@@ -1,11 +1,8 @@
 export interface StudioService {
   id: string;
-  serviceCategoryId: string;
-  serviceCategoryName: string;
   name: string;
-  description: string;
+  description?: string | null;
   price: number;
-  estimatedDurationMinutes: number;
   imageUrl?: string | null;
   isActive: boolean;
   createdAt: string;
@@ -13,12 +10,11 @@ export interface StudioService {
 }
 
 export interface CreateStudioServiceRequest {
-  serviceCategoryId: string;
   name: string;
-  description: string;
+  description?: string | null;
   price: number;
-  estimatedDurationMinutes: number;
   imageUrl?: string | null;
+  isActive?: boolean;
 }
 
 export interface UpdateStudioServiceRequest extends CreateStudioServiceRequest {

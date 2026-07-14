@@ -2,8 +2,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/admin_mobile/marketplace/presentation/admin_marketplace_home_screen.dart';
-import '../../features/admin_mobile/marketplace/presentation/admin_product_category_form_screen.dart';
-import '../../features/admin_mobile/marketplace/presentation/admin_product_category_list_screen.dart';
 import '../../features/admin_mobile/presentation/admin_mobile_home_screen.dart';
 import '../../features/admin_mobile/presentation/admin_mobile_screens.dart';
 import '../../features/admin_mobile/presentation/admin_mobile_marketplace_screens.dart';
@@ -96,20 +94,6 @@ class AppRoutes {
           builder: (context, state) => const AdminMobileHomeScreen(),
         ),
         GoRoute(
-          path: '$adminMobile/categories',
-          builder: (context, state) =>
-              const AdminListScreen(type: AdminListType.categories),
-        ),
-        GoRoute(
-          path: '$adminMobile/categories/new',
-          builder: (context, state) => const AdminCategoryFormScreen(),
-        ),
-        GoRoute(
-          path: '$adminMobile/categories/:id/edit',
-          builder: (context, state) =>
-              AdminCategoryFormScreen(id: state.pathParameters['id']),
-        ),
-        GoRoute(
           path: '$adminMobile/services',
           builder: (context, state) =>
               const AdminListScreen(type: AdminListType.services),
@@ -178,19 +162,6 @@ class AppRoutes {
         GoRoute(
           path: '$adminMobile/marketplace',
           builder: (context, state) => const AdminMarketplaceHomeScreen(),
-        ),
-        GoRoute(
-          path: '$adminMobile/marketplace/categories',
-          builder: (context, state) => const AdminProductCategoryListScreen(),
-        ),
-        GoRoute(
-          path: '$adminMobile/marketplace/categories/new',
-          builder: (context, state) => const AdminProductCategoryFormScreen(),
-        ),
-        GoRoute(
-          path: '$adminMobile/marketplace/categories/:id/edit',
-          builder: (context, state) =>
-              AdminProductCategoryFormScreen(id: state.pathParameters['id']),
         ),
         GoRoute(
           path: '$adminMobile/marketplace/products',

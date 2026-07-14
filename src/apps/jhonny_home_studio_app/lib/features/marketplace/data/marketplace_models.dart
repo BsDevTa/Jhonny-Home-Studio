@@ -1,25 +1,5 @@
 import '../../../core/utils/media_url_resolver.dart';
 
-class ProductCategoryModel {
-  const ProductCategoryModel({
-    required this.id,
-    required this.name,
-    required this.description,
-  });
-
-  final String id;
-  final String name;
-  final String description;
-
-  factory ProductCategoryModel.fromJson(Map<String, dynamic> json) {
-    return ProductCategoryModel(
-      id: _readString(json, 'id'),
-      name: _readString(json, 'name'),
-      description: _readString(json, 'description'),
-    );
-  }
-}
-
 class ProductImageModel {
   const ProductImageModel({required this.imageUrl, required this.isMain});
 
@@ -37,8 +17,6 @@ class ProductImageModel {
 class ProductModel {
   const ProductModel({
     required this.id,
-    required this.productCategoryId,
-    required this.productCategoryName,
     required this.name,
     required this.description,
     required this.shortDescription,
@@ -51,8 +29,6 @@ class ProductModel {
   });
 
   final String id;
-  final String productCategoryId;
-  final String productCategoryName;
   final String name;
   final String description;
   final String shortDescription;
@@ -73,19 +49,16 @@ class ProductModel {
 
     final mainImage = images
         .where((image) => image.isMain)
-        .map((image) {
-          return image.imageUrl.trim();
-        })
+        .map((image) => image.imageUrl.trim())
         .where((imageUrl) => imageUrl.isNotEmpty);
 
     if (mainImage.isNotEmpty) {
       return mainImage.first;
     }
 
-    final firstImageUrl = images
+    return images
         .map((image) => image.imageUrl.trim())
         .firstWhere((imageUrl) => imageUrl.isNotEmpty, orElse: () => '');
-    return firstImageUrl;
   }
 
   bool get hasImage => displayImageUrl.trim().isNotEmpty;
@@ -95,8 +68,6 @@ class ProductModel {
     final images = json['images'];
     return ProductModel(
       id: _readString(json, 'id'),
-      productCategoryId: _readString(json, 'productCategoryId'),
-      productCategoryName: _readString(json, 'productCategoryName'),
       name: _readString(json, 'name'),
       description: _readString(json, 'description'),
       shortDescription: _readString(json, 'shortDescription'),

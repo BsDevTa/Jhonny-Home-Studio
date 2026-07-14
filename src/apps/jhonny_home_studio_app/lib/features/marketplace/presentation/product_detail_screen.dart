@@ -109,14 +109,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    product.productCategoryName,
-                    style: const TextStyle(
-                      color: AppColors.goldSoft,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
                     product.name,
                     style: const TextStyle(
                       color: AppColors.textPrimary,

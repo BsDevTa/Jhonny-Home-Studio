@@ -12,7 +12,6 @@ public sealed class AppointmentResponse
     public string AddressText { get; set; } = string.Empty;
     public DateTime ScheduledAt { get; set; }
     public decimal ServicePriceSnapshot { get; set; }
-    public int EstimatedDurationMinutesSnapshot { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? CustomerNotes { get; set; }
     public DateTime CreatedAt { get; set; }

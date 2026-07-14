@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/service_presentation_formatter.dart';
 import '../../data/appointment_models.dart';
 import '../../../../shared/widgets/premium_card.dart';
 import '../../../../shared/widgets/premium_status_badge.dart';
@@ -59,14 +58,7 @@ class AppointmentCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _InfoTag(
-                label: ServicePresentationFormatter.priceFrom(
-                  appointment.servicePriceSnapshot,
-                ),
-              ),
-              _InfoTag(
-                label: ServicePresentationFormatter.estimatedDuration(
-                  appointment.estimatedDurationMinutesSnapshot,
-                ),
+                label: 'R\$ ${appointment.servicePriceSnapshot.toStringAsFixed(2).replaceAll('.', ',')}',
               ),
             ],
           ),
