@@ -107,6 +107,30 @@ public sealed class LocalFileStorageService : IFileStorageService
         });
     }
 
+    public Task DeleteAsync(
+        string fileUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedPath = NormalizeUploadsPath(ReadPath(fileUrl));
+        if (string.IsNullOrWhiteSpace(normalizedPath))
+        {
+            return Task.CompletedTask;
+        }
+
+        var webRootPath = Path.Combine(_environment.ContentRootPath, "wwwroot");
+        var physicalPath = Path.GetFullPath(Path.Combine(
+            webRootPath,
+            normalizedPath.Replace('/', Path.DirectorySeparatorChar)));
+        var rootPath = Path.GetFullPath(webRootPath);
+
+        if (physicalPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase) && File.Exists(physicalPath))
+        {
+            File.Delete(physicalPath);
+        }
+
+        return Task.CompletedTask;
+    }
+
     private static string NormalizeUploadsPath(string relativePath)
     {
         var normalizedPath = relativePath
@@ -122,6 +146,16 @@ public sealed class LocalFileStorageService : IFileStorageService
         return normalizedPath.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
             ? normalizedPath
             : $"uploads/{normalizedPath}";
+    }
+
+    private static string ReadPath(string fileUrl)
+    {
+        if (Uri.TryCreate(fileUrl, UriKind.Absolute, out var uri))
+        {
+            return uri.LocalPath;
+        }
+
+        return fileUrl;
     }
 
     private static string NormalizeContentType(string contentType, string extension)

@@ -1,4 +1,4 @@
-import { ApiConfig } from '../config/api-config';
+import { resolveMediaUrl } from '../utils/media-url-resolver';
 
 export interface ProductCategoryModel {
   id: string;
@@ -39,22 +39,7 @@ export interface ProductModel {
 }
 
 export function resolveUrl(value?: string | null): string {
-  const url = (value ?? '').trim();
-  if (!url) {
-    return '';
-  }
-
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol) {
-      return url;
-    }
-  } catch {
-    // Treat as relative below.
-  }
-
-  const normalizedPath = url.startsWith('/') ? url : `/${url}`;
-  return `${ApiConfig.baseUrl}${normalizedPath}`;
+  return resolveMediaUrl(value);
 }
 
 export function getProductDisplayImageUrl(
@@ -92,5 +77,6 @@ export interface UpsertProductRequest {
   isFeatured: boolean;
   displayOrder: number;
   stockQuantity?: number | null;
+  removeImage?: boolean;
   images: Array<{ imageUrl: string; displayOrder: number; isMain: boolean }>;
 }

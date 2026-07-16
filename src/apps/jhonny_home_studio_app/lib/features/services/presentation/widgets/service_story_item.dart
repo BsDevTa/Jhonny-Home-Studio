@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/media_url_resolver.dart';
 
 class ServiceStoryItem extends StatelessWidget {
   const ServiceStoryItem({
@@ -20,7 +21,8 @@ class ServiceStoryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final trimmedTitle = title.trim();
     final initials = _buildInitials(trimmedTitle);
-    final hasImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
+    final resolvedImageUrl = resolveMediaUrl(imageUrl);
+    final hasImage = resolvedImageUrl.isNotEmpty;
 
     return InkWell(
       borderRadius: BorderRadius.circular(999),
@@ -54,9 +56,28 @@ class ServiceStoryItem extends StatelessWidget {
                 child: ClipOval(
                   child: hasImage
                       ? Image.network(
-                          imageUrl!,
+                          resolvedImageUrl,
                           fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            }
+
+                            return const Center(
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.gold,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            );
+                          },
                           errorBuilder: (context, error, stackTrace) {
+                            debugPrint(
+                              'Erro ao carregar imagem do serviço: $resolvedImageUrl | $error',
+                            );
                             return _PlaceholderContent(
                               icon: icon,
                               initials: initials,

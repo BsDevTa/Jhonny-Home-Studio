@@ -65,7 +65,7 @@ public sealed class ServiceService : IServiceService
         entity.Name = request.Name.Trim();
         entity.Description = NormalizeOptional(request.Description);
         entity.Price = request.Price;
-        entity.ImageUrl = NormalizeOptional(request.ImageUrl);
+        ApplyImageUpdate(entity, request.ImageUrl, request.RemoveImage);
         entity.IsActive = request.IsActive;
         entity.UpdatedAt = DateTime.UtcNow;
 
@@ -173,5 +173,20 @@ public sealed class ServiceService : IServiceService
 
         var trimmed = value.Trim();
         return string.Equals(trimmed, "null", StringComparison.OrdinalIgnoreCase) ? null : trimmed;
+    }
+
+    private static void ApplyImageUpdate(Service entity, string? imageUrl, bool removeImage)
+    {
+        if (removeImage)
+        {
+            entity.ImageUrl = null;
+            return;
+        }
+
+        var normalizedImageUrl = NormalizeOptional(imageUrl);
+        if (!string.IsNullOrWhiteSpace(normalizedImageUrl))
+        {
+            entity.ImageUrl = normalizedImageUrl;
+        }
     }
 }

@@ -24,4 +24,6 @@ export interface CreateStudioStoryRequest {
   endsAt?: string | null;
 }
 
-export type UpdateStudioStoryRequest = CreateStudioStoryRequest;
+export interface UpdateStudioStoryRequest extends CreateStudioStoryRequest {
+  removeImage?: boolean;
+}

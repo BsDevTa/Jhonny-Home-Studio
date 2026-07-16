@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/responsive/app_breakpoints.dart';
 import '../data/service_models.dart';
 import '../data/services_api.dart';
 import 'widgets/service_card.dart';
@@ -71,8 +72,25 @@ class _ServicesScreenState extends State<ServicesScreen> {
     context.push('/services/${service.id}');
   }
 
+  int _columnsFor(double width) {
+    if (width >= 1400) {
+      return 4;
+    }
+    if (width >= 1000) {
+      return 3;
+    }
+    if (width >= 700) {
+      return 2;
+    }
+    return 1;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final pagePadding = AppBreakpoints.horizontalPadding(screenWidth);
+    final maxContentWidth = AppBreakpoints.maxContentWidth(screenWidth);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -91,59 +109,101 @@ class _ServicesScreenState extends State<ServicesScreen> {
             color: AppColors.gold,
             onRefresh: _loadServices,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              padding: EdgeInsets.fromLTRB(pagePadding, 16, pagePadding, 24),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
-                const Text(
-                  'Nossos servicos',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxContentWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Nossos servicos',
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Escolha a experiencia ideal para o seu momento.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: 24),
+                        if (_isLoading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 60),
+                              child: CircularProgressIndicator(
+                                color: AppColors.gold,
+                              ),
+                            ),
+                          )
+                        else if (_errorMessage != null)
+                          _EmptyState(
+                            icon: Icons.error_outline,
+                            title: 'Nao foi possivel carregar',
+                            message: _errorMessage!,
+                            actionLabel: 'Tentar novamente',
+                            onAction: _loadServices,
+                          )
+                        else if (_services.isEmpty)
+                          const _EmptyState(
+                            icon: Icons.cut_outlined,
+                            title: 'Nenhum servico disponivel',
+                            message: 'Tente novamente em instantes.',
+                          )
+                        else
+                          _ServicesGrid(
+                            services: _services,
+                            columns: _columnsFor(screenWidth),
+                            onOpenDetails: _openDetails,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Escolha a experiencia ideal para o seu momento.',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 24),
-                if (_isLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 60),
-                      child: CircularProgressIndicator(color: AppColors.gold),
-                    ),
-                  )
-                else if (_errorMessage != null)
-                  _EmptyState(
-                    icon: Icons.error_outline,
-                    title: 'Nao foi possivel carregar',
-                    message: _errorMessage!,
-                    actionLabel: 'Tentar novamente',
-                    onAction: _loadServices,
-                  )
-                else if (_services.isEmpty)
-                  const _EmptyState(
-                    icon: Icons.cut_outlined,
-                    title: 'Nenhum servico disponivel',
-                    message: 'Tente novamente em instantes.',
-                  )
-                else
-                  ..._services.map(
-                    (service) => Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: ServiceCard(
-                        service: service,
-                        onDetailsPressed: () => _openDetails(service),
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ServicesGrid extends StatelessWidget {
+  const _ServicesGrid({
+    required this.services,
+    required this.columns,
+    required this.onOpenDetails,
+  });
+
+  final List<ServiceModel> services;
+  final int columns;
+  final ValueChanged<ServiceModel> onOpenDetails;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: services.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
+        childAspectRatio: columns == 1 ? 0.78 : 0.72,
+      ),
+      itemBuilder: (context, index) {
+        final service = services[index];
+        return ServiceCard(
+          service: service,
+          onDetailsPressed: () => onOpenDetails(service),
+        );
+      },
     );
   }
 }

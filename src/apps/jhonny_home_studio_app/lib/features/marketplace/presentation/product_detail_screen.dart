@@ -103,6 +103,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ? Image.network(
                               product.displayImageUrl,
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                debugPrint(
+                                  'Erro ao carregar imagem do produto: ${product.displayImageUrl} | $error',
+                                );
+                                return const _DetailPlaceholder();
+                              },
                             )
                           : const _DetailPlaceholder(),
                     ),

@@ -131,6 +131,19 @@ public sealed class S3FileStorageService : IFileStorageService
         }
     }
 
+    public async Task DeleteAsync(
+        string fileUrl,
+        CancellationToken cancellationToken = default)
+    {
+        var objectKey = NormalizeObjectKey(ReadPath(fileUrl));
+        if (string.IsNullOrWhiteSpace(objectKey))
+        {
+            return;
+        }
+
+        await _client.DeleteObjectAsync(_bucketName, objectKey, cancellationToken);
+    }
+
     private string BuildPublicUrl(Uri publicOrigin, string relativePath)
     {
         if (!string.IsNullOrWhiteSpace(_publicBaseUrl))
@@ -156,6 +169,16 @@ public sealed class S3FileStorageService : IFileStorageService
         return objectKey.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
             ? objectKey
             : $"uploads/{objectKey}";
+    }
+
+    private static string ReadPath(string fileUrl)
+    {
+        if (Uri.TryCreate(fileUrl, UriKind.Absolute, out var uri))
+        {
+            return uri.LocalPath;
+        }
+
+        return fileUrl;
     }
 
     private static string NormalizeContentType(string contentType, string extension)

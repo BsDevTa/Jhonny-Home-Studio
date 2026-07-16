@@ -10,10 +10,14 @@ import {
   UpsertProductRequest,
 } from '../models/marketplace.model';
 import { ApiService } from './api.service';
+import { MediaUploadService } from './media-upload.service';
 
 @Injectable({ providedIn: 'root' })
 export class MarketplaceService {
-  constructor(private readonly api: ApiService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly mediaUpload: MediaUploadService,
+  ) {}
 
   getCategories(): Observable<ProductCategoryModel[]> {
     return this.api.get<ProductCategoryModel[]>('/api/admin/marketplace/categories');
@@ -77,12 +81,7 @@ export class MarketplaceService {
   }
 
   uploadProductImage(file: File): Observable<{ imageUrl: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.api.postForm<{ imageUrl: string }>(
-      '/api/admin/marketplace/products/upload-image',
-      formData,
-    );
+    return this.mediaUpload.uploadImage(file, 'products');
   }
 
   private normalizeProduct(product: ProductModel): ProductModel {

@@ -57,6 +57,17 @@
             {{ uploadingImage() ? 'Enviando imagem...' : imagePreviewUrl() ? 'Trocar imagem' : 'Selecionar imagem' }}
           </label>
 
+          @if (imagePreviewUrl()) {
+            <button
+              type="button"
+              class="danger-button upload-button"
+              [disabled]="uploadingImage()"
+              (click)="removeImage()"
+            >
+              Remover foto
+            </button>
+          }
+
           @if (selectedFileName()) {
             <small class="upload-file-name">{{ selectedFileName() }}</small>
           }

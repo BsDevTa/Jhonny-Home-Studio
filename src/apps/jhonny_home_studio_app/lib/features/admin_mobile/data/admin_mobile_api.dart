@@ -22,6 +22,21 @@ class AdminMobileApi {
   Future<void> toggleService(String id, bool active) =>
       _patch('/admin/services/$id/${active ? 'activate' : 'deactivate'}');
   Future<void> deleteService(String id) => _delete('/admin/services/$id');
+  Future<Map<String, dynamic>> uploadServiceImage(
+    Uint8List bytes, {
+    required String fileName,
+  }) async {
+    final response = await _api.postMultipart(
+      '/admin/stories/upload-media',
+      bytes: bytes,
+      fileName: fileName,
+      fields: const {'folder': 'services'},
+    );
+    debugPrint('Resposta completa upload-media: $response');
+    final normalized = _normalizeUploadResponse(_asMap(response['data']));
+    debugPrint('URL definitiva recebida: ${readUploadUrl(normalized)}');
+    return normalized;
+  }
 
   Future<List<Map<String, dynamic>>> getAppointments({
     String? date,

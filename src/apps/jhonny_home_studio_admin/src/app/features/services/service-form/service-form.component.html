@@ -40,9 +40,67 @@
           }
         </div>
 
-        <div class="field span-2">
-          <label for="imageUrl">URL da imagem <span class="muted">(opcional)</span></label>
-          <input id="imageUrl" type="url" formControlName="imageUrl" placeholder="https://..." />
+        <div class="media-field span-2">
+          <input type="hidden" formControlName="imageUrl" />
+
+          <div class="media-heading">
+            <div>
+              <span class="media-label">Foto do serviço <span class="muted">(opcional)</span></span>
+              <p>Use JPG, JPEG, PNG ou WEBP com até 10MB.</p>
+            </div>
+
+            @if (uploadingImage()) {
+              <span class="upload-status">Enviando imagem...</span>
+            }
+          </div>
+
+          <div class="media-actions">
+            <label class="secondary-button upload-button">
+              Foto/Câmera
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                capture="environment"
+                [disabled]="uploadingImage()"
+                (change)="selectImage($event)"
+              />
+            </label>
+
+            <label class="secondary-button upload-button">
+              Galeria
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                [disabled]="uploadingImage()"
+                (change)="selectImage($event)"
+              />
+            </label>
+
+            @if (imagePreviewUrl()) {
+              <button
+                type="button"
+                class="danger-button"
+                [disabled]="uploadingImage()"
+                (click)="removeImage()"
+              >
+                Remover foto
+              </button>
+            }
+          </div>
+
+          @if (selectedFileName()) {
+            <small class="upload-file-name">{{ selectedFileName() }}</small>
+          }
+
+          <div class="image-preview">
+            @if (imagePreviewUrl()) {
+              <img [src]="imagePreviewUrl()" alt="Prévia da foto do serviço" />
+            } @else {
+              <div class="image-placeholder">
+                <span>Sem foto</span>
+              </div>
+            }
+          </div>
         </div>
 
         @if (editing) {
@@ -55,7 +113,7 @@
 
       <div class="form-actions">
         <a routerLink="/services" class="secondary-button">Cancelar</a>
-        <button type="submit" class="primary-button" [disabled]="saving()">
+        <button type="submit" class="primary-button" [disabled]="saving() || uploadingImage()">
           {{ saving() ? 'Salvando...' : 'Salvar servico' }}
         </button>
       </div>

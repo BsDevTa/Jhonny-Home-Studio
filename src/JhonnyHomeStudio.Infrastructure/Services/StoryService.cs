@@ -103,7 +103,7 @@ public sealed class StoryService : IStoryService
         entity.ServiceId = request.ServiceId;
         entity.Title = request.Title.Trim();
         entity.ShortText = request.Subtitle?.Trim() ?? string.Empty;
-        entity.ImageUrl = NormalizeOptional(request.ImageUrl);
+        ApplyImageUpdate(entity, request.ImageUrl, request.RemoveImage);
         entity.ActionType = request.ServiceId.HasValue ? StoryActionType.Service : StoryActionType.None;
         entity.ActionValue = request.ServiceId?.ToString();
         entity.StartsAtUtc = startsAtUtc;
@@ -222,7 +222,28 @@ public sealed class StoryService : IStoryService
 
     private static string? NormalizeOptional(string? value)
     {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return string.Equals(trimmed, "null", StringComparison.OrdinalIgnoreCase) ? null : trimmed;
+    }
+
+    private static void ApplyImageUpdate(Story entity, string? imageUrl, bool removeImage)
+    {
+        if (removeImage)
+        {
+            entity.ImageUrl = null;
+            return;
+        }
+
+        var normalizedImageUrl = NormalizeOptional(imageUrl);
+        if (!string.IsNullOrWhiteSpace(normalizedImageUrl))
+        {
+            entity.ImageUrl = normalizedImageUrl;
+        }
     }
 
     private static Expression<Func<Story, StoryResponse>> ToResponseProjection()

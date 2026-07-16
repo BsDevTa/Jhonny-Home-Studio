@@ -6,6 +6,7 @@ using JhonnyHomeStudio.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace JhonnyHomeStudio.Infrastructure.Persistence;
@@ -52,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMarketplaceService, MarketplaceService>();
         services.AddScoped<IFileStorageService>(provider =>
         {
+            var environment = provider.GetRequiredService<IHostEnvironment>();
             var storageProvider = configuration["Storage:Provider"] ?? configuration["STORAGE_PROVIDER"] ?? string.Empty;
             var hasRailwayBucketVariables =
                 !string.IsNullOrWhiteSpace(configuration["BUCKET"]) &&
@@ -66,8 +68,14 @@ public static class ServiceCollectionExtensions
                     provider.GetRequiredService<ILogger<S3FileStorageService>>());
             }
 
+            if (!environment.IsDevelopment())
+            {
+                throw new InvalidOperationException(
+                    "Storage persistente não configurado. Em produção, defina Storage:Provider=S3 ou RailwayBucket com BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY.");
+            }
+
             return new LocalFileStorageService(
-                provider.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>(),
+                environment,
                 provider.GetRequiredService<ILogger<LocalFileStorageService>>());
         });
 

@@ -107,6 +107,7 @@ class _LogoImage extends StatelessWidget {
           width: width,
           fit: fit,
           errorBuilder: (context, error, stackTrace) {
+            debugPrint('Erro ao carregar logo: $logoUrl | $error');
             return _AssetLogo(
               width: width,
               height: height,

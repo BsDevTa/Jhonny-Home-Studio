@@ -19,4 +19,5 @@ export interface CreateStudioServiceRequest {
 
 export interface UpdateStudioServiceRequest extends CreateStudioServiceRequest {
   isActive: boolean;
+  removeImage?: boolean;
 }

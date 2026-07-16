@@ -4,6 +4,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/utils/service_presentation_formatter.dart';
 import '../../../../../shared/widgets/premium_card.dart';
 import '../../data/service_models.dart';
+import 'service_image.dart';
 
 class ServiceCard extends StatelessWidget {
   const ServiceCard({
@@ -23,6 +24,13 @@ class ServiceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ServiceImage(
+            imageUrl: service.imageUrl,
+            label: service.name,
+            aspectRatio: 16 / 9,
+            borderRadius: 16,
+          ),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

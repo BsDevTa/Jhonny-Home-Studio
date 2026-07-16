@@ -21,6 +21,7 @@ export class ProductFormComponent implements OnInit {
   readonly saving = signal(false);
   readonly uploading = signal(false);
   readonly error = signal('');
+  readonly imageRemoved = signal(false);
   readonly categories = signal<ProductCategoryModel[]>([]);
   readonly form;
 
@@ -100,11 +101,21 @@ export class ProductFormComponent implements OnInit {
     ).subscribe({
       next: (result) => {
         this.form.patchValue({ mainImageUrl: result.imageUrl });
+        this.imageRemoved.set(false);
       },
       error: (error: Error) => {
         this.error.set(error.message);
       }
     });
+  }
+
+  removeImage(): void {
+    if (this.uploading()) {
+      return;
+    }
+
+    this.form.patchValue({ mainImageUrl: '' });
+    this.imageRemoved.set(true);
   }
 
   submit(): void {
@@ -131,6 +142,7 @@ export class ProductFormComponent implements OnInit {
       stockQuantity: Number(value.stockQuantity) > 0 ? Number(value.stockQuantity) : null,
       displayOrder: Number(value.displayOrder),
       mainImageUrl,
+      removeImage: this.imageRemoved(),
       isActive: value.isActive,
       isFeatured: value.isFeatured,
       images: mainImageUrl ? [{ imageUrl: mainImageUrl, displayOrder: 0, isMain: true }] : []

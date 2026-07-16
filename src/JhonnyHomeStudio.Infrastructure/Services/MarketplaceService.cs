@@ -48,7 +48,8 @@ public sealed class MarketplaceService : IMarketplaceService
     {
         ValidateProduct(request);
         var entity = new Product();
-        ApplyProduct(entity, request);
+        ApplyProductDetails(entity, request);
+        ApplyProductImages(entity, request, preserveExistingWhenEmpty: false);
 
         _dbContext.Products.Add(entity);
         await _dbContext.SaveChangesAsync();
@@ -63,13 +64,9 @@ public sealed class MarketplaceService : IMarketplaceService
             .FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new ValidationAppException("Produto nao encontrado.", new[] { "Verifique o identificador informado." });
 
-        ApplyProduct(entity, request);
+        ApplyProductDetails(entity, request);
+        ApplyProductImages(entity, request, preserveExistingWhenEmpty: true);
         entity.UpdatedAt = DateTime.UtcNow;
-        entity.Images.Clear();
-        foreach (var image in BuildImages(request))
-        {
-            entity.Images.Add(image);
-        }
 
         await _dbContext.SaveChangesAsync();
         return await GetProductByIdRequiredAsync(entity.Id);
@@ -154,25 +151,45 @@ public sealed class MarketplaceService : IMarketplaceService
         }
     }
 
-    private static void ApplyProduct(Product entity, UpsertProductRequest request)
+    private static void ApplyProductDetails(Product entity, UpsertProductRequest request)
     {
         entity.Name = request.Name.Trim();
         entity.Description = request.Description.Trim();
         entity.ShortDescription = NormalizeOptional(request.ShortDescription);
         entity.Price = request.Price;
         entity.PromotionalPrice = request.PromotionalPrice;
-        entity.MainImageUrl = NormalizeOptional(request.MainImageUrl);
         entity.IsActive = request.IsActive;
         entity.IsFeatured = request.IsFeatured;
         entity.DisplayOrder = request.DisplayOrder;
         entity.StockQuantity = request.StockQuantity;
+    }
 
-        if (!entity.Images.Any())
+    private static void ApplyProductImages(
+        Product entity,
+        UpsertProductRequest request,
+        bool preserveExistingWhenEmpty)
+    {
+        if (request.RemoveImage)
         {
-            foreach (var image in BuildImages(request))
-            {
-                entity.Images.Add(image);
-            }
+            entity.MainImageUrl = null;
+            entity.Images.Clear();
+            return;
+        }
+
+        var images = BuildImages(request).ToList();
+        if (preserveExistingWhenEmpty && images.Count == 0)
+        {
+            return;
+        }
+
+        entity.MainImageUrl = NormalizeOptional(request.MainImageUrl)
+            ?? images.FirstOrDefault(x => x.IsMain)?.ImageUrl
+            ?? images.FirstOrDefault()?.ImageUrl;
+
+        entity.Images.Clear();
+        foreach (var image in images)
+        {
+            entity.Images.Add(image);
         }
     }
 
@@ -203,7 +220,13 @@ public sealed class MarketplaceService : IMarketplaceService
 
     private static string? NormalizeOptional(string? value)
     {
-        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return string.Equals(trimmed, "null", StringComparison.OrdinalIgnoreCase) ? null : trimmed;
     }
 
     private static ProductResponse ToProductResponse(Product entity)

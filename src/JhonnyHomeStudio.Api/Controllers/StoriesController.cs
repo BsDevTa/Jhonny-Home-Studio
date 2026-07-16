@@ -1,6 +1,6 @@
 using JhonnyHomeStudio.Api.Extensions;
+using JhonnyHomeStudio.Api.Helpers;
 using JhonnyHomeStudio.Application.Common.Dtos.Stories;
-using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Responses;
 using JhonnyHomeStudio.Application.Common.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,22 +12,6 @@ namespace JhonnyHomeStudio.Api.Controllers;
 [Route("api/stories")]
 public sealed class StoriesController : ControllerBase
 {
-    private const long MaxImageSizeBytes = 5 * 1024 * 1024;
-    private const long MaxMediaSizeBytes = 50 * 1024 * 1024;
-    private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp"
-    };
-    private static readonly HashSet<string> AllowedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".mp4",
-        ".mov",
-        ".webm"
-    };
-
     private readonly IStoryService _storyService;
     private readonly IFileStorageService _fileStorage;
     private readonly ILogger<StoriesController> _logger;
@@ -84,89 +68,35 @@ public sealed class StoriesController : ControllerBase
 
     [HttpPost("/api/admin/stories/upload-image")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UploadImage([FromForm] IFormFile? file)
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile? file, CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
-        {
-            throw new ValidationAppException("Arquivo não enviado.");
-        }
+        var response = await MediaUploadHelper.SaveAsync(
+            file,
+            MediaUploadHelper.StoryImage,
+            _fileStorage,
+            GetPublicOrigin(),
+            _logger,
+            cancellationToken);
 
-        if (file.Length > MaxImageSizeBytes)
-        {
-            throw new ValidationAppException("Imagem muito grande. O limite é 5MB.");
-        }
-
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedImageExtensions.Contains(extension))
-        {
-            throw new ValidationAppException("Formato de imagem não permitido.");
-        }
-
-        try
-        {
-            await using var stream = file.OpenReadStream();
-            var storedFile = await _fileStorage.SaveAsync(
-                stream,
-                file.FileName,
-                file.ContentType,
-                "uploads/stories",
-                "story",
-                GetPublicOrigin());
-
-            return Ok(ApiResponse<object>.SuccessResponse(
-                "Imagem enviada com sucesso.",
-                BuildUploadResponse(storedFile, "Image")));
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Falha ao salvar imagem do story. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
-            throw new ValidationAppException("Não foi possível enviar a imagem.");
-        }
+        return Ok(response);
     }
 
     [HttpPost("/api/admin/stories/upload-media")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UploadMedia([FromForm] IFormFile? file)
+    public async Task<IActionResult> UploadMedia(
+        [FromForm] IFormFile? file,
+        [FromForm] string? folder,
+        CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
-        {
-            throw new ValidationAppException("Arquivo não enviado.");
-        }
+        var response = await MediaUploadHelper.SaveAsync(
+            file,
+            MediaUploadHelper.ResolveTarget(folder),
+            _fileStorage,
+            GetPublicOrigin(),
+            _logger,
+            cancellationToken);
 
-        if (file.Length > MaxMediaSizeBytes)
-        {
-            throw new ValidationAppException("Mídia muito grande. O limite é 50MB.");
-        }
-
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var isImage = AllowedImageExtensions.Contains(extension);
-        var isVideo = AllowedVideoExtensions.Contains(extension);
-        if (!isImage && !isVideo)
-        {
-            throw new ValidationAppException("Formato de mídia não permitido.");
-        }
-
-        try
-        {
-            await using var stream = file.OpenReadStream();
-            var storedFile = await _fileStorage.SaveAsync(
-                stream,
-                file.FileName,
-                file.ContentType,
-                "uploads/stories",
-                "story",
-                GetPublicOrigin());
-
-            var mediaType = isVideo ? "Video" : "Image";
-            return Ok(ApiResponse<object>.SuccessResponse(
-                "Mídia enviada com sucesso.",
-                BuildUploadResponse(storedFile, mediaType)));
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Falha ao salvar mídia do story. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
-            throw new ValidationAppException("Não foi possível enviar a mídia.");
-        }
+        return Ok(response);
     }
 
     [HttpPost("/api/admin/stories")]
@@ -240,20 +170,4 @@ public sealed class StoriesController : ControllerBase
         return new Uri(GetPublicOrigin(), path).ToString();
     }
 
-    private static object BuildUploadResponse(StoredFileResponse storedFile, string mediaType)
-    {
-        return new
-        {
-            success = storedFile.Exists,
-            url = storedFile.PublicUrl,
-            imageUrl = storedFile.PublicUrl,
-            mediaUrl = storedFile.PublicUrl,
-            relativePath = storedFile.RelativePath,
-            fileName = storedFile.FileName,
-            contentType = storedFile.ContentType,
-            sizeBytes = storedFile.SizeBytes,
-            mediaType,
-            storageProvider = storedFile.StorageProvider
-        };
-    }
 }

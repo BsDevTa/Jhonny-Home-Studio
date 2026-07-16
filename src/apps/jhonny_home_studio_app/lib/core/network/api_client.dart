@@ -41,8 +41,8 @@ class ApiClient {
         },
         onError: (error, handler) async {
           if (kDebugMode) {
-            final authorization =
-                error.requestOptions.headers['Authorization']?.toString();
+            final authorization = error.requestOptions.headers['Authorization']
+                ?.toString();
             debugPrint(
               '[ApiClient] ERROR ${error.response?.statusCode} ${error.requestOptions.method} ${error.requestOptions.uri} authorization=${_maskAuthorization(authorization)}',
             );
@@ -99,6 +99,7 @@ class ApiClient {
     String? filePath,
     Uint8List? bytes,
     String fileName = 'upload.bin',
+    Map<String, String>? fields,
   }) async {
     if (filePath == null && bytes == null) {
       throw ArgumentError('Informe filePath ou bytes para o upload.');
@@ -108,6 +109,7 @@ class ApiClient {
       'file': bytes != null
           ? MultipartFile.fromBytes(bytes, filename: fileName)
           : await MultipartFile.fromFile(filePath!),
+      if (fields != null) ...fields,
     });
     final response = await _dio.post(path, data: formData);
     return _normalizeResponse(response);
