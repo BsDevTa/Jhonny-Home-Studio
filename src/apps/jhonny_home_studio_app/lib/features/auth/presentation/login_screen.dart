@@ -21,13 +21,38 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  late final AnimationController _introController;
+  late final Animation<double> _introScale;
+  late final Animation<double> _introOpacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _introController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 720),
+    )..forward();
+    final introCurve = CurvedAnimation(
+      parent: _introController,
+      curve: Curves.easeOutCubic,
+    );
+    _introScale = Tween<double>(begin: 0.88, end: 1).animate(introCurve);
+    _introOpacity = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(0, 0.7, curve: Curves.easeOut),
+      ),
+    );
+  }
 
   @override
   void dispose() {
+    _introController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -57,11 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final settings = context.watch<AppSettingsProvider>().settings;
-    final isWide = MediaQuery.sizeOf(context).width >= 700;
-    final logoWidth = isWide ? 280.0 : 210.0;
-    final logoHeight = isWide ? 170.0 : 130.0;
-    final topSpacing = isWide ? 40.0 : 24.0;
-    final logoCardSpacing = isWide ? 38.0 : 30.0;
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
     return Scaffold(
       body: Stack(
@@ -81,177 +102,205 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SafeArea(
               child: LayoutBuilder(
                 builder: (context, constraints) {
+                  final isWide = screenWidth >= 700;
+                  final isShort = constraints.maxHeight < 760;
+                  final horizontalPadding = isWide ? 24.0 : 18.0;
+                  final logoWidth = isWide
+                      ? (isShort ? 390.0 : 420.0)
+                      : (screenWidth - 36).clamp(260.0, 336.0).toDouble();
+                  final logoHeight = isWide
+                      ? (isShort ? 238.0 : 260.0)
+                      : (screenWidth - 36).clamp(166.0, 208.0).toDouble();
+                  final cardWidth = isWide
+                      ? 430.0
+                      : (screenWidth - horizontalPadding * 2)
+                            .clamp(0.0, 420.0)
+                            .toDouble();
+                  final logoCardSpacing = isWide ? 20.0 : 18.0;
+                  final topOffset = isWide ? (isShort ? 48.0 : 72.0) : 16.0;
+
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      0,
+                      horizontalPadding,
+                      24,
+                    ),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         minHeight: constraints.maxHeight,
                       ),
                       child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 480),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              SizedBox(height: topSpacing),
-                              _BrandHeader(
-                                width: logoWidth,
-                                height: logoHeight,
-                                logoUrl: settings.logoUrl,
-                                fallbackName: settings.studioName,
-                              ),
-                              SizedBox(height: logoCardSpacing),
-                              Center(
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 440,
-                                  ),
-                                  child: PremiumCard(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 22,
-                                    ),
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        AppColors.surface,
-                                        AppColors.surfaceElevated,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Text(
-                                          AppTexts.loginTitle,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        const Text(
-                                          'Entre para continuar sua experiência premium.',
-                                          style: TextStyle(
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 18),
-                                        if (authProvider.errorMessage !=
-                                            null) ...[
-                                          ErrorMessage(
-                                            message: authProvider.errorMessage!,
-                                          ),
-                                          const SizedBox(height: 12),
+                        child: _LoginEntrance(
+                          scale: _introScale,
+                          opacity: _introOpacity,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(0, topOffset, 0, 24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _BrandHeader(
+                                  width: logoWidth,
+                                  height: logoHeight,
+                                  logoUrl: settings.logoUrl,
+                                  fallbackName: settings.studioName,
+                                ),
+                                SizedBox(height: logoCardSpacing),
+                                Center(
+                                  child: SizedBox(
+                                    width: cardWidth,
+                                    child: PremiumCard(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 22,
+                                        vertical: 24,
+                                      ),
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          AppColors.surface,
+                                          AppColors.surfaceElevated,
                                         ],
-                                        Form(
-                                          key: _formKey,
-                                          child: Column(
-                                            children: [
-                                              PremiumTextField(
-                                                controller: _emailController,
-                                                labelText: 'E-mail',
-                                                keyboardType:
-                                                    TextInputType.emailAddress,
-                                                prefixIcon:
-                                                    Icons.email_outlined,
-                                                prefixIconSize: 19,
-                                                isDense: true,
-                                                contentPadding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 13,
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Text(
+                                            AppTexts.loginTitle,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headlineMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          const Text(
+                                            'Entre para continuar sua experiência premium.',
+                                            style: TextStyle(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          if (authProvider.errorMessage !=
+                                              null) ...[
+                                            ErrorMessage(
+                                              message:
+                                                  authProvider.errorMessage!,
+                                            ),
+                                            const SizedBox(height: 12),
+                                          ],
+                                          Form(
+                                            key: _formKey,
+                                            child: Column(
+                                              children: [
+                                                PremiumTextField(
+                                                  controller: _emailController,
+                                                  labelText: 'E-mail',
+                                                  keyboardType: TextInputType
+                                                      .emailAddress,
+                                                  prefixIcon:
+                                                      Icons.email_outlined,
+                                                  prefixIconSize: 19,
+                                                  isDense: true,
+                                                  contentPadding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                  validator: (value) {
+                                                    final text =
+                                                        value?.trim() ?? '';
+                                                    if (text.isEmpty) {
+                                                      return AppTexts
+                                                          .validationRequired;
+                                                    }
+                                                    if (!text.contains('@')) {
+                                                      return AppTexts
+                                                          .validationEmail;
+                                                    }
+                                                    return null;
+                                                  },
+                                                ),
+                                                const SizedBox(height: 12),
+                                                PremiumTextField(
+                                                  controller:
+                                                      _passwordController,
+                                                  labelText: 'Senha',
+                                                  obscureText: true,
+                                                  prefixIcon:
+                                                      Icons.lock_outline,
+                                                  prefixIconSize: 19,
+                                                  isDense: true,
+                                                  contentPadding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                  validator: (value) {
+                                                    if ((value ?? '').isEmpty) {
+                                                      return AppTexts
+                                                          .validationRequired;
+                                                    }
+                                                    return null;
+                                                  },
+                                                ),
+                                                const SizedBox(height: 16),
+                                                PremiumButton(
+                                                  text: AppTexts.signIn,
+                                                  isLoading:
+                                                      authProvider.isLoading,
+                                                  height: 46,
+                                                  onPressed: _submit,
+                                                ),
+                                                const SizedBox(height: 6),
+                                                TextButton(
+                                                  style: TextButton.styleFrom(
+                                                    foregroundColor: AppColors
+                                                        .buttonSecondaryText,
+                                                    backgroundColor: AppColors
+                                                        .buttonSecondaryBackground,
+                                                    side: const BorderSide(
+                                                      color: AppColors.border,
+                                                      width: 0.8,
                                                     ),
-                                                validator: (value) {
-                                                  final text =
-                                                      value?.trim() ?? '';
-                                                  if (text.isEmpty) {
-                                                    return AppTexts
-                                                        .validationRequired;
-                                                  }
-                                                  if (!text.contains('@')) {
-                                                    return AppTexts
-                                                        .validationEmail;
-                                                  }
-                                                  return null;
-                                                },
-                                              ),
-                                              const SizedBox(height: 12),
-                                              PremiumTextField(
-                                                controller: _passwordController,
-                                                labelText: 'Senha',
-                                                obscureText: true,
-                                                prefixIcon: Icons.lock_outline,
-                                                prefixIconSize: 19,
-                                                isDense: true,
-                                                contentPadding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 13,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            18,
+                                                          ),
                                                     ),
-                                                validator: (value) {
-                                                  if ((value ?? '').isEmpty) {
-                                                    return AppTexts
-                                                        .validationRequired;
-                                                  }
-                                                  return null;
-                                                },
-                                              ),
-                                              const SizedBox(height: 18),
-                                              PremiumButton(
-                                                text: AppTexts.signIn,
-                                                isLoading:
-                                                    authProvider.isLoading,
-                                                height: 48,
-                                                onPressed: _submit,
-                                              ),
-                                              const SizedBox(height: 8),
-                                              TextButton(
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: AppColors
-                                                      .buttonSecondaryText,
-                                                  backgroundColor: AppColors
-                                                      .buttonSecondaryBackground,
-                                                  side: const BorderSide(
-                                                    color: AppColors.border,
-                                                    width: 0.8,
-                                                  ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          18,
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 18,
+                                                          vertical: 10,
                                                         ),
                                                   ),
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 18,
-                                                        vertical: 11,
-                                                      ),
-                                                ),
-                                                onPressed: () => context.go(
-                                                  AppRoutes.register,
-                                                ),
-                                                child: const Text(
-                                                  AppTexts.createAccount,
-                                                  style: TextStyle(
-                                                    color: AppColors
-                                                        .buttonSecondaryText,
-                                                    fontWeight: FontWeight.w600,
+                                                  onPressed: () => context.go(
+                                                    AppRoutes.register,
+                                                  ),
+                                                  child: const Text(
+                                                    AppTexts.createAccount,
+                                                    style: TextStyle(
+                                                      color: AppColors
+                                                          .buttonSecondaryText,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -264,6 +313,30 @@ class _LoginScreenState extends State<LoginScreen> {
           if (authProvider.isLoading) const LoadingOverlay(),
         ],
       ),
+    );
+  }
+}
+
+class _LoginEntrance extends StatelessWidget {
+  const _LoginEntrance({
+    required this.scale,
+    required this.opacity,
+    required this.child,
+  });
+
+  final Animation<double> scale;
+  final Animation<double> opacity;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return child;
+    }
+
+    return FadeTransition(
+      opacity: opacity,
+      child: ScaleTransition(scale: scale, child: child),
     );
   }
 }
@@ -288,8 +361,9 @@ class _BrandHeader extends StatelessWidget {
         width: width,
         height: height,
         showBorder: true,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.all(4),
         fit: BoxFit.contain,
+        imageScale: width >= 360 ? 2.15 : 1.88,
         logoUrl: logoUrl,
         fallbackName: fallbackName,
       ),

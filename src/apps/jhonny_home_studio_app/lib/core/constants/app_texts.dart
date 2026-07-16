@@ -1,5 +1,5 @@
 class AppTexts {
-  static const String appName = 'Jhonny Home Studio';
+  static const String appName = 'Johnny Home Studio';
   static const String appSubtitle = 'Experiência premium';
   static const String slogan =
       'Beleza, exclusividade e conforto onde você estiver.';

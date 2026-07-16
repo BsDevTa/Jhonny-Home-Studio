@@ -173,7 +173,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       phoneNumber: settings.whatsAppNumber,
       message:
           '''
-Olá, quero confirmar meu agendamento no Jhonny Home Studio.
+Olá, quero confirmar meu agendamento no Johnny Home Studio.
 
 Serviço: ${appointment.serviceName}
 Data: ${date == null ? 'Não informada' : DateFormat('dd/MM/yyyy').format(date)}

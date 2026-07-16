@@ -224,8 +224,9 @@ class _ItemCard extends StatelessWidget {
     AdminListType.stories => _text(item, 'title'),
   };
   String get subtitle => switch (type) {
-    AdminListType.services =>
-      ServicePresentationFormatter.priceFrom(num.tryParse(_text(item, 'price')) ?? 0),
+    AdminListType.services => ServicePresentationFormatter.priceFrom(
+      num.tryParse(_text(item, 'price')) ?? 0,
+    ),
     AdminListType.appointments =>
       '${_date(item['scheduledAt'])} · ${_statusLabel(_text(item, 'status'))}',
     AdminListType.customers =>
@@ -1044,7 +1045,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Future<void> _load() async {
     final x = await _api(context).getSettings();
     for (final e in fields.entries) {
-      e.value.text = _text(x, e.key);
+      e.value.text = _settingsDisplayText(x, e.key);
     }
     active = _flag(x, 'isActive', true);
     if (mounted) setState(() {});
@@ -1092,6 +1093,22 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     ],
   );
 }
+
+String _settingsDisplayText(Map<String, dynamic> item, String key) {
+  final value = _text(item, key);
+  return _settingsBrandTextFields.contains(key)
+      ? value.replaceAll('Jhonny', 'Johnny')
+      : value;
+}
+
+const _settingsBrandTextFields = {
+  'studioName',
+  'subtitle',
+  'slogan',
+  'welcomeTitle',
+  'welcomeMessage',
+  'supportMessage',
+};
 
 const _settingsLabels = {
   'studioName': 'Nome do estúdio',
@@ -1464,7 +1481,7 @@ class _AdminNavigationPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Jhonny ERP',
+                    'Johnny ERP',
                     style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 20,

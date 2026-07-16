@@ -38,23 +38,31 @@ class AppSettingsModel {
 
   factory AppSettingsModel.fromJson(Map<String, dynamic> json) {
     return AppSettingsModel(
-      studioName: _readString(json, 'studioName', fallback: AppTexts.appName),
-      subtitle: _readString(json, 'subtitle', fallback: AppTexts.appSubtitle),
-      slogan: _readString(json, 'slogan', fallback: AppTexts.slogan),
+      studioName: _readDisplayString(
+        json,
+        'studioName',
+        fallback: AppTexts.appName,
+      ),
+      subtitle: _readDisplayString(
+        json,
+        'subtitle',
+        fallback: AppTexts.appSubtitle,
+      ),
+      slogan: _readDisplayString(json, 'slogan', fallback: AppTexts.slogan),
       logoUrl: resolveMediaUrl(_readString(json, 'logoUrl')),
       whatsAppNumber: _readString(json, 'whatsAppNumber'),
       instagramUrl: _readString(json, 'instagramUrl'),
-      welcomeTitle: _readString(
+      welcomeTitle: _readDisplayString(
         json,
         'welcomeTitle',
         fallback: AppTexts.beautyBegins,
       ),
-      welcomeMessage: _readString(
+      welcomeMessage: _readDisplayString(
         json,
         'welcomeMessage',
         fallback: AppTexts.slogan,
       ),
-      supportMessage: _readString(
+      supportMessage: _readDisplayString(
         json,
         'supportMessage',
         fallback: 'Como podemos ajudar?',
@@ -70,4 +78,16 @@ String _readString(
 }) {
   final value = json[key]?.toString().trim() ?? '';
   return value.isEmpty ? fallback : value;
+}
+
+String _readDisplayString(
+  Map<String, dynamic> json,
+  String key, {
+  String fallback = '',
+}) {
+  return _normalizeBrandText(_readString(json, key, fallback: fallback));
+}
+
+String _normalizeBrandText(String value) {
+  return value.replaceAll('Jhonny', 'Johnny');
 }

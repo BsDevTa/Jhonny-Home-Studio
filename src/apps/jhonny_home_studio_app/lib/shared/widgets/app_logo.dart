@@ -13,6 +13,7 @@ class AppLogo extends StatelessWidget {
     this.borderRadius = 22,
     this.padding = const EdgeInsets.all(10),
     this.fit = BoxFit.contain,
+    this.imageScale = 1,
     this.logoUrl = '',
     this.fallbackName = AppTexts.appName,
   });
@@ -23,22 +24,24 @@ class AppLogo extends StatelessWidget {
   final double borderRadius;
   final EdgeInsetsGeometry padding;
   final BoxFit fit;
+  final double imageScale;
   final String logoUrl;
   final String fallbackName;
 
   @override
   Widget build(BuildContext context) {
-    final logo = _LogoImage(
-      width: showBorder ? null : width,
-      height: showBorder ? null : height,
-      fit: fit,
-      logoUrl: logoUrl,
-      fallbackName: fallbackName,
-    );
-
     if (!showBorder) {
-      return logo;
+      return _LogoImage(
+        width: width,
+        height: height,
+        fit: fit,
+        imageScale: imageScale,
+        logoUrl: logoUrl,
+        fallbackName: fallbackName,
+      );
     }
+
+    const borderWidth = 1.2;
 
     return SizedBox(
       width: width,
@@ -47,9 +50,23 @@ class AppLogo extends StatelessWidget {
         borderRadius: borderRadius,
         padding: padding,
         backgroundColor: AppColors.backgroundSoft,
-        borderWidth: 1.2,
+        borderWidth: borderWidth,
         subtleGlow: true,
-        child: logo,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius - borderWidth),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return _LogoImage(
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                fit: fit,
+                imageScale: imageScale,
+                logoUrl: logoUrl,
+                fallbackName: fallbackName,
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -60,6 +77,7 @@ class _LogoImage extends StatelessWidget {
     required this.width,
     required this.height,
     required this.fit,
+    required this.imageScale,
     required this.logoUrl,
     required this.fallbackName,
   });
@@ -67,34 +85,47 @@ class _LogoImage extends StatelessWidget {
   final double? width;
   final double? height;
   final BoxFit fit;
+  final double imageScale;
   final String logoUrl;
   final String fallbackName;
 
   @override
   Widget build(BuildContext context) {
+    Widget applyScale(Widget child) {
+      if (imageScale == 1) {
+        return child;
+      }
+
+      return Transform.scale(scale: imageScale, child: child);
+    }
+
     if (logoUrl.trim().isNotEmpty) {
-      return Image.network(
-        logoUrl,
-        height: height,
-        width: width,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) {
-          return _AssetLogo(
-            width: width,
-            height: height,
-            fit: fit,
-            fallbackName: fallbackName,
-          );
-        },
+      return applyScale(
+        Image.network(
+          logoUrl,
+          height: height,
+          width: width,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) {
+            return _AssetLogo(
+              width: width,
+              height: height,
+              fit: fit,
+              fallbackName: fallbackName,
+            );
+          },
+        ),
       );
     }
 
-    // A imagem da logo possui margem interna. Recortar o PNG melhora o encaixe.
-    return _AssetLogo(
-      width: width,
-      height: height,
-      fit: fit,
-      fallbackName: fallbackName,
+    // A imagem da logo possui margem interna; escala controlada melhora o encaixe.
+    return applyScale(
+      _AssetLogo(
+        width: width,
+        height: height,
+        fit: fit,
+        fallbackName: fallbackName,
+      ),
     );
   }
 }
