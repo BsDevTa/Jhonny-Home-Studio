@@ -138,13 +138,12 @@ public sealed class AvailabilityService : IAvailabilityService
 
         for (var day = 0; day <= 6; day++)
         {
-            var isSaturday = day == (int)DayOfWeek.Saturday;
             hours.Add(new BusinessHour
             {
                 DayOfWeek = day,
                 IsOpen = day != (int)DayOfWeek.Sunday,
-                StartTime = new TimeOnly(8, 0),
-                EndTime = isSaturday ? new TimeOnly(14, 0) : new TimeOnly(18, 0),
+                StartTime = new TimeOnly(9, 0),
+                EndTime = new TimeOnly(17, 0),
                 SlotIntervalMinutes = 30
             });
         }
