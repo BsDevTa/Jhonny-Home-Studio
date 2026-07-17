@@ -1,10 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 
-import '../../../core/config/api_config.dart';
-import '../../../core/errors/api_exception.dart';
 import '../../../core/network/api_client.dart';
 
 class AdminMobileApi {
@@ -25,18 +22,7 @@ class AdminMobileApi {
   Future<Map<String, dynamic>> uploadServiceImage(
     Uint8List bytes, {
     required String fileName,
-  }) async {
-    final response = await _api.postMultipart(
-      '/admin/stories/upload-media',
-      bytes: bytes,
-      fileName: fileName,
-      fields: const {'folder': 'services'},
-    );
-    debugPrint('Resposta completa upload-media: $response');
-    final normalized = _normalizeUploadResponse(_asMap(response['data']));
-    debugPrint('URL definitiva recebida: ${readUploadUrl(normalized)}');
-    return normalized;
-  }
+  }) => _uploadMedia(bytes, fileName: fileName, folder: 'services');
 
   Future<List<Map<String, dynamic>>> getAppointments({
     String? date,
@@ -83,17 +69,7 @@ class AdminMobileApi {
   Future<Map<String, dynamic>> uploadStoryMedia(
     Uint8List bytes, {
     required String fileName,
-  }) async {
-    final response = await _api.postMultipart(
-      '/admin/stories/upload-media',
-      bytes: bytes,
-      fileName: fileName,
-    );
-    debugPrint('Resposta completa upload-media: $response');
-    final normalized = _normalizeUploadResponse(_asMap(response['data']));
-    debugPrint('URL definitiva recebida: ${readUploadUrl(normalized)}');
-    return normalized;
-  }
+  }) => _uploadMedia(bytes, fileName: fileName, folder: 'stories');
 
   Future<Map<String, dynamic>> getSettings() => _getObject('/admin/settings');
   Future<void> saveSettings(Map<String, dynamic> data) =>
@@ -130,46 +106,26 @@ class AdminMobileApi {
     Uint8List bytes, {
     required String fileName,
   }) async {
-    final uri = Uri.parse(
-      '${ApiConfig.baseUrl}/admin/marketplace/products/upload-image',
+    return _uploadMedia(bytes, fileName: fileName, folder: 'products');
+  }
+
+  Future<Map<String, dynamic>> _uploadMedia(
+    Uint8List bytes, {
+    required String fileName,
+    required String folder,
+  }) async {
+    final response = await _api.postMultipart(
+      '/admin/stories/upload-media',
+      bytes: bytes,
+      fileName: fileName,
+      fields: {'folder': folder},
     );
-    final request = http.MultipartRequest('POST', uri);
-
-    final token = await _api.getToken();
-    if (token != null && token.isNotEmpty) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-    request.headers['Accept'] = 'application/json';
-    if (kDebugMode) {
-      debugPrint(
-        '[AdminMobileApi] POST $uri tokenStored=${_maskToken(token)} authorization=${_maskAuthorization(request.headers['Authorization'])}',
-      );
-    }
-
-    request.files.add(
-      http.MultipartFile.fromBytes('file', bytes, filename: fileName),
+    debugPrint('Resposta completa upload-media[$folder]: $response');
+    final normalized = _normalizeUploadResponse(_asMap(response['data']));
+    debugPrint(
+      'URL definitiva recebida[$folder]: ${readUploadUrl(normalized)}',
     );
-
-    final streamedResponse = await request.send();
-    final response = await http.Response.fromStream(streamedResponse);
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw ApiException(
-        message: response.body,
-        statusCode: response.statusCode,
-      );
-    }
-
-    final decoded = _decodeBody(response.body);
-    if (decoded is Map<String, dynamic>) {
-      final data = decoded['data'];
-      if (data is Map<String, dynamic>) {
-        return _normalizeUploadResponse(data);
-      }
-      return _normalizeUploadResponse(decoded);
-    }
-
-    return const <String, dynamic>{};
+    return normalized;
   }
 
   Future<List<Map<String, dynamic>>> _getList(String path) async {
@@ -183,19 +139,36 @@ class AdminMobileApi {
   }
 
   Future<void> _post(String path, Object? data) async {
+    _logPayload('POST', path, data);
     await _api.postJson(path, data: data);
   }
 
   Future<void> _put(String path, Object? data) async {
+    _logPayload('PUT', path, data);
     await _api.putJson(path, data: data);
   }
 
   Future<void> _patch(String path, [Object? data]) async {
+    _logPayload('PATCH', path, data);
     await _api.patchJson(path, data: data);
   }
 
   Future<void> _delete(String path) async {
     await _api.deleteJson(path);
+  }
+}
+
+void _logPayload(String method, String path, Object? payload) {
+  if (!kDebugMode || payload == null) {
+    return;
+  }
+
+  debugPrint('========== PAYLOAD ==========');
+  debugPrint('$method $path');
+  try {
+    debugPrint(jsonEncode(payload));
+  } catch (_) {
+    debugPrint(payload.toString());
   }
 }
 
@@ -207,19 +180,6 @@ List<Map<String, dynamic>> _asList(dynamic value) {
 
 Map<String, dynamic> _asMap(dynamic value) {
   return value is Map<String, dynamic> ? value : <String, dynamic>{};
-}
-
-dynamic _decodeBody(String body) {
-  final trimmed = body.trim();
-  if (trimmed.isEmpty) {
-    return const <String, dynamic>{};
-  }
-
-  try {
-    return jsonDecode(trimmed);
-  } catch (_) {
-    return trimmed;
-  }
 }
 
 Map<String, dynamic> _normalizeUploadResponse(Map<String, dynamic> value) {
@@ -262,29 +222,4 @@ String _ensureHttps(String value) {
   }
 
   return text;
-}
-
-String _maskAuthorization(String? authorization) {
-  if (authorization == null || authorization.isEmpty) {
-    return '<missing>';
-  }
-
-  const prefix = 'Bearer ';
-  if (!authorization.startsWith(prefix)) {
-    return '<present non-bearer>';
-  }
-
-  return 'Bearer ${_maskToken(authorization.substring(prefix.length))}';
-}
-
-String _maskToken(String? token) {
-  if (token == null || token.isEmpty) {
-    return '<empty>';
-  }
-
-  if (token.length <= 16) {
-    return '$token(len=${token.length})';
-  }
-
-  return '${token.substring(0, 12)}...${token.substring(token.length - 8)}(len=${token.length})';
 }

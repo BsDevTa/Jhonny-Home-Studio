@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -343,7 +342,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       imageUrl = TextEditingController();
   bool active = true, saving = false, uploading = false, imageRemoved = false;
   Uint8List? imagePreviewBytes;
-  String imagePreviewName = '';
+  String imagePreviewName = '', originalImageUrl = '';
   @override
   void initState() {
     super.initState();
@@ -360,6 +359,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       );
       price.text = _text(x, 'price');
       imageUrl.text = _text(x, 'imageUrl');
+      originalImageUrl = imageUrl.text.trim();
       active = _flag(x, 'isActive', true);
     }
     if (mounted) setState(() {});
@@ -403,6 +403,9 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
         );
       }
 
+      debugPrint(
+        'UPLOAD serviço: oldImageUrl=$originalImageUrl newImageUrl=$uploadedUrl storageProvider=${result['storageProvider']}',
+      );
       imageUrl.text = uploadedUrl;
       imageRemoved = false;
       if (!mounted) {
@@ -443,6 +446,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       imagePreviewName = '';
       imageRemoved = true;
     });
+    debugPrint('EDIT serviço: remoção explícita oldImageUrl=$originalImageUrl');
   }
 
   @override
@@ -474,7 +478,9 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
         'removeImage': imageRemoved,
         'isActive': widget.id == null ? true : active,
       };
-      debugPrint('Payload serviço: ${jsonEncode(payload)}');
+      debugPrint(
+        'EDIT serviço: oldImageUrl=$originalImageUrl newImageUrl=${payload['imageUrl']} removeImage=$imageRemoved',
+      );
       setState(() => saving = true);
       try {
         await _api(context).saveService(widget.id, payload);
@@ -973,8 +979,9 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
   String serviceId = '';
   bool active = true, saving = false, uploading = false;
   Uint8List? mediaPreviewBytes;
-  String mediaPreviewName = '';
+  String mediaPreviewName = '', originalMediaUrl = '';
   bool mediaPreviewIsVideo = false;
+  bool mediaRemoved = false;
   @override
   void initState() {
     super.initState();
@@ -991,6 +998,7 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
       mediaUrl.text = _text(x, 'mediaUrl').isEmpty
           ? _text(x, 'imageUrl')
           : _text(x, 'mediaUrl');
+      originalMediaUrl = mediaUrl.text.trim();
       order.text = _text(x, 'displayOrder');
       serviceId = _text(x, 'serviceId');
       active = _flag(x, 'isActive', true);
@@ -1019,12 +1027,16 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         );
       }
 
+      debugPrint(
+        'UPLOAD story: oldImageUrl=$originalMediaUrl newImageUrl=$uploadedUrl storageProvider=${result['storageProvider']}',
+      );
       if (!mounted) return;
       setState(() {
         mediaUrl.text = uploadedUrl;
         mediaPreviewBytes = bytes;
         mediaPreviewName = file.name;
         mediaPreviewIsVideo = video;
+        mediaRemoved = false;
       });
     } catch (error) {
       if (!mounted) return;
@@ -1034,6 +1046,21 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         setState(() => uploading = false);
       }
     }
+  }
+
+  void _removeMedia() {
+    if (uploading) {
+      return;
+    }
+
+    setState(() {
+      mediaUrl.clear();
+      mediaPreviewBytes = null;
+      mediaPreviewName = '';
+      mediaPreviewIsVideo = false;
+      mediaRemoved = true;
+    });
+    debugPrint('EDIT story: remoção explícita oldImageUrl=$originalMediaUrl');
   }
 
   @override
@@ -1050,6 +1077,11 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
     title: widget.id == null ? 'Novo story' : 'Editar story',
     saving: saving,
     onSave: () async {
+      if (uploading) {
+        _showMessage('Aguarde o upload terminar antes de salvar.');
+        return;
+      }
+
       final uploadedUrl = mediaUrl.text.trim();
       if (uploadedUrl.startsWith('blob:')) {
         _showMessage(
@@ -1065,15 +1097,19 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         return;
       }
 
+      final nextImageUrl = uploadedUrl.isEmpty ? null : uploadedUrl;
       final payload = {
         'title': title.text,
         'subtitle': subtitle.text,
-        'imageUrl': uploadedUrl,
+        'imageUrl': nextImageUrl,
+        'removeImage': mediaRemoved,
         'serviceId': serviceId.isEmpty ? null : serviceId,
         'displayOrder': int.tryParse(order.text) ?? 0,
         'isActive': active,
       };
-      debugPrint('Payload Story: $payload');
+      debugPrint(
+        'EDIT story: oldImageUrl=$originalMediaUrl newImageUrl=$nextImageUrl removeImage=$mediaRemoved',
+      );
 
       setState(() => saving = true);
       try {
@@ -1101,6 +1137,14 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
       const SizedBox(height: 12),
       TextField(
         controller: mediaUrl,
+        onChanged: (value) {
+          if (mediaRemoved && value.trim().isNotEmpty) {
+            setState(() => mediaRemoved = false);
+            return;
+          }
+
+          setState(() {});
+        },
         decoration: const InputDecoration(labelText: 'URL da mídia'),
       ),
       const SizedBox(height: 10),
@@ -1151,25 +1195,39 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         runSpacing: 8,
         children: [
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.camera, video: false),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.camera, video: false),
             icon: const Icon(Icons.photo_camera),
             label: const Text('Foto'),
           ),
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.gallery, video: false),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.gallery, video: false),
             icon: const Icon(Icons.photo_library),
             label: const Text('Galeria'),
           ),
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.camera, video: true),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.camera, video: true),
             icon: const Icon(Icons.videocam),
             label: const Text('Gravar vídeo'),
           ),
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.gallery, video: true),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.gallery, video: true),
             icon: const Icon(Icons.video_library),
             label: const Text('Vídeo'),
           ),
+          if (mediaUrl.text.trim().isNotEmpty || mediaPreviewBytes != null)
+            TextButton.icon(
+              onPressed: uploading ? null : _removeMedia,
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Remover mídia'),
+            ),
         ],
       ),
       const SizedBox(height: 12),
