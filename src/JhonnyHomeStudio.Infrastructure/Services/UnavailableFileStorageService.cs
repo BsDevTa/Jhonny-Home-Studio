@@ -10,13 +10,31 @@ public sealed class UnavailableFileStorageService : IFileStorageService
 
     private readonly ILogger<UnavailableFileStorageService> _logger;
     private readonly string _reason;
+    private readonly string _provider;
+    private readonly bool _bucketConfigured;
+    private readonly bool _endpointConfigured;
+    private readonly bool _accessKeyConfigured;
+    private readonly bool _secretKeyConfigured;
+    private readonly bool _publicBaseUrlConfigured;
 
     public UnavailableFileStorageService(
         ILogger<UnavailableFileStorageService> logger,
-        string reason)
+        string reason,
+        string provider,
+        bool bucketConfigured,
+        bool endpointConfigured,
+        bool accessKeyConfigured,
+        bool secretKeyConfigured,
+        bool publicBaseUrlConfigured)
     {
         _logger = logger;
         _reason = reason;
+        _provider = provider;
+        _bucketConfigured = bucketConfigured;
+        _endpointConfigured = endpointConfigured;
+        _accessKeyConfigured = accessKeyConfigured;
+        _secretKeyConfigured = secretKeyConfigured;
+        _publicBaseUrlConfigured = publicBaseUrlConfigured;
     }
 
     public Task<StoredFileResponse> SaveAsync(
@@ -30,7 +48,13 @@ public sealed class UnavailableFileStorageService : IFileStorageService
     {
         cancellationToken.ThrowIfCancellationRequested();
         _logger.LogWarning(
-            "Storage provider unavailable. API will remain online. Media operations will return 503. Operation=Save; Folder={Folder}; FileName={FileName}; Reason={Reason}",
+            "Storage upload unavailable. Provider={Provider}; BucketConfigured={BucketConfigured}; EndpointConfigured={EndpointConfigured}; AccessKeyConfigured={AccessKeyConfigured}; SecretKeyConfigured={SecretKeyConfigured}; PublicBaseUrlConfigured={PublicBaseUrlConfigured}; Operation=Save; Folder={Folder}; FileName={FileName}; Reason={Reason}",
+            _provider,
+            _bucketConfigured,
+            _endpointConfigured,
+            _accessKeyConfigured,
+            _secretKeyConfigured,
+            _publicBaseUrlConfigured,
             relativeFolder,
             originalFileName,
             _reason);
@@ -44,7 +68,13 @@ public sealed class UnavailableFileStorageService : IFileStorageService
     {
         cancellationToken.ThrowIfCancellationRequested();
         _logger.LogWarning(
-            "Storage provider unavailable. API will remain online. Media operations will return 503. Operation=Get; Path={Path}; Reason={Reason}",
+            "Storage upload unavailable. Provider={Provider}; BucketConfigured={BucketConfigured}; EndpointConfigured={EndpointConfigured}; AccessKeyConfigured={AccessKeyConfigured}; SecretKeyConfigured={SecretKeyConfigured}; PublicBaseUrlConfigured={PublicBaseUrlConfigured}; Operation=Get; Path={Path}; Reason={Reason}",
+            _provider,
+            _bucketConfigured,
+            _endpointConfigured,
+            _accessKeyConfigured,
+            _secretKeyConfigured,
+            _publicBaseUrlConfigured,
             relativePath,
             _reason);
 
@@ -57,7 +87,13 @@ public sealed class UnavailableFileStorageService : IFileStorageService
     {
         cancellationToken.ThrowIfCancellationRequested();
         _logger.LogWarning(
-            "Storage provider unavailable. API will remain online. Media operations will return 503. Operation=Delete; FileUrl={FileUrl}; Reason={Reason}",
+            "Storage upload unavailable. Provider={Provider}; BucketConfigured={BucketConfigured}; EndpointConfigured={EndpointConfigured}; AccessKeyConfigured={AccessKeyConfigured}; SecretKeyConfigured={SecretKeyConfigured}; PublicBaseUrlConfigured={PublicBaseUrlConfigured}; Operation=Delete; FileUrl={FileUrl}; Reason={Reason}",
+            _provider,
+            _bucketConfigured,
+            _endpointConfigured,
+            _accessKeyConfigured,
+            _secretKeyConfigured,
+            _publicBaseUrlConfigured,
             fileUrl,
             _reason);
 

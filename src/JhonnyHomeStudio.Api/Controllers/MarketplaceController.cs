@@ -132,9 +132,9 @@ public sealed class MarketplaceController : ControllerBase
         _logger.LogInformation("Resolving file storage. Folder={Folder}; TraceId={TraceId}", "products", HttpContext.TraceIdentifier);
         var fileStorage = _serviceProvider.GetRequiredService<IFileStorageService>();
         _logger.LogInformation(
-            "File storage resolved. Folder={Folder}; StorageType={StorageType}; TraceId={TraceId}",
-            "products",
+            "Resolved storage implementation: {StorageType}. Folder={Folder}; TraceId={TraceId}",
             fileStorage.GetType().Name,
+            "products",
             HttpContext.TraceIdentifier);
 
         var response = await MediaUploadHelper.SaveAsync(

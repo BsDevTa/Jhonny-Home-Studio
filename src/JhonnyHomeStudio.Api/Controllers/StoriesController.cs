@@ -133,9 +133,9 @@ public sealed class StoriesController : ControllerBase
         _logger.LogInformation("Resolving file storage. Folder={Folder}; TraceId={TraceId}", folder, HttpContext.TraceIdentifier);
         var fileStorage = _serviceProvider.GetRequiredService<IFileStorageService>();
         _logger.LogInformation(
-            "File storage resolved. Folder={Folder}; StorageType={StorageType}; TraceId={TraceId}",
-            folder,
+            "Resolved storage implementation: {StorageType}. Folder={Folder}; TraceId={TraceId}",
             fileStorage.GetType().Name,
+            folder,
             HttpContext.TraceIdentifier);
         return fileStorage;
     }

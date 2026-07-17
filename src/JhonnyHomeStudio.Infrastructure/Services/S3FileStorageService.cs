@@ -33,7 +33,9 @@ public sealed class S3FileStorageService : IFileStorageService
 
         var accessKey = ReadRequired(configuration, "Storage:S3:AccessKeyId", "ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID");
         var secretKey = ReadRequired(configuration, "Storage:S3:SecretAccessKey", "SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY");
-        var endpoint = ReadRequired(configuration, "Storage:S3:Endpoint", "ENDPOINT", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL");
+        var endpoint = ReadRequired(configuration, "Storage:S3:Endpoint", "ENDPOINT", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL")
+            .Trim()
+            .TrimEnd('/');
         _endpoint = SanitizeEndpoint(endpoint);
         var region = ReadOptional(configuration, "Storage:S3:Region", "REGION", "AWS_REGION") ?? "auto";
         _forcePathStyle = ResolveForcePathStyle(configuration, _storageProvider);
@@ -60,10 +62,7 @@ public sealed class S3FileStorageService : IFileStorageService
         CancellationToken cancellationToken = default)
     {
         var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
-        var normalizedFolder = relativeFolder
-            .Trim()
-            .Trim('/', '\\')
-            .Replace('\\', '/');
+        var normalizedFolder = NormalizePathSegments(relativeFolder);
         var fileName = $"{filePrefix}_{Guid.NewGuid():N}{extension}";
         var relativePath = $"/{normalizedFolder}/{fileName}";
         var objectKey = NormalizeObjectKey(relativePath);
@@ -99,7 +98,7 @@ public sealed class S3FileStorageService : IFileStorageService
                 throw new IOException($"Objeto S3 {objectKey} foi criado sem conteúdo.");
             }
 
-            var publicUrl = BuildPublicUrl(publicOrigin, relativePath);
+            var publicUrl = BuildPublicUrl(publicOrigin, relativePath, objectKey);
 
             _logger.LogInformation(
                 "Storage upload completed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; ObjectKey={ObjectKey}; PublicUrl={PublicUrl}; Exists={Exists}; SizeBytes={SizeBytes}; ElapsedMs={ElapsedMs}",
@@ -202,11 +201,11 @@ public sealed class S3FileStorageService : IFileStorageService
         await _client.DeleteObjectAsync(_bucketName, objectKey, cancellationToken);
     }
 
-    private string BuildPublicUrl(Uri publicOrigin, string relativePath)
+    private string BuildPublicUrl(Uri publicOrigin, string relativePath, string objectKey)
     {
         if (!string.IsNullOrWhiteSpace(_publicBaseUrl))
         {
-            return $"{_publicBaseUrl.TrimEnd('/')}/{relativePath.TrimStart('/')}";
+            return $"{_publicBaseUrl.Trim().TrimEnd('/')}/{objectKey.TrimStart('/')}";
         }
 
         return new Uri(publicOrigin, relativePath).ToString();
@@ -214,10 +213,7 @@ public sealed class S3FileStorageService : IFileStorageService
 
     private static string NormalizeObjectKey(string relativePath)
     {
-        var objectKey = relativePath
-            .Trim()
-            .Trim('/', '\\')
-            .Replace('\\', '/');
+        var objectKey = NormalizePathSegments(relativePath);
 
         if (string.IsNullOrWhiteSpace(objectKey))
         {
@@ -227,6 +223,17 @@ public sealed class S3FileStorageService : IFileStorageService
         return objectKey.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
             ? objectKey
             : $"uploads/{objectKey}";
+    }
+
+    private static string NormalizePathSegments(string value)
+    {
+        return string.Join(
+            '/',
+            value
+                .Trim()
+                .Trim('/', '\\')
+                .Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries));
     }
 
     private static string ReadPath(string fileUrl)

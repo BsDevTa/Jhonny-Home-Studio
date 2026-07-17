@@ -243,7 +243,10 @@ class ApiClient {
     final payload = _tryDecodeResponse(response.body);
     if (payload is Map<String, dynamic>) {
       final message =
-          payload['message']?.toString() ?? _statusMessage(response.statusCode);
+          payload['message']?.toString() ??
+          payload['detail']?.toString() ??
+          payload['title']?.toString() ??
+          _statusMessage(response.statusCode);
       final errors = _extractErrors(payload['errors']);
       return ApiException(
         message: message,

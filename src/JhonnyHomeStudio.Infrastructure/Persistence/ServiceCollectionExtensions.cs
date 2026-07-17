@@ -95,7 +95,13 @@ public static class ServiceCollectionExtensions
 
             return new UnavailableFileStorageService(
                 provider.GetRequiredService<ILogger<UnavailableFileStorageService>>(),
-                status.Reason);
+                status.Reason,
+                status.Provider,
+                status.HasBucket,
+                status.HasEndpoint,
+                status.HasAccessKeyId,
+                status.HasSecretAccessKey,
+                status.PublicBaseUrlConfigured);
         });
 
         return services;
