@@ -6,6 +6,8 @@ namespace JhonnyHomeStudio.Api.Helpers;
 
 public static class MediaUploadHelper
 {
+    private static readonly TimeSpan StorageUploadTimeout = TimeSpan.FromSeconds(30);
+
     private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".jpg",
@@ -88,14 +90,36 @@ public static class MediaUploadHelper
         ILogger logger,
         CancellationToken cancellationToken = default)
     {
+        logger.LogInformation(
+            "Upload helper started. Folder={Folder}; FileReceived={FileReceived}; FileName={FileName}; ContentType={ContentType}; Length={Length}",
+            target.RelativeFolder,
+            file is not null,
+            file?.FileName,
+            file?.ContentType,
+            file?.Length);
+
         if (file is null || file.Length == 0)
         {
+            logger.LogWarning("Upload validation failed. Folder={Folder}; Reason=MissingFile", target.RelativeFolder);
             throw new ValidationAppException("Arquivo não enviado.");
         }
 
+        logger.LogInformation(
+            "Upload validation started. Folder={Folder}; FileName={FileName}; ContentType={ContentType}; Length={Length}; MaxSizeBytes={MaxSizeBytes}",
+            target.RelativeFolder,
+            file.FileName,
+            file.ContentType,
+            file.Length,
+            target.MaxSizeBytes);
+
         if (file.Length > target.MaxSizeBytes)
         {
-            throw new ValidationAppException(target.TooLargeMessage);
+            logger.LogWarning(
+                "Upload validation failed. Folder={Folder}; Reason=TooLarge; Length={Length}; MaxSizeBytes={MaxSizeBytes}",
+                target.RelativeFolder,
+                file.Length,
+                target.MaxSizeBytes);
+            throw new PayloadTooLargeAppException(target.TooLargeMessage, new[] { target.TooLargeMessage });
         }
 
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
@@ -103,12 +127,41 @@ public static class MediaUploadHelper
         var isVideo = target.AllowsVideo && AllowedVideoExtensions.Contains(extension);
         if (!isImage && !isVideo)
         {
-            throw new ValidationAppException(target.InvalidFormatMessage);
+            logger.LogWarning(
+                "Upload validation failed. Folder={Folder}; Reason=UnsupportedExtension; Extension={Extension}; ContentType={ContentType}",
+                target.RelativeFolder,
+                extension,
+                file.ContentType);
+            throw new UnsupportedMediaTypeAppException(target.InvalidFormatMessage, new[] { target.InvalidFormatMessage });
         }
+
+        logger.LogInformation(
+            "Upload validation completed. Folder={Folder}; Extension={Extension}; MediaKind={MediaKind}",
+            target.RelativeFolder,
+            extension,
+            isVideo ? "Video" : "Image");
 
         try
         {
             await using var stream = file.OpenReadStream();
+            if (stream.CanSeek)
+            {
+                stream.Position = 0;
+            }
+
+            using var timeoutCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCancellationTokenSource.CancelAfter(StorageUploadTimeout);
+
+            logger.LogInformation(
+                "Upload storage call starting. Folder={Folder}; FileName={FileName}; ContentType={ContentType}; Length={Length}; TimeoutSeconds={TimeoutSeconds}; StreamCanSeek={StreamCanSeek}; StreamPosition={StreamPosition}",
+                target.RelativeFolder,
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                StorageUploadTimeout.TotalSeconds,
+                stream.CanSeek,
+                stream.CanSeek ? stream.Position : null);
+
             var storedFile = await fileStorage.SaveAsync(
                 stream,
                 file.FileName,
@@ -116,24 +169,51 @@ public static class MediaUploadHelper
                 target.RelativeFolder,
                 target.FilePrefix,
                 publicOrigin,
-                cancellationToken);
+                timeoutCancellationTokenSource.Token);
 
             var exists = VerifyStoredFile(storedFile);
             logger.LogInformation(
-                "Upload concluído. Folder={Folder}; PhysicalPath={PhysicalPath}; PublicUrl={PublicUrl}; Exists={Exists}",
+                "Upload storage call completed. Folder={Folder}; PhysicalPath={PhysicalPath}; PublicUrl={PublicUrl}; Exists={Exists}; StorageProvider={StorageProvider}; SizeBytes={SizeBytes}",
                 target.RelativeFolder,
                 storedFile.PhysicalPath,
                 storedFile.PublicUrl,
-                exists);
+                exists,
+                storedFile.StorageProvider,
+                storedFile.SizeBytes);
 
             if (!exists)
             {
                 throw new IOException($"Upload não foi confirmado em {storedFile.PhysicalPath ?? storedFile.RelativePath}.");
             }
 
+            logger.LogInformation(
+                "Upload response building. Folder={Folder}; PublicUrl={PublicUrl}; FileName={FileName}; ContentType={ContentType}; SizeBytes={SizeBytes}; StorageProvider={StorageProvider}",
+                target.FormValue,
+                storedFile.PublicUrl,
+                storedFile.FileName,
+                storedFile.ContentType,
+                storedFile.SizeBytes,
+                storedFile.StorageProvider);
+
             return ApiResponse<object>.SuccessResponse(
                 target.SuccessMessage,
-                BuildUploadResponse(storedFile, isVideo ? "Video" : "Image"));
+                BuildUploadResponse(storedFile, target.FormValue, isVideo ? "Video" : "Image"));
+        }
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogError(
+                exception,
+                "Upload storage call timed out. Folder={Folder}; FileName={FileName}; TimeoutSeconds={TimeoutSeconds}",
+                target.RelativeFolder,
+                file.FileName,
+                StorageUploadTimeout.TotalSeconds);
+            throw new StorageTimeoutAppException(
+                "Timeout ao enviar mídia para o storage.",
+                new[] { "O storage não respondeu dentro de 30 segundos." });
+        }
+        catch (AppException)
+        {
+            throw;
         }
         catch (Exception exception)
         {
@@ -144,11 +224,13 @@ public static class MediaUploadHelper
                 file.FileName,
                 file.ContentType,
                 file.Length);
-            throw new ValidationAppException(target.FailureMessage);
+            throw new StorageUnavailableAppException(
+                "Storage de mídia indisponível.",
+                new[] { target.FailureMessage });
         }
     }
 
-    private static object BuildUploadResponse(StoredFileResponse storedFile, string mediaType)
+    private static object BuildUploadResponse(StoredFileResponse storedFile, string folder, string mediaType)
     {
         return new
         {
@@ -156,10 +238,12 @@ public static class MediaUploadHelper
             url = storedFile.PublicUrl,
             imageUrl = storedFile.PublicUrl,
             mediaUrl = storedFile.PublicUrl,
+            folder,
             relativePath = storedFile.RelativePath,
             fileName = storedFile.FileName,
             contentType = storedFile.ContentType,
             sizeBytes = storedFile.SizeBytes,
+            size = storedFile.SizeBytes,
             mediaType,
             storageProvider = storedFile.StorageProvider
         };

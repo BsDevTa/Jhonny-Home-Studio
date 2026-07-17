@@ -12,6 +12,7 @@ class TokenStorage {
   static const String _userKey = 'auth_user';
 
   final FlutterSecureStorage _storage;
+  String? _cachedToken;
 
   Future<void> saveToken(String token) async {
     if (kDebugMode) {
@@ -21,6 +22,7 @@ class TokenStorage {
       );
     }
     await _storage.write(key: _tokenKey, value: token);
+    _cachedToken = token;
   }
 
   Future<void> saveUser(AuthUser user) async {
@@ -33,7 +35,11 @@ class TokenStorage {
   }
 
   Future<String?> getToken() async {
-    final token = await _storage.read(key: _tokenKey);
+    final storedToken = await _storage.read(key: _tokenKey);
+    final token = storedToken?.isNotEmpty == true ? storedToken : _cachedToken;
+    if (storedToken?.isNotEmpty == true) {
+      _cachedToken = storedToken;
+    }
     if (kDebugMode) {
       debugPrint('[AuthStorage] getToken stored=${_maskToken(token)}');
     }
@@ -54,6 +60,7 @@ class TokenStorage {
     if (kDebugMode) {
       debugPrint('[AuthStorage] deleteToken');
     }
+    _cachedToken = null;
     await Future.wait([
       _storage.delete(key: _tokenKey),
       _storage.delete(key: _userKey),

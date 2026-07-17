@@ -12,16 +12,16 @@ namespace JhonnyHomeStudio.Api.Controllers;
 public sealed class MarketplaceController : ControllerBase
 {
     private readonly IMarketplaceService _marketplaceService;
-    private readonly IFileStorageService _fileStorage;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MarketplaceController> _logger;
 
     public MarketplaceController(
         IMarketplaceService marketplaceService,
-        IFileStorageService fileStorage,
+        IServiceProvider serviceProvider,
         ILogger<MarketplaceController> logger)
     {
         _marketplaceService = marketplaceService;
-        _fileStorage = fileStorage;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -116,16 +116,36 @@ public sealed class MarketplaceController : ControllerBase
 
     [HttpPost("/api/admin/marketplace/products/upload-image")]
     [Authorize(Roles = "Admin")]
+    [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadImage([FromForm] IFormFile? file, CancellationToken cancellationToken)
     {
+        _logger.LogInformation(
+            "Marketplace upload endpoint started. Path={Path}; HasFile={HasFile}; FileName={FileName}; ContentType={ContentType}; Length={Length}; RequestContentLength={RequestContentLength}; TraceId={TraceId}",
+            Request.Path,
+            file is not null,
+            file?.FileName,
+            file?.ContentType,
+            file?.Length,
+            Request.ContentLength,
+            HttpContext.TraceIdentifier);
+
+        _logger.LogInformation("Resolving file storage. Folder={Folder}; TraceId={TraceId}", "products", HttpContext.TraceIdentifier);
+        var fileStorage = _serviceProvider.GetRequiredService<IFileStorageService>();
+        _logger.LogInformation(
+            "File storage resolved. Folder={Folder}; StorageType={StorageType}; TraceId={TraceId}",
+            "products",
+            fileStorage.GetType().Name,
+            HttpContext.TraceIdentifier);
+
         var response = await MediaUploadHelper.SaveAsync(
             file,
             MediaUploadHelper.ProductImage,
-            _fileStorage,
+            fileStorage,
             GetPublicOrigin(),
             _logger,
             cancellationToken);
 
+        _logger.LogInformation("Marketplace upload endpoint returning success. Folder={Folder}; TraceId={TraceId}", "products", HttpContext.TraceIdentifier);
         return Ok(response);
     }
 

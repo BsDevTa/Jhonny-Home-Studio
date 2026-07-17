@@ -4,16 +4,21 @@ using JhonnyHomeStudio.Application.Common.Services;
 using JhonnyHomeStudio.Domain.Entities;
 using JhonnyHomeStudio.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace JhonnyHomeStudio.Infrastructure.Services;
 
 public sealed class ServiceService : IServiceService
 {
     private readonly JhonnyHomeStudioDbContext _dbContext;
+    private readonly ILogger<ServiceService> _logger;
 
-    public ServiceService(JhonnyHomeStudioDbContext dbContext)
+    public ServiceService(
+        JhonnyHomeStudioDbContext dbContext,
+        ILogger<ServiceService> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<ServiceResponse>> GetAllAsync()
@@ -51,6 +56,10 @@ public sealed class ServiceService : IServiceService
 
         _dbContext.Services.Add(entity);
         await _dbContext.SaveChangesAsync();
+        _logger.LogInformation(
+            "Service image create. ServiceId={ServiceId}; ImageUrl={ImageUrl}",
+            entity.Id,
+            entity.ImageUrl);
 
         return await GetByIdRequiredAsync(entity.Id);
     }
@@ -62,12 +71,20 @@ public sealed class ServiceService : IServiceService
         var entity = await _dbContext.Services.FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new ValidationAppException("Servico nao encontrado.", new[] { "Verifique o identificador informado." });
 
+        var previousImageUrl = entity.ImageUrl;
         entity.Name = request.Name.Trim();
         entity.Description = NormalizeOptional(request.Description);
         entity.Price = request.Price;
         ApplyImageUpdate(entity, request.ImageUrl, request.RemoveImage);
         entity.IsActive = request.IsActive;
         entity.UpdatedAt = DateTime.UtcNow;
+        _logger.LogInformation(
+            "Service image edit. ServiceId={ServiceId}; OldImageUrl={OldImageUrl}; RequestImageUrl={RequestImageUrl}; NewImageUrl={NewImageUrl}; RemoveImage={RemoveImage}",
+            entity.Id,
+            previousImageUrl,
+            request.ImageUrl,
+            entity.ImageUrl,
+            request.RemoveImage);
 
         await _dbContext.SaveChangesAsync();
         return await GetByIdRequiredAsync(entity.Id);

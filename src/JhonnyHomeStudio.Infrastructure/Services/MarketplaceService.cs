@@ -4,16 +4,21 @@ using JhonnyHomeStudio.Application.Common.Services;
 using JhonnyHomeStudio.Domain.Entities;
 using JhonnyHomeStudio.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace JhonnyHomeStudio.Infrastructure.Services;
 
 public sealed class MarketplaceService : IMarketplaceService
 {
     private readonly JhonnyHomeStudioDbContext _dbContext;
+    private readonly ILogger<MarketplaceService> _logger;
 
-    public MarketplaceService(JhonnyHomeStudioDbContext dbContext)
+    public MarketplaceService(
+        JhonnyHomeStudioDbContext dbContext,
+        ILogger<MarketplaceService> logger)
     {
         _dbContext = dbContext;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<ProductResponse>> GetProductsAsync(bool includeInactive, bool? featured = null, string? search = null)
@@ -53,6 +58,11 @@ public sealed class MarketplaceService : IMarketplaceService
 
         _dbContext.Products.Add(entity);
         await _dbContext.SaveChangesAsync();
+        _logger.LogInformation(
+            "Product image create. ProductId={ProductId}; MainImageUrl={MainImageUrl}; ImagesCount={ImagesCount}",
+            entity.Id,
+            entity.MainImageUrl,
+            entity.Images.Count);
         return await GetProductByIdRequiredAsync(entity.Id);
     }
 
@@ -64,9 +74,22 @@ public sealed class MarketplaceService : IMarketplaceService
             .FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new ValidationAppException("Produto nao encontrado.", new[] { "Verifique o identificador informado." });
 
+        var previousMainImageUrl = entity.MainImageUrl;
+        var previousImagesCount = entity.Images.Count;
+        var requestImagesCount = request.Images.Count();
         ApplyProductDetails(entity, request);
         ApplyProductImages(entity, request, preserveExistingWhenEmpty: true);
         entity.UpdatedAt = DateTime.UtcNow;
+        _logger.LogInformation(
+            "Product image edit. ProductId={ProductId}; OldMainImageUrl={OldMainImageUrl}; RequestMainImageUrl={RequestMainImageUrl}; NewMainImageUrl={NewMainImageUrl}; RemoveImage={RemoveImage}; OldImagesCount={OldImagesCount}; RequestImagesCount={RequestImagesCount}; NewImagesCount={NewImagesCount}",
+            entity.Id,
+            previousMainImageUrl,
+            request.MainImageUrl,
+            entity.MainImageUrl,
+            request.RemoveImage,
+            previousImagesCount,
+            requestImagesCount,
+            entity.Images.Count);
 
         await _dbContext.SaveChangesAsync();
         return await GetProductByIdRequiredAsync(entity.Id);
@@ -196,20 +219,27 @@ public sealed class MarketplaceService : IMarketplaceService
     private static IEnumerable<ProductImage> BuildImages(UpsertProductRequest request)
     {
         var images = request.Images
+            .Select(x => new
+            {
+                ImageUrl = NormalizeOptional(x.ImageUrl),
+                x.DisplayOrder,
+                x.IsMain
+            })
             .Where(x => !string.IsNullOrWhiteSpace(x.ImageUrl))
             .Select(x => new ProductImage
             {
-                ImageUrl = x.ImageUrl.Trim(),
+                ImageUrl = x.ImageUrl!,
                 DisplayOrder = x.DisplayOrder,
                 IsMain = x.IsMain
             })
             .ToList();
 
-        if (!string.IsNullOrWhiteSpace(request.MainImageUrl) && images.All(x => x.ImageUrl != request.MainImageUrl.Trim()))
+        var mainImageUrl = NormalizeOptional(request.MainImageUrl);
+        if (!string.IsNullOrWhiteSpace(mainImageUrl) && images.All(x => x.ImageUrl != mainImageUrl))
         {
             images.Add(new ProductImage
             {
-                ImageUrl = request.MainImageUrl.Trim(),
+                ImageUrl = mainImageUrl,
                 DisplayOrder = 0,
                 IsMain = true
             });

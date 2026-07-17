@@ -2,17 +2,24 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace JhonnyHomeStudio.Infrastructure.Services;
 
 public sealed class S3FileStorageService : IFileStorageService
 {
+    private static readonly TimeSpan StorageOperationTimeout = TimeSpan.FromSeconds(30);
+
     private readonly IAmazonS3 _client;
     private readonly ILogger<S3FileStorageService> _logger;
     private readonly string _bucketName;
+    private readonly string _endpoint;
+    private readonly string _storageProvider;
+    private readonly bool _forcePathStyle;
     private readonly string? _publicBaseUrl;
 
     public S3FileStorageService(
@@ -22,21 +29,22 @@ public sealed class S3FileStorageService : IFileStorageService
         _logger = logger;
         _bucketName = ReadRequired(configuration, "Storage:S3:BucketName", "BUCKET");
         _publicBaseUrl = ReadOptional(configuration, "Storage:S3:PublicBaseUrl", "STORAGE_PUBLIC_BASE_URL");
+        _storageProvider = ReadOptional(configuration, "STORAGE_PROVIDER", "Storage:Provider") ?? "S3";
 
         var accessKey = ReadRequired(configuration, "Storage:S3:AccessKeyId", "ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID");
         var secretKey = ReadRequired(configuration, "Storage:S3:SecretAccessKey", "SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY");
         var endpoint = ReadRequired(configuration, "Storage:S3:Endpoint", "ENDPOINT", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL");
+        _endpoint = SanitizeEndpoint(endpoint);
         var region = ReadOptional(configuration, "Storage:S3:Region", "REGION", "AWS_REGION") ?? "auto";
-        var forcePathStyle = bool.TryParse(
-            ReadOptional(configuration, "Storage:S3:ForcePathStyle", "S3_FORCE_PATH_STYLE"),
-            out var parsedForcePathStyle) && parsedForcePathStyle;
+        _forcePathStyle = ResolveForcePathStyle(configuration, _storageProvider);
 
         var config = new AmazonS3Config
         {
             ServiceURL = endpoint,
             AuthenticationRegion = region,
-            ForcePathStyle = forcePathStyle,
-            UseHttp = endpoint.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            ForcePathStyle = _forcePathStyle,
+            UseHttp = endpoint.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
+            Timeout = StorageOperationTimeout
         };
 
         _client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey), config);
@@ -70,35 +78,85 @@ public sealed class S3FileStorageService : IFileStorageService
             AutoCloseStream = false
         };
 
-        await _client.PutObjectAsync(putRequest, cancellationToken);
-        var metadata = await _client.GetObjectMetadataAsync(_bucketName, objectKey, cancellationToken);
-
-        if (metadata.ContentLength <= 0)
+        var stopwatch = Stopwatch.StartNew();
+        try
         {
-            throw new IOException($"Objeto S3 {objectKey} foi criado sem conteúdo.");
+            _logger.LogInformation(
+                "Storage upload started. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; ObjectKey={ObjectKey}; ContentType={ContentType}; ForcePathStyle={ForcePathStyle}; TimeoutSeconds={TimeoutSeconds}",
+                _storageProvider,
+                _endpoint,
+                _bucketName,
+                objectKey,
+                normalizedContentType,
+                _forcePathStyle,
+                StorageOperationTimeout.TotalSeconds);
+
+            await _client.PutObjectAsync(putRequest, cancellationToken);
+            var metadata = await _client.GetObjectMetadataAsync(_bucketName, objectKey, cancellationToken);
+
+            if (metadata.ContentLength <= 0)
+            {
+                throw new IOException($"Objeto S3 {objectKey} foi criado sem conteúdo.");
+            }
+
+            var publicUrl = BuildPublicUrl(publicOrigin, relativePath);
+
+            _logger.LogInformation(
+                "Storage upload completed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; ObjectKey={ObjectKey}; PublicUrl={PublicUrl}; Exists={Exists}; SizeBytes={SizeBytes}; ElapsedMs={ElapsedMs}",
+                _storageProvider,
+                _endpoint,
+                _bucketName,
+                objectKey,
+                publicUrl,
+                true,
+                metadata.ContentLength,
+                stopwatch.ElapsedMilliseconds);
+
+            return new StoredFileResponse
+            {
+                FileName = fileName,
+                RelativePath = relativePath,
+                PublicUrl = publicUrl,
+                ContentType = normalizedContentType,
+                SizeBytes = metadata.ContentLength,
+                Exists = true,
+                PhysicalPath = $"s3://{_bucketName}/{objectKey}",
+                StorageProvider = _storageProvider
+            };
         }
-
-        var publicUrl = BuildPublicUrl(publicOrigin, relativePath);
-
-        _logger.LogInformation(
-            "Upload Story/Media S3: Bucket={Bucket}; ObjectKey={ObjectKey}; PublicUrl={PublicUrl}; Exists={Exists}; SizeBytes={SizeBytes}",
-            _bucketName,
-            objectKey,
-            publicUrl,
-            true,
-            metadata.ContentLength);
-
-        return new StoredFileResponse
+        catch (TaskCanceledException exception)
         {
-            FileName = fileName,
-            RelativePath = relativePath,
-            PublicUrl = publicUrl,
-            ContentType = normalizedContentType,
-            SizeBytes = metadata.ContentLength,
-            Exists = true,
-            PhysicalPath = $"s3://{_bucketName}/{objectKey}",
-            StorageProvider = "S3"
-        };
+            _logger.LogError(
+                exception,
+                "Storage upload timed out. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; ObjectKey={ObjectKey}; ContentType={ContentType}; ElapsedMs={ElapsedMs}",
+                _storageProvider,
+                _endpoint,
+                _bucketName,
+                objectKey,
+                normalizedContentType,
+                stopwatch.ElapsedMilliseconds);
+
+            throw new StorageTimeoutAppException(
+                "Timeout ao enviar mídia para o storage.",
+                new[] { "O storage não respondeu dentro de 30 segundos." });
+        }
+        catch (Exception exception) when (exception is AmazonS3Exception or HttpRequestException or IOException)
+        {
+            _logger.LogError(
+                exception,
+                "Storage upload failed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; ObjectKey={ObjectKey}; ContentType={ContentType}; ElapsedMs={ElapsedMs}; ErrorType={ErrorType}",
+                _storageProvider,
+                _endpoint,
+                _bucketName,
+                objectKey,
+                normalizedContentType,
+                stopwatch.ElapsedMilliseconds,
+                exception.GetType().Name);
+
+            throw new StorageUnavailableAppException(
+                "Storage de mídia indisponível.",
+                new[] { "Não foi possível gravar o arquivo no storage persistente." });
+        }
     }
 
     public async Task<StoredFileDownload?> GetAsync(
@@ -208,7 +266,9 @@ public sealed class S3FileStorageService : IFileStorageService
             return value;
         }
 
-        throw new InvalidOperationException($"Configuração de storage ausente. Informe uma destas variáveis: {string.Join(", ", keys)}.");
+        throw new StorageUnavailableAppException(
+            "Configuração de storage ausente.",
+            new[] { $"Informe uma destas variáveis: {string.Join(", ", keys)}." });
     }
 
     private static string? ReadOptional(IConfiguration configuration, params string[] keys)
@@ -223,5 +283,27 @@ public sealed class S3FileStorageService : IFileStorageService
         }
 
         return null;
+    }
+
+    private static bool ResolveForcePathStyle(IConfiguration configuration, string storageProvider)
+    {
+        var configured = ReadOptional(configuration, "Storage:S3:ForcePathStyle", "S3_FORCE_PATH_STYLE");
+        if (bool.TryParse(configured, out var parsedForcePathStyle))
+        {
+            return parsedForcePathStyle;
+        }
+
+        return storageProvider.Equals("RailwayBucket", StringComparison.OrdinalIgnoreCase) ||
+            !string.IsNullOrWhiteSpace(configuration["BUCKET"]);
+    }
+
+    private static string SanitizeEndpoint(string endpoint)
+    {
+        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri))
+        {
+            return "<invalid-endpoint>";
+        }
+
+        return uri.GetLeftPart(UriPartial.Authority);
     }
 }

@@ -13,16 +13,16 @@ namespace JhonnyHomeStudio.Api.Controllers;
 public sealed class StoriesController : ControllerBase
 {
     private readonly IStoryService _storyService;
-    private readonly IFileStorageService _fileStorage;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<StoriesController> _logger;
 
     public StoriesController(
         IStoryService storyService,
-        IFileStorageService fileStorage,
+        IServiceProvider serviceProvider,
         ILogger<StoriesController> logger)
     {
         _storyService = storyService;
-        _fileStorage = fileStorage;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -68,35 +68,76 @@ public sealed class StoriesController : ControllerBase
 
     [HttpPost("/api/admin/stories/upload-image")]
     [Authorize(Roles = "Admin")]
+    [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadImage([FromForm] IFormFile? file, CancellationToken cancellationToken)
     {
+        LogUploadEndpointStarted("stories", file);
+        var fileStorage = ResolveFileStorage("stories");
         var response = await MediaUploadHelper.SaveAsync(
             file,
             MediaUploadHelper.StoryImage,
-            _fileStorage,
+            fileStorage,
             GetPublicOrigin(),
             _logger,
             cancellationToken);
 
+        _logger.LogInformation("Upload endpoint returning success. Folder={Folder}; TraceId={TraceId}", "stories", HttpContext.TraceIdentifier);
         return Ok(response);
     }
 
     [HttpPost("/api/admin/stories/upload-media")]
     [Authorize(Roles = "Admin")]
+    [Consumes("multipart/form-data")]
     public async Task<IActionResult> UploadMedia(
         [FromForm] IFormFile? file,
         [FromForm] string? folder,
         CancellationToken cancellationToken)
     {
+        LogUploadEndpointStarted(folder, file);
+        var target = MediaUploadHelper.ResolveTarget(folder);
+        _logger.LogInformation(
+            "Upload endpoint target resolved. RequestedFolder={RequestedFolder}; TargetFolder={TargetFolder}; TraceId={TraceId}",
+            folder,
+            target.RelativeFolder,
+            HttpContext.TraceIdentifier);
+        var fileStorage = ResolveFileStorage(target.FormValue);
+
         var response = await MediaUploadHelper.SaveAsync(
             file,
-            MediaUploadHelper.ResolveTarget(folder),
-            _fileStorage,
+            target,
+            fileStorage,
             GetPublicOrigin(),
             _logger,
             cancellationToken);
 
+        _logger.LogInformation("Upload endpoint returning success. Folder={Folder}; TraceId={TraceId}", target.FormValue, HttpContext.TraceIdentifier);
         return Ok(response);
+    }
+
+    private void LogUploadEndpointStarted(string? folder, IFormFile? file)
+    {
+        _logger.LogInformation(
+            "Upload endpoint started. Path={Path}; RequestedFolder={RequestedFolder}; HasFile={HasFile}; FileName={FileName}; ContentType={ContentType}; Length={Length}; RequestContentLength={RequestContentLength}; TraceId={TraceId}",
+            Request.Path,
+            folder,
+            file is not null,
+            file?.FileName,
+            file?.ContentType,
+            file?.Length,
+            Request.ContentLength,
+            HttpContext.TraceIdentifier);
+    }
+
+    private IFileStorageService ResolveFileStorage(string folder)
+    {
+        _logger.LogInformation("Resolving file storage. Folder={Folder}; TraceId={TraceId}", folder, HttpContext.TraceIdentifier);
+        var fileStorage = _serviceProvider.GetRequiredService<IFileStorageService>();
+        _logger.LogInformation(
+            "File storage resolved. Folder={Folder}; StorageType={StorageType}; TraceId={TraceId}",
+            folder,
+            fileStorage.GetType().Name,
+            HttpContext.TraceIdentifier);
+        return fileStorage;
     }
 
     [HttpPost("/api/admin/stories")]

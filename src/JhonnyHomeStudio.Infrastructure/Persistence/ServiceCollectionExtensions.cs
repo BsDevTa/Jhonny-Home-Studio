@@ -1,4 +1,5 @@
 using JhonnyHomeStudio.Application.Common.Services;
+using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Settings;
 using JhonnyHomeStudio.Infrastructure.Authentication;
 using JhonnyHomeStudio.Infrastructure.Security;
@@ -51,10 +52,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();
         services.AddScoped<IMarketplaceService, MarketplaceService>();
+        services.AddHostedService<StorageConfigurationStartupValidator>();
         services.AddScoped<IFileStorageService>(provider =>
         {
             var environment = provider.GetRequiredService<IHostEnvironment>();
-            var storageProvider = configuration["Storage:Provider"] ?? configuration["STORAGE_PROVIDER"] ?? string.Empty;
+            var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("FileStorage");
+            var storageProvider = configuration["STORAGE_PROVIDER"] ?? configuration["Storage:Provider"] ?? string.Empty;
             var hasRailwayBucketVariables =
                 !string.IsNullOrWhiteSpace(configuration["BUCKET"]) &&
                 !string.IsNullOrWhiteSpace(configuration["ENDPOINT"]);
@@ -63,6 +66,13 @@ public static class ServiceCollectionExtensions
                 storageProvider.Equals("RailwayBucket", StringComparison.OrdinalIgnoreCase) ||
                 hasRailwayBucketVariables)
             {
+                logger.LogInformation(
+                    "File storage provider selected. Provider={Provider}; HasBucket={HasBucket}; HasEndpoint={HasEndpoint}; HasPublicBaseUrl={HasPublicBaseUrl}",
+                    string.IsNullOrWhiteSpace(storageProvider) ? "RailwayBucket" : storageProvider,
+                    !string.IsNullOrWhiteSpace(configuration["BUCKET"] ?? configuration["Storage:S3:BucketName"]),
+                    !string.IsNullOrWhiteSpace(configuration["ENDPOINT"] ?? configuration["Storage:S3:Endpoint"]),
+                    !string.IsNullOrWhiteSpace(configuration["STORAGE_PUBLIC_BASE_URL"] ?? configuration["Storage:S3:PublicBaseUrl"]));
+
                 return new S3FileStorageService(
                     configuration,
                     provider.GetRequiredService<ILogger<S3FileStorageService>>());
@@ -70,10 +80,12 @@ public static class ServiceCollectionExtensions
 
             if (!environment.IsDevelopment())
             {
-                throw new InvalidOperationException(
-                    "Storage persistente não configurado. Em produção, defina Storage:Provider=S3 ou RailwayBucket com BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY.");
+                throw new StorageUnavailableAppException(
+                    "Storage persistente não configurado.",
+                    new[] { "Em produção, defina STORAGE_PROVIDER=RailwayBucket com BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY." });
             }
 
+            logger.LogInformation("File storage provider selected. Provider=Local; Environment={Environment}", environment.EnvironmentName);
             return new LocalFileStorageService(
                 environment,
                 provider.GetRequiredService<ILogger<LocalFileStorageService>>());

@@ -5,12 +5,14 @@ using JhonnyHomeStudio.Infrastructure.Persistence;
 using JhonnyHomeStudio.Api.Middleware;
 using JhonnyHomeStudio.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+const long MaxUploadRequestSizeBytes = 50 * 1024 * 1024;
 
 var allowedOrigins = new[]
 {
@@ -60,6 +62,16 @@ builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
             ContentType = "application/json"
         };
     };
+});
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = MaxUploadRequestSizeBytes;
+});
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = MaxUploadRequestSizeBytes;
 });
 
 builder.Services.AddEndpointsApiExplorer();
