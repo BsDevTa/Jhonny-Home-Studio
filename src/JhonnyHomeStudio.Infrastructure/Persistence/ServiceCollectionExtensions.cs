@@ -57,54 +57,47 @@ public static class ServiceCollectionExtensions
         {
             var environment = provider.GetRequiredService<IHostEnvironment>();
             var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("FileStorage");
-            var storageProvider = ReadOptional(configuration, "STORAGE_PROVIDER", "Storage:Provider") ?? string.Empty;
-            var hasRailwayBucketVariables =
-                !string.IsNullOrWhiteSpace(ReadOptional(configuration, "BUCKET", "Storage:S3:BucketName")) &&
-                !string.IsNullOrWhiteSpace(ReadOptional(configuration, "ENDPOINT", "Storage:S3:Endpoint", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL"));
+            var status = StorageConfigurationStatusFactory.Evaluate(configuration, environment);
 
-            if (storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase) ||
-                storageProvider.Equals("RailwayBucket", StringComparison.OrdinalIgnoreCase) ||
-                hasRailwayBucketVariables)
+            if (status.UseS3Storage)
             {
                 logger.LogInformation(
-                    "File storage provider selected. Provider={Provider}; HasBucket={HasBucket}; HasEndpoint={HasEndpoint}; HasPublicBaseUrl={HasPublicBaseUrl}",
-                    string.IsNullOrWhiteSpace(storageProvider) ? "RailwayBucket" : storageProvider,
-                    !string.IsNullOrWhiteSpace(ReadOptional(configuration, "BUCKET", "Storage:S3:BucketName")),
-                    !string.IsNullOrWhiteSpace(ReadOptional(configuration, "ENDPOINT", "Storage:S3:Endpoint", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL")),
-                    !string.IsNullOrWhiteSpace(ReadOptional(configuration, "STORAGE_PUBLIC_BASE_URL", "Storage:S3:PublicBaseUrl")));
+                    "File storage provider selected. Provider={Provider}; BucketConfigured={BucketConfigured}; Endpoint={Endpoint}; PublicBaseUrlConfigured={PublicBaseUrlConfigured}; StorageAvailable={StorageAvailable}",
+                    status.Provider,
+                    status.HasBucket,
+                    status.SanitizedEndpoint,
+                    status.PublicBaseUrlConfigured,
+                    status.StorageAvailable);
 
                 return new S3FileStorageService(
                     configuration,
                     provider.GetRequiredService<ILogger<S3FileStorageService>>());
             }
 
-            if (!environment.IsDevelopment())
+            if (status.UseLocalStorage)
             {
-                throw new StorageUnavailableAppException(
-                    "Storage persistente não configurado. Defina STORAGE_PROVIDER=RailwayBucket, BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY.",
-                    new[] { "No Railway, adicione um Storage Bucket ao projeto e vincule essas variáveis ao serviço da API." });
+                logger.LogInformation("File storage provider selected. Provider=Local; Environment={Environment}", environment.EnvironmentName);
+                return new LocalFileStorageService(
+                    environment,
+                    provider.GetRequiredService<ILogger<LocalFileStorageService>>());
             }
 
-            logger.LogInformation("File storage provider selected. Provider=Local; Environment={Environment}", environment.EnvironmentName);
-            return new LocalFileStorageService(
-                environment,
-                provider.GetRequiredService<ILogger<LocalFileStorageService>>());
+            logger.LogWarning(
+                "RailwayBucket foi selecionado, mas as variáveis obrigatórias não estão configuradas. A API continuará disponível e uploads retornarão 503. Provider={Provider}; BucketConfigured={BucketConfigured}; EndpointConfigured={EndpointConfigured}; Endpoint={Endpoint}; AccessKeyIdConfigured={AccessKeyIdConfigured}; SecretAccessKeyConfigured={SecretAccessKeyConfigured}; PublicBaseUrlConfigured={PublicBaseUrlConfigured}; Reason={Reason}",
+                status.Provider,
+                status.HasBucket,
+                status.HasEndpoint,
+                status.SanitizedEndpoint,
+                status.HasAccessKeyId,
+                status.HasSecretAccessKey,
+                status.PublicBaseUrlConfigured,
+                status.Reason);
+
+            return new UnavailableFileStorageService(
+                provider.GetRequiredService<ILogger<UnavailableFileStorageService>>(),
+                status.Reason);
         });
 
         return services;
-    }
-
-    private static string? ReadOptional(IConfiguration configuration, params string[] keys)
-    {
-        foreach (var key in keys)
-        {
-            var value = configuration[key];
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                return value.Trim();
-            }
-        }
-
-        return null;
     }
 }

@@ -211,6 +211,17 @@ public static class MediaUploadHelper
                 "Timeout ao enviar mídia para o storage.",
                 new[] { "O storage não respondeu dentro de 30 segundos." });
         }
+        catch (StorageUnavailableAppException exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Upload unavailable. Folder={Folder}; FileName={FileName}; ContentType={ContentType}; Length={Length}",
+                target.RelativeFolder,
+                file.FileName,
+                file.ContentType,
+                file.Length);
+            throw;
+        }
         catch (AppException)
         {
             throw;
