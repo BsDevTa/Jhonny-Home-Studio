@@ -1,6 +1,7 @@
 using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Settings;
 using JhonnyHomeStudio.Domain.Entities;
+using JhonnyHomeStudio.Domain.Enums;
 using JhonnyHomeStudio.Infrastructure.Persistence;
 using JhonnyHomeStudio.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -26,87 +27,181 @@ public sealed class AppointmentServiceAvailabilityTests
             Assert.Equal(new TimeOnly(9, 0), businessHour.StartTime);
             Assert.Equal(new TimeOnly(17, 0), businessHour.EndTime);
             Assert.Equal(businessHour.DayOfWeek != (int)DayOfWeek.Sunday, businessHour.IsOpen);
+            Assert.Equal(60, businessHour.SlotIntervalMinutes);
         }
     }
 
-    [Fact]
-    public async Task GetAvailableSlotsAsync_UsesMorningAndAfternoonShiftsWithoutLunchSlots()
+    [Theory]
+    [InlineData(DayOfWeek.Monday)]
+    [InlineData(DayOfWeek.Tuesday)]
+    [InlineData(DayOfWeek.Wednesday)]
+    [InlineData(DayOfWeek.Thursday)]
+    [InlineData(DayOfWeek.Friday)]
+    [InlineData(DayOfWeek.Saturday)]
+    public async Task GetAvailableSlotsAsync_ReturnsOnlyTwoShiftsFromMondayToSaturday(DayOfWeek dayOfWeek)
     {
         await using var dbContext = CreateDbContext();
         var serviceEntity = await SeedActiveServiceAsync(dbContext);
-        var date = NextDate(DayOfWeek.Monday);
-        SeedBusinessHour(dbContext, date.DayOfWeek);
+        var date = NextDate(dayOfWeek);
+        SeedBusinessHour(dbContext, dayOfWeek, slotIntervalMinutes: 30);
         await dbContext.SaveChangesAsync();
 
         var appointmentService = CreateAppointmentService(dbContext);
 
         var slots = (await appointmentService.GetAvailableSlotsAsync(serviceEntity.Id, date)).ToList();
-        var startTimes = slots.Select(x => TimeOnly.FromDateTime(x.StartAt)).ToList();
 
-        Assert.Contains(new TimeOnly(9, 0), startTimes);
-        Assert.Contains(new TimeOnly(11, 0), startTimes);
-        Assert.DoesNotContain(new TimeOnly(12, 0), startTimes);
-        Assert.DoesNotContain(new TimeOnly(12, 30), startTimes);
-        Assert.Contains(new TimeOnly(13, 0), startTimes);
-        Assert.Contains(new TimeOnly(16, 0), startTimes);
-        Assert.All(slots, slot =>
-            Assert.False(slot.StartAt.TimeOfDay < TimeSpan.FromHours(13) && slot.EndAt.TimeOfDay > TimeSpan.FromHours(12)));
+        AssertShift(slots[0], "Turno Matutino", date.AddHours(9), date.AddHours(12));
+        AssertShift(slots[1], "Turno Vespertino", date.AddHours(13), date.AddHours(17));
+        Assert.Equal(2, slots.Count);
     }
 
     [Fact]
-    public async Task CreateMyAppointmentAsync_RejectsAppointmentDuringLunchBreak()
+    public async Task GetAvailableSlotsAsync_ReturnsNoSlotsOnSunday()
     {
         await using var dbContext = CreateDbContext();
-        var user = new User
-        {
-            FullName = "Cliente",
-            Email = "cliente@example.com",
-            PasswordHash = "hash",
-            IsActive = true
-        };
-        var customer = new Customer
-        {
-            User = user
-        };
-        var address = new Address
-        {
-            Customer = customer,
-            Street = "Rua A",
-            Number = "123",
-            Neighborhood = "Centro",
-            City = "Salvador",
-            State = "BA",
-            ZipCode = "40000000",
-            IsDefault = true
-        };
+        var serviceEntity = await SeedActiveServiceAsync(dbContext);
+        var date = NextDate(DayOfWeek.Sunday);
+        SeedBusinessHour(dbContext, DayOfWeek.Sunday, isOpen: false);
+        await dbContext.SaveChangesAsync();
+
+        var appointmentService = CreateAppointmentService(dbContext);
+
+        var slots = await appointmentService.GetAvailableSlotsAsync(serviceEntity.Id, date);
+
+        Assert.Empty(slots);
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_HidesMorningShiftWhenMorningIsOccupied()
+    {
+        await using var dbContext = CreateDbContext();
+        var serviceEntity = await SeedActiveServiceAsync(dbContext);
+        var date = NextDate(DayOfWeek.Monday);
+        SeedBusinessHour(dbContext, date.DayOfWeek);
+        SeedAppointment(dbContext, serviceEntity, date.AddHours(9), 180);
+        await dbContext.SaveChangesAsync();
+
+        var appointmentService = CreateAppointmentService(dbContext);
+
+        var slots = (await appointmentService.GetAvailableSlotsAsync(serviceEntity.Id, date)).ToList();
+
+        var slot = Assert.Single(slots);
+        AssertShift(slot, "Turno Vespertino", date.AddHours(13), date.AddHours(17));
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_HidesAfternoonShiftWhenAfternoonIsOccupied()
+    {
+        await using var dbContext = CreateDbContext();
+        var serviceEntity = await SeedActiveServiceAsync(dbContext);
+        var date = NextDate(DayOfWeek.Monday);
+        SeedBusinessHour(dbContext, date.DayOfWeek);
+        SeedAppointment(dbContext, serviceEntity, date.AddHours(13), 240);
+        await dbContext.SaveChangesAsync();
+
+        var appointmentService = CreateAppointmentService(dbContext);
+
+        var slots = (await appointmentService.GetAvailableSlotsAsync(serviceEntity.Id, date)).ToList();
+
+        var slot = Assert.Single(slots);
+        AssertShift(slot, "Turno Matutino", date.AddHours(9), date.AddHours(12));
+    }
+
+    [Fact]
+    public async Task GetAvailableSlotsAsync_ReturnsNoSlotsWhenBothShiftsAreOccupied()
+    {
+        await using var dbContext = CreateDbContext();
+        var serviceEntity = await SeedActiveServiceAsync(dbContext);
+        var date = NextDate(DayOfWeek.Monday);
+        SeedBusinessHour(dbContext, date.DayOfWeek);
+        SeedAppointment(dbContext, serviceEntity, date.AddHours(9), 180);
+        SeedAppointment(dbContext, serviceEntity, date.AddHours(13), 240);
+        await dbContext.SaveChangesAsync();
+
+        var appointmentService = CreateAppointmentService(dbContext);
+
+        var slots = await appointmentService.GetAvailableSlotsAsync(serviceEntity.Id, date);
+
+        Assert.Empty(slots);
+    }
+
+    [Fact]
+    public async Task CreateMyAppointmentAsync_SavesSelectedMorningShiftAsFullBlock()
+    {
+        await using var dbContext = CreateDbContext();
         var serviceEntity = new StudioService
         {
             Name = "Escova",
             Price = 80,
             IsActive = true
         };
+        var customer = SeedCustomerWithAddress(dbContext, out var address);
         var date = NextDate(DayOfWeek.Monday);
 
-        dbContext.Users.Add(user);
-        dbContext.Customers.Add(customer);
-        dbContext.Addresses.Add(address);
         dbContext.Services.Add(serviceEntity);
         SeedBusinessHour(dbContext, date.DayOfWeek);
         await dbContext.SaveChangesAsync();
 
         var appointmentService = CreateAppointmentService(dbContext);
 
+        var response = await appointmentService.CreateMyAppointmentAsync(
+            customer.UserId,
+            new()
+            {
+                ServiceId = serviceEntity.Id,
+                AddressId = address.Id,
+                ScheduledAt = date.AddHours(9),
+                ScheduledEndAt = date.AddHours(12)
+            });
+
+        var appointment = await dbContext.Appointments.FindAsync(response.Id);
+        Assert.NotNull(appointment);
+        Assert.Equal(180, appointment.EstimatedDurationMinutesSnapshot);
+    }
+
+    [Fact]
+    public async Task CreateMyAppointmentAsync_RejectsIndividualHourlyStart()
+    {
+        await using var dbContext = CreateDbContext();
+        var serviceEntity = new StudioService
+        {
+            Name = "Escova",
+            Price = 80,
+            IsActive = true
+        };
+        var customer = SeedCustomerWithAddress(dbContext, out var address);
+        var date = NextDate(DayOfWeek.Monday);
+
+        dbContext.Services.Add(serviceEntity);
+        SeedBusinessHour(dbContext, date.DayOfWeek, slotIntervalMinutes: 30);
+        await dbContext.SaveChangesAsync();
+
+        var appointmentService = CreateAppointmentService(dbContext);
+
         var exception = await Assert.ThrowsAsync<ValidationAppException>(() =>
             appointmentService.CreateMyAppointmentAsync(
-                user.Id,
+                customer.UserId,
                 new()
                 {
                     ServiceId = serviceEntity.Id,
                     AddressId = address.Id,
-                    ScheduledAt = date.AddHours(12)
+                    ScheduledAt = date.AddHours(10),
+                    ScheduledEndAt = date.AddHours(11)
                 }));
 
-        Assert.Contains(exception.Errors, error => error.Contains("turnos de atendimento", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(exception.Errors, error => error.Contains("turnos disponíveis", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void AssertShift(
+        JhonnyHomeStudio.Application.Common.Dtos.Appointments.AvailableSlotResponse slot,
+        string name,
+        DateTime start,
+        DateTime end)
+    {
+        Assert.Equal(name, slot.Name);
+        Assert.Equal(start, slot.StartAt);
+        Assert.Equal(end, slot.EndAt);
+        Assert.True(slot.IsAvailable);
     }
 
     private static AppointmentService CreateAppointmentService(JhonnyHomeStudioDbContext dbContext)
@@ -135,15 +230,70 @@ public sealed class AppointmentServiceAvailabilityTests
         return serviceEntity;
     }
 
-    private static void SeedBusinessHour(JhonnyHomeStudioDbContext dbContext, DayOfWeek dayOfWeek)
+    private static void SeedAppointment(
+        JhonnyHomeStudioDbContext dbContext,
+        StudioService serviceEntity,
+        DateTime start,
+        int durationMinutes)
+    {
+        var customer = SeedCustomerWithAddress(dbContext, out var address);
+        dbContext.Appointments.Add(new Appointment
+        {
+            Customer = customer,
+            Service = serviceEntity,
+            Address = address,
+            ScheduledAtUtc = DateTime.SpecifyKind(start, DateTimeKind.Local).ToUniversalTime(),
+            ServicePriceSnapshot = serviceEntity.Price,
+            EstimatedDurationMinutesSnapshot = durationMinutes,
+            Status = AppointmentStatus.Confirmed
+        });
+    }
+
+    private static Customer SeedCustomerWithAddress(JhonnyHomeStudioDbContext dbContext, out Address address)
+    {
+        var user = new User
+        {
+            FullName = "Cliente",
+            Email = $"cliente-{Guid.NewGuid():N}@example.com",
+            PasswordHash = "hash",
+            IsActive = true
+        };
+        var customer = new Customer
+        {
+            User = user
+        };
+        address = new Address
+        {
+            Customer = customer,
+            Street = "Rua A",
+            Number = "123",
+            Neighborhood = "Centro",
+            City = "Salvador",
+            State = "BA",
+            ZipCode = "40000000",
+            IsDefault = true
+        };
+
+        dbContext.Users.Add(user);
+        dbContext.Customers.Add(customer);
+        dbContext.Addresses.Add(address);
+
+        return customer;
+    }
+
+    private static void SeedBusinessHour(
+        JhonnyHomeStudioDbContext dbContext,
+        DayOfWeek dayOfWeek,
+        bool isOpen = true,
+        int slotIntervalMinutes = 60)
     {
         dbContext.BusinessHours.Add(new BusinessHour
         {
             DayOfWeek = (int)dayOfWeek,
-            IsOpen = true,
+            IsOpen = isOpen,
             StartTime = new TimeOnly(9, 0),
             EndTime = new TimeOnly(17, 0),
-            SlotIntervalMinutes = 30
+            SlotIntervalMinutes = slotIntervalMinutes
         });
     }
 

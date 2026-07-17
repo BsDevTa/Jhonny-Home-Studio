@@ -23,10 +23,10 @@ public sealed class AppointmentService : IAppointmentService
         AppointmentStatus.InProgress
     };
 
-    private static readonly IReadOnlyCollection<(TimeOnly Start, TimeOnly End)> AppointmentWindows = new[]
+    private static readonly IReadOnlyCollection<AppointmentWindow> AppointmentWindows = new[]
     {
-        (new TimeOnly(9, 0), new TimeOnly(12, 0)),
-        (new TimeOnly(13, 0), new TimeOnly(17, 0))
+        new AppointmentWindow("Turno Matutino", new TimeOnly(9, 0), new TimeOnly(12, 0)),
+        new AppointmentWindow("Turno Vespertino", new TimeOnly(13, 0), new TimeOnly(17, 0))
     };
 
     private readonly JhonnyHomeStudioDbContext _dbContext;
@@ -51,14 +51,15 @@ public sealed class AppointmentService : IAppointmentService
         var service = await GetActiveServiceAsync(request.ServiceId);
         var address = await GetOwnedAddressAsync(customer.Id, request.AddressId);
         var scheduledLocal = NormalizeLocalDateTime(request.ScheduledAt);
-        var appointmentDurationMinutes = GetDefaultAppointmentDurationMinutes();
+        var scheduledEndLocal = NormalizeOptionalLocalDateTime(request.ScheduledEndAt);
 
-        await ValidateScheduledAvailabilityAsync(scheduledLocal, appointmentDurationMinutes);
+        var selectedWindow = await ValidateScheduledAvailabilityAsync(scheduledLocal, scheduledEndLocal);
+        var appointmentDurationMinutes = (int)(selectedWindow.End - selectedWindow.Start).TotalMinutes;
 
-        var scheduledStartUtc = ToUtc(scheduledLocal);
-        var scheduledEndUtc = ToUtc(scheduledLocal.AddMinutes(appointmentDurationMinutes));
+        var scheduledStartUtc = ToUtc(selectedWindow.Start);
+        var scheduledEndUtc = ToUtc(selectedWindow.End);
 
-        await EnsureNoConflictAsync(scheduledLocal, scheduledStartUtc, scheduledEndUtc);
+        await EnsureNoConflictAsync(selectedWindow.Start, scheduledStartUtc, scheduledEndUtc);
 
         var appointment = new Appointment
         {
@@ -266,34 +267,27 @@ public sealed class AppointmentService : IAppointmentService
             return slots;
         }
 
-        var appointmentDurationMinutes = GetDefaultAppointmentDurationMinutes();
-        var slotStep = TimeSpan.FromMinutes(businessHour.SlotIntervalMinutes);
         var existingAppointments = await GetBlockingAppointmentsInUtcRangeAsync(localDate);
 
         foreach (var window in GetAppointmentWindows(localDate, businessHour))
         {
-            var latestStart = window.End.AddMinutes(-appointmentDurationMinutes);
+            var windowStartUtc = ToUtc(window.Start);
+            var windowEndUtc = ToUtc(window.End);
+            var blockedByStatus = existingAppointments.Any(x => IsBlockingStatus(x.Status) && Overlaps(windowStartUtc, windowEndUtc, x.ScheduledAtUtc, x.ScheduledAtUtc.AddMinutes(x.EstimatedDurationMinutesSnapshot)));
+            var blockedByDate = IsBlockedByDate(window.Start, window.End, blockedDates);
 
-            for (var slotStart = window.Start; slotStart <= latestStart; slotStart = slotStart.Add(slotStep))
+            if (window.Start < DateTime.Now || blockedByStatus || blockedByDate)
             {
-                var slotEnd = slotStart.AddMinutes(appointmentDurationMinutes);
-                var slotStartUtc = ToUtc(slotStart);
-                var slotEndUtc = ToUtc(slotEnd);
-                var blockedByStatus = existingAppointments.Any(x => IsBlockingStatus(x.Status) && Overlaps(slotStartUtc, slotEndUtc, x.ScheduledAtUtc, x.ScheduledAtUtc.AddMinutes(x.EstimatedDurationMinutesSnapshot)));
-                var blockedByDate = IsBlockedByDate(slotStart, slotEnd, blockedDates);
-
-                if (slotStart < DateTime.Now || blockedByStatus || blockedByDate)
-                {
-                    continue;
-                }
-
-                slots.Add(new AvailableSlotResponse
-                {
-                    StartAt = slotStart,
-                    EndAt = slotEnd,
-                    IsAvailable = true
-                });
+                continue;
             }
+
+            slots.Add(new AvailableSlotResponse
+            {
+                Name = window.Name,
+                StartAt = window.Start,
+                EndAt = window.End,
+                IsAvailable = true
+            });
         }
 
         return slots;
@@ -416,7 +410,9 @@ public sealed class AppointmentService : IAppointmentService
         }
     }
 
-    private async Task ValidateScheduledAvailabilityAsync(DateTime scheduledLocal, int serviceDurationMinutes)
+    private async Task<(DateTime Start, DateTime End)> ValidateScheduledAvailabilityAsync(
+        DateTime scheduledLocal,
+        DateTime? scheduledEndLocal)
     {
         var nowLocal = DateTime.Now;
 
@@ -431,25 +427,26 @@ public sealed class AppointmentService : IAppointmentService
             throw new ValidationAppException("Horário indisponível.", new[] { "Não há atendimento disponível nesta data." });
         }
 
-        var scheduledEnd = scheduledLocal.AddMinutes(serviceDurationMinutes);
         var appointmentWindow = GetAppointmentWindows(scheduledLocal.Date, businessHour)
-            .FirstOrDefault(window => scheduledLocal >= window.Start && scheduledEnd <= window.End);
+            .FirstOrDefault(window => scheduledLocal == window.Start);
 
         if (appointmentWindow == default)
         {
-            throw new ValidationAppException("Horário indisponível.", new[] { "O horário informado está fora dos turnos de atendimento." });
+            throw new ValidationAppException("Horário indisponível.", new[] { "Selecione um dos turnos disponíveis para atendimento." });
         }
 
-        if ((scheduledLocal - appointmentWindow.Start).Ticks % TimeSpan.FromMinutes(businessHour.SlotIntervalMinutes).Ticks != 0)
+        if (scheduledEndLocal.HasValue && scheduledEndLocal.Value != appointmentWindow.End)
         {
-            throw new ValidationAppException("Horário indisponível.", new[] { "Selecione um dos horários disponíveis para atendimento." });
+            throw new ValidationAppException("Horário indisponível.", new[] { "O fim do turno selecionado não corresponde ao turno disponível." });
         }
 
         var blockedDates = await GetBlockedDatesAsync(scheduledLocal.Date);
-        if (IsBlockedByDate(scheduledLocal, scheduledEnd, blockedDates))
+        if (IsBlockedByDate(appointmentWindow.Start, appointmentWindow.End, blockedDates))
         {
             throw new ValidationAppException("Horário indisponível.", new[] { "Este período está bloqueado para atendimento." });
         }
+
+        return (appointmentWindow.Start, appointmentWindow.End);
     }
 
     private async Task EnsureNoConflictAsync(DateTime scheduledLocal, DateTime newStartUtc, DateTime newEndUtc)
@@ -516,7 +513,7 @@ public sealed class AppointmentService : IAppointmentService
         return false;
     }
 
-    private static IEnumerable<(DateTime Start, DateTime End)> GetAppointmentWindows(
+    private static IEnumerable<(string Name, DateTime Start, DateTime End)> GetAppointmentWindows(
         DateTime localDate,
         BusinessHour businessHour)
     {
@@ -530,9 +527,11 @@ public sealed class AppointmentService : IAppointmentService
                 continue;
             }
 
-            yield return (localDate.Add(start.ToTimeSpan()), localDate.Add(end.ToTimeSpan()));
+            yield return (appointmentWindow.Name, localDate.Add(start.ToTimeSpan()), localDate.Add(end.ToTimeSpan()));
         }
     }
+
+    private sealed record AppointmentWindow(string Name, TimeOnly Start, TimeOnly End);
 
     private static bool IsSchedulingDay(DayOfWeek dayOfWeek)
     {
@@ -562,6 +561,13 @@ public sealed class AppointmentService : IAppointmentService
     private static DateTime NormalizeLocalDateTime(DateTime value)
     {
         return DateTime.SpecifyKind(value, DateTimeKind.Unspecified);
+    }
+
+    private static DateTime? NormalizeOptionalLocalDateTime(DateTime? value)
+    {
+        return value.HasValue
+            ? DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified)
+            : null;
     }
 
     private static DateTime ToUtc(DateTime localDateTime)

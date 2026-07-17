@@ -10,6 +10,8 @@ namespace JhonnyHomeStudio.Infrastructure.Services;
 
 public sealed class AvailabilityService : IAvailabilityService
 {
+    private const int AppointmentSlotIntervalMinutes = 60;
+
     private static readonly string[] DayNames =
     {
         "Domingo",
@@ -54,7 +56,7 @@ public sealed class AvailabilityService : IAvailabilityService
             businessHour.IsOpen = request.IsOpen;
             businessHour.StartTime = ParseTimeOrDefault(request.StartTime, businessHour.StartTime);
             businessHour.EndTime = ParseTimeOrDefault(request.EndTime, businessHour.EndTime);
-            businessHour.SlotIntervalMinutes = request.SlotIntervalMinutes;
+            businessHour.SlotIntervalMinutes = AppointmentSlotIntervalMinutes;
             businessHour.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -144,7 +146,7 @@ public sealed class AvailabilityService : IAvailabilityService
                 IsOpen = day != (int)DayOfWeek.Sunday,
                 StartTime = new TimeOnly(9, 0),
                 EndTime = new TimeOnly(17, 0),
-                SlotIntervalMinutes = 30
+                SlotIntervalMinutes = AppointmentSlotIntervalMinutes
             });
         }
 

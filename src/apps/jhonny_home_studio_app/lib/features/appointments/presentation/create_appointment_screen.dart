@@ -226,8 +226,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
       return;
     }
 
-    if (_selectedSlot?.startAt == null) {
-      _showMessage('Selecione um horário disponível.');
+    if (_selectedSlot?.startAt == null || _selectedSlot?.endAt == null) {
+      _showMessage('Selecione um turno disponível.');
       return;
     }
 
@@ -242,6 +242,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
           serviceId: _selectedService!.id,
           addressId: _selectedAddress!.id,
           scheduledAt: _selectedSlot!.startAt!,
+          scheduledEndAt: _selectedSlot!.endAt!,
           customerNotes: _notesController.text.trim(),
         ),
       );
@@ -295,10 +296,16 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     final date = _selectedDate;
     final slot = _selectedSlot;
 
-    if (service == null || date == null || slot?.startAt == null) {
+    if (service == null ||
+        date == null ||
+        slot?.startAt == null ||
+        slot?.endAt == null) {
       return false;
     }
 
+    final start = DateFormat('HH:mm').format(slot!.startAt!.toLocal());
+    final end = DateFormat('HH:mm').format(slot.endAt!.toLocal());
+    final shiftName = slot.name.trim().isEmpty ? 'Turno' : slot.name.trim();
     if (!hasConfiguredWhatsAppNumber(settings.whatsAppNumber)) {
       return false;
     }
@@ -307,7 +314,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
         '''
 Olá! Gostaria de confirmar meu agendamento:
 ✂️ Serviço: ${service.name}
-📅 Data: ${_dateFormat.format(date)} às ${DateFormat('HH:mm').format(slot!.startAt!)}
+📅 Data: ${_dateFormat.format(date)}
+🕒 $shiftName: $start - $end
 💰 Valor a partir de: ${ServicePresentationFormatter.priceFrom(service.price)}''';
 
     return openWhatsApp(phoneNumber: settings.whatsAppNumber, message: message);
@@ -527,7 +535,7 @@ Olá! Gostaria de confirmar meu agendamento:
                               _StepCard(
                                 step: '4',
                                 title: 'Horário',
-                                subtitle: 'Escolha um horário disponível.',
+                                subtitle: 'Escolha um turno disponível.',
                                 child: _isLoadingSlots
                                     ? const Padding(
                                         padding: EdgeInsets.symmetric(
@@ -549,7 +557,7 @@ Olá! Gostaria de confirmar meu agendamento:
                                         icon: Icons.schedule_outlined,
                                         title: 'Escolha uma data',
                                         message:
-                                            'Depois de escolher o dia, os horários disponíveis aparecerão aqui.',
+                                            'Depois de escolher o dia, os turnos disponíveis aparecerão aqui.',
                                       )
                                     : _slots.isEmpty
                                     ? PremiumEmptyState(
@@ -557,7 +565,7 @@ Olá! Gostaria de confirmar meu agendamento:
                                         title:
                                             'Não há atendimento disponível nesta data',
                                         message:
-                                            'Nenhum horário disponível para esta data. Tente escolher outro dia.',
+                                            'Nenhum turno disponível para esta data. Tente escolher outro dia.',
                                       )
                                     : Wrap(
                                         spacing: 8,
@@ -987,9 +995,22 @@ class _ConfirmationSummary extends StatelessWidget {
     final dateText = date == null
         ? 'Selecione uma data'
         : dateFormat.format(date!);
-    final timeText = slot?.startAt == null
-        ? 'Selecione um horário'
-        : DateFormat('HH:mm').format(slot!.startAt!.toLocal());
+    final selectedSlot = slot;
+    final String timeText;
+    if (selectedSlot == null ||
+        selectedSlot.startAt == null ||
+        selectedSlot.endAt == null) {
+      timeText = 'Selecione um turno';
+    } else {
+      final shiftName = selectedSlot.name.trim().isEmpty
+          ? 'Turno'
+          : selectedSlot.name.trim();
+      final startText = DateFormat(
+        'HH:mm',
+      ).format(selectedSlot.startAt!.toLocal());
+      final endText = DateFormat('HH:mm').format(selectedSlot.endAt!.toLocal());
+      timeText = '$shiftName · $startText - $endText';
+    }
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1017,7 +1038,7 @@ class _ConfirmationSummary extends StatelessWidget {
           const SizedBox(height: 8),
           _SummaryRow(label: 'Data', value: dateText),
           const SizedBox(height: 8),
-          _SummaryRow(label: 'Horário', value: timeText),
+          _SummaryRow(label: 'Turno', value: timeText),
           const SizedBox(height: 12),
           Container(height: 1, color: AppColors.border.withValues(alpha: 0.7)),
           const SizedBox(height: 12),

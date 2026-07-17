@@ -20,6 +20,7 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                     "IsOpen" = CASE WHEN "DayOfWeek" BETWEEN 1 AND 6 THEN TRUE ELSE FALSE END,
                     "StartTime" = TIME '09:00:00',
                     "EndTime" = TIME '17:00:00',
+                    "SlotIntervalMinutes" = 60,
                     "UpdatedAt" = NOW()
                 WHERE "DayOfWeek" BETWEEN 0 AND 6;
                 """);
@@ -37,6 +38,7 @@ namespace JhonnyHomeStudio.Infrastructure.Persistence.Migrations
                         WHEN "DayOfWeek" = 6 THEN TIME '14:00:00'
                         ELSE TIME '18:00:00'
                     END,
+                    "SlotIntervalMinutes" = 30,
                     "UpdatedAt" = NOW()
                 WHERE "DayOfWeek" BETWEEN 0 AND 6;
                 """);

@@ -21,9 +21,12 @@ class AvailableSlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final start = slot.startAt;
     final end = slot.endAt;
-    final label = start == null || end == null
+    final range = start == null || end == null
         ? 'Horário indisponível'
         : '${_timeFormat.format(start.toLocal())} - ${_timeFormat.format(end.toLocal())}';
+    final label = slot.name.trim().isEmpty || start == null || end == null
+        ? range
+        : '${slot.name}\n$range';
 
     return InkWell(
       borderRadius: BorderRadius.circular(14),
