@@ -74,20 +74,22 @@ public sealed class S3FileStorageService : IFileStorageService
             Key = objectKey,
             InputStream = content,
             ContentType = normalizedContentType,
-            AutoCloseStream = false
+            AutoCloseStream = false,
+            UseChunkEncoding = false
         };
 
         var stopwatch = Stopwatch.StartNew();
         try
         {
             _logger.LogInformation(
-                "Storage upload started. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; ForcePathStyle={ForcePathStyle}; TimeoutSeconds={TimeoutSeconds}",
+                "Storage upload started. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; UseChunkEncoding={UseChunkEncoding}; ForcePathStyle={ForcePathStyle}; TimeoutSeconds={TimeoutSeconds}",
                 _storageProvider,
                 _endpoint,
                 putRequest.BucketName,
                 putRequest.Key,
                 putRequest.ContentType,
                 "null",
+                putRequest.UseChunkEncoding,
                 _forcePathStyle,
                 StorageOperationTimeout.TotalSeconds);
 
@@ -142,16 +144,22 @@ public sealed class S3FileStorageService : IFileStorageService
         }
         catch (Exception exception) when (exception is AmazonS3Exception or HttpRequestException or IOException)
         {
+            var s3Exception = exception as AmazonS3Exception;
             _logger.LogError(
                 exception,
-                "Storage upload failed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; ObjectKey={ObjectKey}; ContentType={ContentType}; ElapsedMs={ElapsedMs}; ErrorType={ErrorType}",
+                "Storage upload failed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; UseChunkEncoding={UseChunkEncoding}; ElapsedMs={ElapsedMs}; ErrorType={ErrorType}; StatusCode={StatusCode}; S3ErrorCode={S3ErrorCode}; RequestId={RequestId}",
                 _storageProvider,
                 _endpoint,
-                _bucketName,
-                objectKey,
-                normalizedContentType,
+                putRequest.BucketName,
+                putRequest.Key,
+                putRequest.ContentType,
+                "null",
+                putRequest.UseChunkEncoding,
                 stopwatch.ElapsedMilliseconds,
-                exception.GetType().Name);
+                exception.GetType().Name,
+                s3Exception?.StatusCode,
+                s3Exception?.ErrorCode,
+                s3Exception?.RequestId);
 
             throw new StorageUnavailableAppException(
                 "Storage de mídia indisponível.",
