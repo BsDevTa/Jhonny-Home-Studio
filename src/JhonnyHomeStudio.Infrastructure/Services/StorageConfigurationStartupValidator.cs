@@ -26,7 +26,7 @@ public sealed class StorageConfigurationStartupValidator : IHostedService
         var storageProvider = ReadOptional("STORAGE_PROVIDER", "Storage:Provider") ?? string.Empty;
         var hasRailwayBucketVariables =
             !string.IsNullOrWhiteSpace(ReadOptional("BUCKET", "Storage:S3:BucketName")) &&
-            !string.IsNullOrWhiteSpace(ReadOptional("ENDPOINT", "Storage:S3:Endpoint"));
+            !string.IsNullOrWhiteSpace(ReadOptional("ENDPOINT", "Storage:S3:Endpoint", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL"));
         var usesPersistentStorage =
             storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase) ||
             storageProvider.Equals("RailwayBucket", StringComparison.OrdinalIgnoreCase) ||
@@ -37,8 +37,8 @@ public sealed class StorageConfigurationStartupValidator : IHostedService
             if (!_environment.IsDevelopment())
             {
                 throw new StorageUnavailableAppException(
-                    "Storage persistente não configurado.",
-                    new[] { "Em produção, defina STORAGE_PROVIDER=RailwayBucket com BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY." });
+                    "Storage persistente não configurado. Defina STORAGE_PROVIDER=RailwayBucket, BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY.",
+                    new[] { "No Railway, adicione um Storage Bucket ao projeto e vincule essas variáveis ao serviço da API." });
             }
 
             _logger.LogInformation(
@@ -48,10 +48,10 @@ public sealed class StorageConfigurationStartupValidator : IHostedService
         }
 
         var providerName = string.IsNullOrWhiteSpace(storageProvider) ? "RailwayBucket" : storageProvider.Trim();
-        var bucket = ReadRequired("BUCKET", "Storage:S3:BucketName");
-        var endpoint = ReadRequired("ENDPOINT", "Storage:S3:Endpoint", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL");
-        _ = ReadRequired("ACCESS_KEY_ID", "Storage:S3:AccessKeyId", "AWS_ACCESS_KEY_ID");
-        _ = ReadRequired("SECRET_ACCESS_KEY", "Storage:S3:SecretAccessKey", "AWS_SECRET_ACCESS_KEY");
+        var bucket = ReadRequired("bucket", "BUCKET", "Storage:S3:BucketName");
+        var endpoint = ReadRequired("endpoint", "ENDPOINT", "Storage:S3:Endpoint", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL");
+        _ = ReadRequired("access key id", "ACCESS_KEY_ID", "Storage:S3:AccessKeyId", "AWS_ACCESS_KEY_ID");
+        _ = ReadRequired("secret access key", "SECRET_ACCESS_KEY", "Storage:S3:SecretAccessKey", "AWS_SECRET_ACCESS_KEY");
         var sanitizedEndpoint = SanitizeEndpoint(endpoint);
         var forcePathStyle = ResolveForcePathStyle(providerName);
 
@@ -82,7 +82,7 @@ public sealed class StorageConfigurationStartupValidator : IHostedService
         return Task.CompletedTask;
     }
 
-    private string ReadRequired(params string[] keys)
+    private string ReadRequired(string description, params string[] keys)
     {
         var value = ReadOptional(keys);
         if (!string.IsNullOrWhiteSpace(value))
@@ -91,7 +91,7 @@ public sealed class StorageConfigurationStartupValidator : IHostedService
         }
 
         throw new StorageUnavailableAppException(
-            "Configuração de storage ausente.",
+            $"Configuração de storage ausente: {description}. Informe uma destas variáveis: {string.Join(", ", keys)}.",
             new[] { $"Informe uma destas variáveis: {string.Join(", ", keys)}." });
     }
 

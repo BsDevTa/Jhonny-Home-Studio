@@ -57,10 +57,10 @@ public static class ServiceCollectionExtensions
         {
             var environment = provider.GetRequiredService<IHostEnvironment>();
             var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("FileStorage");
-            var storageProvider = configuration["STORAGE_PROVIDER"] ?? configuration["Storage:Provider"] ?? string.Empty;
+            var storageProvider = ReadOptional(configuration, "STORAGE_PROVIDER", "Storage:Provider") ?? string.Empty;
             var hasRailwayBucketVariables =
-                !string.IsNullOrWhiteSpace(configuration["BUCKET"]) &&
-                !string.IsNullOrWhiteSpace(configuration["ENDPOINT"]);
+                !string.IsNullOrWhiteSpace(ReadOptional(configuration, "BUCKET", "Storage:S3:BucketName")) &&
+                !string.IsNullOrWhiteSpace(ReadOptional(configuration, "ENDPOINT", "Storage:S3:Endpoint", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL"));
 
             if (storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase) ||
                 storageProvider.Equals("RailwayBucket", StringComparison.OrdinalIgnoreCase) ||
@@ -69,9 +69,9 @@ public static class ServiceCollectionExtensions
                 logger.LogInformation(
                     "File storage provider selected. Provider={Provider}; HasBucket={HasBucket}; HasEndpoint={HasEndpoint}; HasPublicBaseUrl={HasPublicBaseUrl}",
                     string.IsNullOrWhiteSpace(storageProvider) ? "RailwayBucket" : storageProvider,
-                    !string.IsNullOrWhiteSpace(configuration["BUCKET"] ?? configuration["Storage:S3:BucketName"]),
-                    !string.IsNullOrWhiteSpace(configuration["ENDPOINT"] ?? configuration["Storage:S3:Endpoint"]),
-                    !string.IsNullOrWhiteSpace(configuration["STORAGE_PUBLIC_BASE_URL"] ?? configuration["Storage:S3:PublicBaseUrl"]));
+                    !string.IsNullOrWhiteSpace(ReadOptional(configuration, "BUCKET", "Storage:S3:BucketName")),
+                    !string.IsNullOrWhiteSpace(ReadOptional(configuration, "ENDPOINT", "Storage:S3:Endpoint", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL")),
+                    !string.IsNullOrWhiteSpace(ReadOptional(configuration, "STORAGE_PUBLIC_BASE_URL", "Storage:S3:PublicBaseUrl")));
 
                 return new S3FileStorageService(
                     configuration,
@@ -81,8 +81,8 @@ public static class ServiceCollectionExtensions
             if (!environment.IsDevelopment())
             {
                 throw new StorageUnavailableAppException(
-                    "Storage persistente não configurado.",
-                    new[] { "Em produção, defina STORAGE_PROVIDER=RailwayBucket com BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY." });
+                    "Storage persistente não configurado. Defina STORAGE_PROVIDER=RailwayBucket, BUCKET, ENDPOINT, ACCESS_KEY_ID e SECRET_ACCESS_KEY.",
+                    new[] { "No Railway, adicione um Storage Bucket ao projeto e vincule essas variáveis ao serviço da API." });
             }
 
             logger.LogInformation("File storage provider selected. Provider=Local; Environment={Environment}", environment.EnvironmentName);
@@ -92,5 +92,19 @@ public static class ServiceCollectionExtensions
         });
 
         return services;
+    }
+
+    private static string? ReadOptional(IConfiguration configuration, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            var value = configuration[key];
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return null;
     }
 }
