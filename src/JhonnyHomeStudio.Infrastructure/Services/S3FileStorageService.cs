@@ -81,12 +81,13 @@ public sealed class S3FileStorageService : IFileStorageService
         try
         {
             _logger.LogInformation(
-                "Storage upload started. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; ObjectKey={ObjectKey}; ContentType={ContentType}; ForcePathStyle={ForcePathStyle}; TimeoutSeconds={TimeoutSeconds}",
+                "Storage upload started. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; ForcePathStyle={ForcePathStyle}; TimeoutSeconds={TimeoutSeconds}",
                 _storageProvider,
                 _endpoint,
-                _bucketName,
-                objectKey,
-                normalizedContentType,
+                putRequest.BucketName,
+                putRequest.Key,
+                putRequest.ContentType,
+                "null",
                 _forcePathStyle,
                 StorageOperationTimeout.TotalSeconds);
 
