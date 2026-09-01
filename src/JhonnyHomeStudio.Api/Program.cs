@@ -12,6 +12,10 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuração para compatibilidade com a injeção dinâmica de porta do Render
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 var allowedOrigins = new[]
 {
     "https://johnny-home-studio.web.app",
