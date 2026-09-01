@@ -1,5 +1,5 @@
+using JhonnyHomeStudio.Api.Helpers;
 using JhonnyHomeStudio.Application.Common.Dtos.Marketplace;
-using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Responses;
 using JhonnyHomeStudio.Application.Common.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,26 +11,17 @@ namespace JhonnyHomeStudio.Api.Controllers;
 [Route("api/marketplace")]
 public sealed class MarketplaceController : ControllerBase
 {
-    private const long MaxImageSizeBytes = 5 * 1024 * 1024;
-    private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp"
-    };
-
     private readonly IMarketplaceService _marketplaceService;
-    private readonly IFileStorageService _fileStorage;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MarketplaceController> _logger;
 
     public MarketplaceController(
         IMarketplaceService marketplaceService,
-        IFileStorageService fileStorage,
+        IServiceProvider serviceProvider,
         ILogger<MarketplaceController> logger)
     {
         _marketplaceService = marketplaceService;
-        _fileStorage = fileStorage;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -125,53 +116,37 @@ public sealed class MarketplaceController : ControllerBase
 
     [HttpPost("/api/admin/marketplace/products/upload-image")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UploadImage([FromForm] IFormFile? file)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile? file, CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
-        {
-            throw new ValidationAppException("Arquivo nao enviado.");
-        }
-        if (file.Length > MaxImageSizeBytes)
-        {
-            throw new ValidationAppException("Imagem muito grande. O limite e 5MB.");
-        }
+        _logger.LogInformation(
+            "Marketplace upload endpoint started. Path={Path}; HasFile={HasFile}; FileName={FileName}; ContentType={ContentType}; Length={Length}; RequestContentLength={RequestContentLength}; TraceId={TraceId}",
+            Request.Path,
+            file is not null,
+            file?.FileName,
+            file?.ContentType,
+            file?.Length,
+            Request.ContentLength,
+            HttpContext.TraceIdentifier);
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedImageExtensions.Contains(extension))
-        {
-            throw new ValidationAppException("Formato de imagem nao permitido.");
-        }
+        _logger.LogInformation("Resolving file storage. Folder={Folder}; TraceId={TraceId}", "products", HttpContext.TraceIdentifier);
+        var fileStorage = _serviceProvider.GetRequiredService<IFileStorageService>();
+        _logger.LogInformation(
+            "Resolved storage implementation: {StorageType}. Folder={Folder}; TraceId={TraceId}",
+            fileStorage.GetType().Name,
+            "products",
+            HttpContext.TraceIdentifier);
 
-        try
-        {
-            await using var stream = file.OpenReadStream();
-            var storedFile = await _fileStorage.SaveAsync(
-                stream,
-                file.FileName,
-                file.ContentType,
-                "uploads/products",
-                "product",
-                GetPublicOrigin());
+        var response = await MediaUploadHelper.SaveAsync(
+            file,
+            MediaUploadHelper.ProductImage,
+            fileStorage,
+            GetPublicOrigin(),
+            _logger,
+            cancellationToken);
 
-            return Ok(ApiResponse<object>.SuccessResponse(
-                "Imagem enviada com sucesso.",
-                new
-                {
-                    success = storedFile.Exists,
-                    url = storedFile.PublicUrl,
-                    imageUrl = storedFile.PublicUrl,
-                    relativePath = storedFile.RelativePath,
-                    fileName = storedFile.FileName,
-                    contentType = storedFile.ContentType,
-                    sizeBytes = storedFile.SizeBytes,
-                    storageProvider = storedFile.StorageProvider
-                }));
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Falha ao salvar imagem do produto. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
-            throw new ValidationAppException("Nao foi possivel enviar a imagem.");
-        }
+        _logger.LogInformation("Marketplace upload endpoint returning success. Folder={Folder}; TraceId={TraceId}", "products", HttpContext.TraceIdentifier);
+        return Ok(response);
     }
 
     private IEnumerable<ProductResponse> NormalizeProducts(IEnumerable<ProductResponse> products)

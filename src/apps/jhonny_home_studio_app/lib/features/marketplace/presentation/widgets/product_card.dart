@@ -36,7 +36,12 @@ class ProductCard extends StatelessWidget {
                   ? Image.network(
                       product.displayImageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const _ProductPlaceholder(),
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint(
+                          'Erro ao carregar imagem do produto: ${product.displayImageUrl} | $error',
+                        );
+                        return const _ProductPlaceholder();
+                      },
                     )
                   : const _ProductPlaceholder(),
             ),

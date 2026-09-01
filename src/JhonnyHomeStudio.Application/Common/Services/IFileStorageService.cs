@@ -14,6 +14,10 @@ public interface IFileStorageService
     Task<StoredFileDownload?> GetAsync(
         string relativePath,
         CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(
+        string fileUrl,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class StoredFileResponse

@@ -16,6 +16,7 @@ import '../../addresses/data/address_models.dart';
 import '../../addresses/data/addresses_api.dart';
 import '../../services/data/service_models.dart';
 import '../../services/data/services_api.dart';
+import '../../services/presentation/widgets/service_image.dart';
 import '../../settings/presentation/app_settings_provider.dart';
 import '../data/appointment_models.dart';
 import '../data/appointments_api.dart';
@@ -225,8 +226,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
       return;
     }
 
-    if (_selectedSlot?.startAt == null) {
-      _showMessage('Selecione um horário disponível.');
+    if (_selectedSlot?.startAt == null || _selectedSlot?.endAt == null) {
+      _showMessage('Selecione um turno disponível.');
       return;
     }
 
@@ -241,6 +242,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
           serviceId: _selectedService!.id,
           addressId: _selectedAddress!.id,
           scheduledAt: _selectedSlot!.startAt!,
+          scheduledEndAt: _selectedSlot!.endAt!,
           customerNotes: _notesController.text.trim(),
         ),
       );
@@ -294,10 +296,16 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     final date = _selectedDate;
     final slot = _selectedSlot;
 
-    if (service == null || date == null || slot?.startAt == null) {
+    if (service == null ||
+        date == null ||
+        slot?.startAt == null ||
+        slot?.endAt == null) {
       return false;
     }
 
+    final start = DateFormat('HH:mm').format(slot!.startAt!.toLocal());
+    final end = DateFormat('HH:mm').format(slot.endAt!.toLocal());
+    final shiftName = slot.name.trim().isEmpty ? 'Turno' : slot.name.trim();
     if (!hasConfiguredWhatsAppNumber(settings.whatsAppNumber)) {
       return false;
     }
@@ -306,7 +314,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
         '''
 Olá! Gostaria de confirmar meu agendamento:
 ✂️ Serviço: ${service.name}
-📅 Data: ${_dateFormat.format(date)} às ${DateFormat('HH:mm').format(slot!.startAt!)}
+📅 Data: ${_dateFormat.format(date)}
+🕒 $shiftName: $start - $end
 💰 Valor a partir de: ${ServicePresentationFormatter.priceFrom(service.price)}''';
 
     return openWhatsApp(phoneNumber: settings.whatsAppNumber, message: message);
@@ -375,57 +384,59 @@ Olá! Gostaria de confirmar meu agendamento:
                                 step: '1',
                                 title: 'Serviço',
                                 subtitle: 'Escolha o atendimento desejado.',
-                                child: DropdownButtonFormField<ServiceModel>(
-                                  initialValue: _selectedService,
-                                  isDense: true,
-                                  icon: const Icon(
-                                    Icons.expand_more_rounded,
-                                    size: 18,
-                                  ),
-                                  dropdownColor: AppColors.surfaceElevated,
-                                  items: _services
-                                      .map(
-                                        (service) =>
-                                            DropdownMenuItem<ServiceModel>(
-                                              value: service,
-                                              child: Text(service.name),
-                                            ),
-                                      )
-                                      .toList(growable: false),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedService = value;
-                                      _selectedSlot = null;
-                                    });
-                                    if (_selectedDate != null) {
-                                      _loadSlots();
-                                    }
-                                  },
-                                  decoration: const InputDecoration(
-                                    labelText: 'Serviço',
-                                    prefixIcon: Icon(
-                                      Icons.spa_outlined,
-                                      size: 18,
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    DropdownButtonFormField<ServiceModel>(
+                                      initialValue: _selectedService,
+                                      isDense: true,
+                                      icon: const Icon(
+                                        Icons.expand_more_rounded,
+                                        size: 18,
+                                      ),
+                                      dropdownColor: AppColors.surfaceElevated,
+                                      items: _services
+                                          .map(
+                                            (service) =>
+                                                DropdownMenuItem<ServiceModel>(
+                                                  value: service,
+                                                  child: Text(service.name),
+                                                ),
+                                          )
+                                          .toList(growable: false),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _selectedService = value;
+                                          _selectedSlot = null;
+                                        });
+                                        if (_selectedDate != null) {
+                                          _loadSlots();
+                                        }
+                                      },
+                                      decoration: const InputDecoration(
+                                        labelText: 'Serviço',
+                                        prefixIcon: Icon(
+                                          Icons.spa_outlined,
+                                          size: 18,
+                                        ),
+                                        filled: true,
+                                        fillColor: AppColors.surface,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                      ),
                                     ),
-                                    filled: true,
-                                    fillColor: AppColors.surface,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 12,
-                                    ),
-                                  ),
+                                    if (_selectedService != null) ...[
+                                      const SizedBox(height: 12),
+                                      _SelectedServicePreview(
+                                        service: _selectedService!,
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
-                              if (_selectedService != null) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                              ServicePresentationFormatter.priceFrom(_selectedService!.price),
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
                               const SizedBox(height: 12),
                               _StepCard(
                                 step: '2',
@@ -524,7 +535,7 @@ Olá! Gostaria de confirmar meu agendamento:
                               _StepCard(
                                 step: '4',
                                 title: 'Horário',
-                                subtitle: 'Escolha um horário disponível.',
+                                subtitle: 'Escolha um turno disponível.',
                                 child: _isLoadingSlots
                                     ? const Padding(
                                         padding: EdgeInsets.symmetric(
@@ -546,7 +557,7 @@ Olá! Gostaria de confirmar meu agendamento:
                                         icon: Icons.schedule_outlined,
                                         title: 'Escolha uma data',
                                         message:
-                                            'Depois de escolher o dia, os horários disponíveis aparecerão aqui.',
+                                            'Depois de escolher o dia, os turnos disponíveis aparecerão aqui.',
                                       )
                                     : _slots.isEmpty
                                     ? PremiumEmptyState(
@@ -554,7 +565,7 @@ Olá! Gostaria de confirmar meu agendamento:
                                         title:
                                             'Não há atendimento disponível nesta data',
                                         message:
-                                            'Nenhum horário disponível para esta data. Tente escolher outro dia.',
+                                            'Nenhum turno disponível para esta data. Tente escolher outro dia.',
                                       )
                                     : Wrap(
                                         spacing: 8,
@@ -636,6 +647,66 @@ Olá! Gostaria de confirmar meu agendamento:
                   ),
                 ),
         ),
+      ),
+    );
+  }
+}
+
+class _SelectedServicePreview extends StatelessWidget {
+  const _SelectedServicePreview({required this.service});
+
+  final ServiceModel service;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border, width: 0.6),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 86,
+            child: ServiceImage(
+              imageUrl: service.imageUrl,
+              label: service.name,
+              aspectRatio: 1.28,
+              borderRadius: 12,
+              showLabel: false,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  service.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  ServicePresentationFormatter.priceFrom(service.price),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -924,9 +995,22 @@ class _ConfirmationSummary extends StatelessWidget {
     final dateText = date == null
         ? 'Selecione uma data'
         : dateFormat.format(date!);
-    final timeText = slot?.startAt == null
-        ? 'Selecione um horário'
-        : DateFormat('HH:mm').format(slot!.startAt!.toLocal());
+    final selectedSlot = slot;
+    final String timeText;
+    if (selectedSlot == null ||
+        selectedSlot.startAt == null ||
+        selectedSlot.endAt == null) {
+      timeText = 'Selecione um turno';
+    } else {
+      final shiftName = selectedSlot.name.trim().isEmpty
+          ? 'Turno'
+          : selectedSlot.name.trim();
+      final startText = DateFormat(
+        'HH:mm',
+      ).format(selectedSlot.startAt!.toLocal());
+      final endText = DateFormat('HH:mm').format(selectedSlot.endAt!.toLocal());
+      timeText = '$shiftName · $startText - $endText';
+    }
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -938,13 +1022,23 @@ class _ConfirmationSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SummaryRow(label: 'Serviço', value: serviceName),
-          const SizedBox(height: 8),
+          if (service == null) ...[
+            _SummaryRow(label: 'Serviço', value: serviceName),
+            const SizedBox(height: 8),
+          ] else ...[
+            _SummaryServiceHeader(service: service!),
+            const SizedBox(height: 12),
+            Container(
+              height: 1,
+              color: AppColors.border.withValues(alpha: 0.7),
+            ),
+            const SizedBox(height: 12),
+          ],
           _SummaryRow(label: 'Endereço', value: addressText),
           const SizedBox(height: 8),
           _SummaryRow(label: 'Data', value: dateText),
           const SizedBox(height: 8),
-          _SummaryRow(label: 'Horário', value: timeText),
+          _SummaryRow(label: 'Turno', value: timeText),
           const SizedBox(height: 12),
           Container(height: 1, color: AppColors.border.withValues(alpha: 0.7)),
           const SizedBox(height: 12),
@@ -960,6 +1054,58 @@ class _ConfirmationSummary extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SummaryServiceHeader extends StatelessWidget {
+  const _SummaryServiceHeader({required this.service});
+
+  final ServiceModel service;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 76,
+          child: ServiceImage(
+            imageUrl: service.imageUrl,
+            label: service.name,
+            aspectRatio: 1.22,
+            borderRadius: 12,
+            showLabel: false,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                service.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                ServicePresentationFormatter.priceFrom(service.price),
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

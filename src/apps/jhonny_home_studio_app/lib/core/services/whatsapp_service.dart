@@ -92,7 +92,7 @@ $time
 
 Em breve entraremos em contato.
 
-Equipe Jhonny Home Studio.''',
+Equipe Johnny Home Studio.''',
       'WaitingPayment' =>
         '''
 Olá, $name.
@@ -110,7 +110,7 @@ $value
 
 Após a confirmação do pagamento seu horário será confirmado.
 
-Equipe Jhonny Home Studio.''',
+Equipe Johnny Home Studio.''',
       'Confirmed' =>
         '''
 Olá, $name ✨
@@ -131,7 +131,7 @@ $service
 
 Estamos ansiosos para recebê-la.
 
-Equipe Jhonny Home Studio.''',
+Equipe Johnny Home Studio.''',
       'Rescheduled' =>
         '''
 Olá, $name.
@@ -163,7 +163,7 @@ Estamos aguardando sua chegada.
 Até já!''',
       'Completed' =>
         '''
-Muito obrigado por escolher o Jhonny Home Studio ❤️
+Muito obrigado por escolher o Johnny Home Studio ❤️
 
 Seu atendimento foi concluído.
 
@@ -203,7 +203,7 @@ ${appointmentStatusLabel(status)}
 Serviço:
 $service
 
-Equipe Jhonny Home Studio.''',
+Equipe Johnny Home Studio.''',
     };
   }
 }

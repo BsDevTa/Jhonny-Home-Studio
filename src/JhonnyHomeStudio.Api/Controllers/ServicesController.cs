@@ -21,7 +21,7 @@ public sealed class ServicesController : ControllerBase
     public async Task<IActionResult> GetActive()
     {
         var response = await _serviceService.GetActiveAsync();
-        return Ok(ApiResponse<IEnumerable<ServiceResponse>>.SuccessResponse("Servicos ativos localizados com sucesso.", response));
+        return Ok(ApiResponse<IEnumerable<ServiceResponse>>.SuccessResponse("Servicos ativos localizados com sucesso.", NormalizeServices(response)));
     }
 
     [HttpGet("{id:guid}")]
@@ -33,7 +33,7 @@ public sealed class ServicesController : ControllerBase
             return NotFound(ApiResponse<object>.FailureResponse("Servico nao encontrado.", new[] { "Verifique o identificador informado." }));
         }
 
-        return Ok(ApiResponse<ServiceResponse>.SuccessResponse("Servico localizado com sucesso.", response));
+        return Ok(ApiResponse<ServiceResponse>.SuccessResponse("Servico localizado com sucesso.", NormalizeService(response)));
     }
 
     [HttpGet("/api/admin/services")]
@@ -41,7 +41,7 @@ public sealed class ServicesController : ControllerBase
     public async Task<IActionResult> GetAllAdmin()
     {
         var response = await _serviceService.GetAllAsync();
-        return Ok(ApiResponse<IEnumerable<ServiceResponse>>.SuccessResponse("Servicos localizados com sucesso.", response));
+        return Ok(ApiResponse<IEnumerable<ServiceResponse>>.SuccessResponse("Servicos localizados com sucesso.", NormalizeServices(response)));
     }
 
     [HttpPost]
@@ -50,7 +50,7 @@ public sealed class ServicesController : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateServiceRequest request)
     {
         var response = await _serviceService.CreateAsync(request);
-        return Ok(ApiResponse<ServiceResponse>.SuccessResponse("Servico criado com sucesso.", response));
+        return Ok(ApiResponse<ServiceResponse>.SuccessResponse("Servico criado com sucesso.", NormalizeService(response)));
     }
 
     [HttpPut("{id:guid}")]
@@ -59,7 +59,7 @@ public sealed class ServicesController : ControllerBase
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateServiceRequest request)
     {
         var response = await _serviceService.UpdateAsync(id, request);
-        return Ok(ApiResponse<ServiceResponse>.SuccessResponse("Servico atualizado com sucesso.", response));
+        return Ok(ApiResponse<ServiceResponse>.SuccessResponse("Servico atualizado com sucesso.", NormalizeService(response)));
     }
 
     [HttpPatch("/api/admin/services/{id:guid}/activate")]
@@ -99,5 +99,33 @@ public sealed class ServicesController : ControllerBase
         }
 
         return Ok(ApiResponse<object>.SuccessResponse("Servico removido com sucesso.", new { id, isActive = false }));
+    }
+
+    private IEnumerable<ServiceResponse> NormalizeServices(IEnumerable<ServiceResponse> services)
+    {
+        return services.Select(NormalizeService).ToArray();
+    }
+
+    private ServiceResponse NormalizeService(ServiceResponse service)
+    {
+        service.ImageUrl = ResolveUrl(service.ImageUrl);
+        return service;
+    }
+
+    private string? ResolveUrl(string? value)
+    {
+        var url = value?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(url) || Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            return value;
+        }
+
+        var path = url.StartsWith('/') ? url : $"/{url}";
+        return new Uri(GetPublicOrigin(), path).ToString();
+    }
+
+    private Uri GetPublicOrigin()
+    {
+        return new Uri($"{Request.Scheme}://{Request.Host}");
     }
 }

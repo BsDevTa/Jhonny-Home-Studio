@@ -30,7 +30,7 @@ class _VipClubScreenState extends State<VipClubScreen> {
 
     final opened = await openWhatsApp(
       phoneNumber: settings.whatsAppNumber,
-      message: 'Olá, quero saber mais sobre o Clube VIP do Jhonny Home Studio.',
+      message: 'Olá, quero saber mais sobre o Clube VIP do Johnny Home Studio.',
     );
 
     if (!mounted) {

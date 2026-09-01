@@ -1,11 +1,11 @@
 {
-    "name": "Jhonny Home Studio",
+    "name": "Johnny Home Studio",
     "short_name": "JHS",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#050505",
     "theme_color": "#D6A354",
-    "description": "Sistema web premium do Jhonny Home Studio para agendamentos, marketplace, Clube VIP e painel do cliente.",
+    "description": "Sistema web premium do Johnny Home Studio para agendamentos, marketplace, Clube VIP e painel do cliente.",
     "orientation": "any",
     "prefer_related_applications": false,
     "icons": [

@@ -1,4 +1,5 @@
 using JhonnyHomeStudio.Application.Common.Services;
+using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Settings;
 using JhonnyHomeStudio.Infrastructure.Authentication;
 using JhonnyHomeStudio.Infrastructure.Security;
@@ -6,6 +7,7 @@ using JhonnyHomeStudio.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace JhonnyHomeStudio.Infrastructure.Persistence;
@@ -50,25 +52,56 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAvailabilityService, AvailabilityService>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();
         services.AddScoped<IMarketplaceService, MarketplaceService>();
+        services.AddHostedService<StorageConfigurationStartupValidator>();
         services.AddScoped<IFileStorageService>(provider =>
         {
-            var storageProvider = configuration["Storage:Provider"] ?? configuration["STORAGE_PROVIDER"] ?? string.Empty;
-            var hasRailwayBucketVariables =
-                !string.IsNullOrWhiteSpace(configuration["BUCKET"]) &&
-                !string.IsNullOrWhiteSpace(configuration["ENDPOINT"]);
+            var environment = provider.GetRequiredService<IHostEnvironment>();
+            var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("FileStorage");
+            var status = StorageConfigurationStatusFactory.Evaluate(configuration, environment);
 
-            if (storageProvider.Equals("S3", StringComparison.OrdinalIgnoreCase) ||
-                storageProvider.Equals("RailwayBucket", StringComparison.OrdinalIgnoreCase) ||
-                hasRailwayBucketVariables)
+            if (status.UseS3Storage)
             {
+                logger.LogInformation(
+                    "File storage provider selected. Provider={Provider}; BucketConfigured={BucketConfigured}; Endpoint={Endpoint}; PublicBaseUrlConfigured={PublicBaseUrlConfigured}; StorageAvailable={StorageAvailable}",
+                    status.Provider,
+                    status.HasBucket,
+                    status.SanitizedEndpoint,
+                    status.PublicBaseUrlConfigured,
+                    status.StorageAvailable);
+
                 return new S3FileStorageService(
                     configuration,
                     provider.GetRequiredService<ILogger<S3FileStorageService>>());
             }
 
-            return new LocalFileStorageService(
-                provider.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>(),
-                provider.GetRequiredService<ILogger<LocalFileStorageService>>());
+            if (status.UseLocalStorage)
+            {
+                logger.LogInformation("File storage provider selected. Provider=Local; Environment={Environment}", environment.EnvironmentName);
+                return new LocalFileStorageService(
+                    environment,
+                    provider.GetRequiredService<ILogger<LocalFileStorageService>>());
+            }
+
+            logger.LogWarning(
+                "RailwayBucket foi selecionado, mas as variáveis obrigatórias não estão configuradas. A API continuará disponível e uploads retornarão 503. Provider={Provider}; BucketConfigured={BucketConfigured}; EndpointConfigured={EndpointConfigured}; Endpoint={Endpoint}; AccessKeyIdConfigured={AccessKeyIdConfigured}; SecretAccessKeyConfigured={SecretAccessKeyConfigured}; PublicBaseUrlConfigured={PublicBaseUrlConfigured}; Reason={Reason}",
+                status.Provider,
+                status.HasBucket,
+                status.HasEndpoint,
+                status.SanitizedEndpoint,
+                status.HasAccessKeyId,
+                status.HasSecretAccessKey,
+                status.PublicBaseUrlConfigured,
+                status.Reason);
+
+            return new UnavailableFileStorageService(
+                provider.GetRequiredService<ILogger<UnavailableFileStorageService>>(),
+                status.Reason,
+                status.Provider,
+                status.HasBucket,
+                status.HasEndpoint,
+                status.HasAccessKeyId,
+                status.HasSecretAccessKey,
+                status.PublicBaseUrlConfigured);
         });
 
         return services;

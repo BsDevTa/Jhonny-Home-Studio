@@ -9,9 +9,9 @@ import '../../../core/utils/service_presentation_formatter.dart';
 import '../../../shared/widgets/premium_button.dart';
 import '../../../shared/widgets/premium_card.dart';
 import '../../../shared/widgets/premium_empty_state.dart';
-import '../../../shared/widgets/premium_icon_tile.dart';
 import '../data/service_models.dart';
 import '../data/services_api.dart';
+import 'widgets/service_image.dart';
 
 class ServiceDetailScreen extends StatefulWidget {
   const ServiceDetailScreen({super.key, required this.serviceId});
@@ -130,7 +130,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                         children: [
                           _PageHeader(
                             title: 'Detalhes do servico',
-                            subtitle: 'Tudo o que importa, em uma leitura limpa e objetiva.',
+                            subtitle:
+                                'Tudo o que importa, em uma leitura limpa e objetiva.',
                             onBack: () => context.pop(),
                           ),
                           const SizedBox(height: 12),
@@ -200,57 +201,11 @@ class _HeroImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = service.imageUrl.trim().isNotEmpty;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: AspectRatio(
-        aspectRatio: 1.08,
-        child: Container(
-          color: AppColors.surfaceElevated,
-          child: hasImage
-              ? Image.network(
-                  service.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _FallbackHero(service: service);
-                  },
-                )
-              : _FallbackHero(service: service),
-        ),
-      ),
-    );
-  }
-}
-
-class _FallbackHero extends StatelessWidget {
-  const _FallbackHero({required this.service});
-
-  final ServiceModel service;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const PremiumIconTile(icon: Icons.spa_rounded, size: 60),
-            const SizedBox(height: 12),
-            Text(
-              service.name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                height: 1.2,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ServiceImage(
+      imageUrl: service.imageUrl,
+      label: service.name,
+      aspectRatio: 1.08,
+      borderRadius: 18,
     );
   }
 }

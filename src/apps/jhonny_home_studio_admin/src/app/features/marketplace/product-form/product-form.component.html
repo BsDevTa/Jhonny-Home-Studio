@@ -67,6 +67,11 @@
           <input type="url" formControlName="mainImageUrl" placeholder="URL da imagem" />
           @if (form.controls.mainImageUrl.value) {
             <img [src]="form.controls.mainImageUrl.value" alt="Preview do produto" style="margin-top: 12px; max-width: 180px; border-radius: 14px;" />
+            <div style="margin-top: 10px;">
+              <button type="button" class="danger-button" [disabled]="uploading()" (click)="removeImage()">
+                Remover foto
+              </button>
+            </div>
           }
         </div>
         <label class="checkbox-field">

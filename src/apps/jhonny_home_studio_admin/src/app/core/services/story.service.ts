@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import {
   CreateStudioStoryRequest,
@@ -7,10 +7,14 @@ import {
   UpdateStudioStoryRequest,
 } from '../models/story.model';
 import { ApiService } from './api.service';
+import { MediaUploadService } from './media-upload.service';
 
 @Injectable({ providedIn: 'root' })
 export class StoryService {
-  constructor(private readonly api: ApiService) {}
+  constructor(
+    private readonly api: ApiService,
+    private readonly mediaUpload: MediaUploadService,
+  ) {}
 
   getAll(): Observable<StudioStory[]> {
     return this.api.get<StudioStory[]>('/api/admin/stories');
@@ -21,22 +25,7 @@ export class StoryService {
   }
 
   uploadImage(file: File): Observable<{ imageUrl: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.api
-      .postForm<Record<string, unknown>>('/api/admin/stories/upload-media', formData)
-      .pipe(
-        map((response) => {
-          console.debug('Resposta completa upload-media:', response);
-          const uploadedUrl = this.readUploadUrl(response);
-          console.debug('URL definitiva recebida:', uploadedUrl);
-          if (!uploadedUrl) {
-            throw new Error('Upload concluído, mas a API não retornou a URL da imagem.');
-          }
-
-          return { imageUrl: uploadedUrl };
-        }),
-      );
+    return this.mediaUpload.uploadImage(file, 'stories');
   }
 
   create(request: CreateStudioStoryRequest): Observable<StudioStory> {
@@ -55,14 +44,4 @@ export class StoryService {
     return this.api.delete(`/api/admin/stories/${id}`);
   }
 
-  private readUploadUrl(response: Record<string, unknown>): string {
-    for (const key of ['imageUrl', 'mediaUrl', 'url', 'fileUrl']) {
-      const value = response[key];
-      if (typeof value === 'string' && value.trim()) {
-        return value.trim();
-      }
-    }
-
-    return '';
-  }
 }

@@ -67,7 +67,7 @@ ${time}
 
 Em breve entraremos em contato.
 
-Equipe Jhonny Home Studio.`;
+Equipe Johnny Home Studio.`;
       case 'WaitingPayment':
         return `Olá, ${name}.
 
@@ -84,7 +84,7 @@ ${value}
 
 Após a confirmação do pagamento seu horário será confirmado.
 
-Equipe Jhonny Home Studio.`;
+Equipe Johnny Home Studio.`;
       case 'Confirmed':
         return `Olá, ${name} ✨
 
@@ -104,7 +104,7 @@ ${service}
 
 Estamos ansiosos para recebê-la.
 
-Equipe Jhonny Home Studio.`;
+Equipe Johnny Home Studio.`;
       case 'Rescheduled':
         return `Olá, ${name}.
 
@@ -132,7 +132,7 @@ Estamos aguardando sua chegada.
 
 Até já!`;
       case 'Completed':
-        return `Muito obrigado por escolher o Jhonny Home Studio ❤️
+        return `Muito obrigado por escolher o Johnny Home Studio ❤️
 
 Seu atendimento foi concluído.
 
@@ -168,7 +168,7 @@ ${getAppointmentStatusLabel(data.status)}
 Serviço:
 ${service}
 
-Equipe Jhonny Home Studio.`;
+Equipe Johnny Home Studio.`;
     }
   }
 

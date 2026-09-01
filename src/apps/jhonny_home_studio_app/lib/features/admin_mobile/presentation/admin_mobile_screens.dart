@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../core/services/whatsapp_service.dart';
 import '../../../core/utils/appointment_status_helper.dart';
+import '../../../core/utils/media_url_resolver.dart';
 import '../../../core/utils/service_presentation_formatter.dart';
 import '../../../shared/responsive/app_breakpoints.dart';
 import '../../auth/presentation/auth_provider.dart';
@@ -224,8 +224,9 @@ class _ItemCard extends StatelessWidget {
     AdminListType.stories => _text(item, 'title'),
   };
   String get subtitle => switch (type) {
-    AdminListType.services =>
-      ServicePresentationFormatter.priceFrom(num.tryParse(_text(item, 'price')) ?? 0),
+    AdminListType.services => ServicePresentationFormatter.priceFrom(
+      num.tryParse(_text(item, 'price')) ?? 0,
+    ),
     AdminListType.appointments =>
       '${_date(item['scheduledAt'])} · ${_statusLabel(_text(item, 'status'))}',
     AdminListType.customers =>
@@ -339,7 +340,9 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       description = TextEditingController(),
       price = TextEditingController(),
       imageUrl = TextEditingController();
-  bool active = true, saving = false;
+  bool active = true, saving = false, uploading = false, imageRemoved = false;
+  Uint8List? imagePreviewBytes;
+  String imagePreviewName = '', originalImageUrl = '';
   @override
   void initState() {
     super.initState();
@@ -356,6 +359,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       );
       price.text = _text(x, 'price');
       imageUrl.text = _text(x, 'imageUrl');
+      originalImageUrl = imageUrl.text.trim();
       active = _flag(x, 'isActive', true);
     }
     if (mounted) setState(() {});
@@ -370,11 +374,98 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    final api = _api(context);
+    final picked = await ImagePicker().pickImage(source: source);
+    if (picked == null) {
+      return;
+    }
+
+    final bytes = await picked.readAsBytes();
+    final validationError = _validateImage(picked.name, bytes.length);
+    if (validationError.isNotEmpty) {
+      _showMessage(validationError);
+      return;
+    }
+
+    setState(() {
+      uploading = true;
+      imagePreviewBytes = bytes;
+      imagePreviewName = picked.name;
+    });
+
+    try {
+      final result = await api.uploadServiceImage(bytes, fileName: picked.name);
+      final uploadedUrl = readUploadUrl(result);
+      if (uploadedUrl.isEmpty) {
+        throw const FormatException(
+          'Upload concluído, mas a API não retornou a URL da imagem.',
+        );
+      }
+
+      debugPrint(
+        'UPLOAD serviço: oldImageUrl=$originalImageUrl newImageUrl=$uploadedUrl storageProvider=${result['storageProvider']}',
+      );
+      imageUrl.text = uploadedUrl;
+      imageRemoved = false;
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        imagePreviewBytes = null;
+        imagePreviewName = picked.name;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        imagePreviewBytes = null;
+        imagePreviewName = '';
+      });
+      _showMessage(
+        _readApiError(error, fallback: 'Não foi possível enviar a imagem.'),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => uploading = false);
+      }
+    }
+  }
+
+  void _removeImage() {
+    if (uploading) {
+      return;
+    }
+
+    setState(() {
+      imageUrl.clear();
+      imagePreviewBytes = null;
+      imagePreviewName = '';
+      imageRemoved = true;
+    });
+    debugPrint('EDIT serviço: remoção explícita oldImageUrl=$originalImageUrl');
+  }
+
   @override
   Widget build(BuildContext context) => _SimpleFormScaffold(
     title: widget.id == null ? 'Novo serviço' : 'Editar serviço',
-    saving: saving,
+    saving: saving || uploading,
     onSave: () async {
+      if (uploading) {
+        _showMessage('Aguarde o upload terminar antes de salvar.');
+        return;
+      }
+
+      if (imageUrl.text.trim().startsWith('blob:')) {
+        _showMessage(
+          'A URL temporária de prévia não pode ser salva. Aguarde o upload concluir.',
+        );
+        return;
+      }
+
       final sanitizedDescription =
           ServicePresentationFormatter.sanitizeNullableText(description.text);
       final Map<String, dynamic> payload = {
@@ -384,9 +475,12 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
             : sanitizedDescription,
         'price': double.tryParse(price.text.replaceAll(',', '.')) ?? 0,
         'imageUrl': imageUrl.text.trim().isEmpty ? null : imageUrl.text.trim(),
+        'removeImage': imageRemoved,
         'isActive': widget.id == null ? true : active,
       };
-      debugPrint('Payload serviço: ${jsonEncode(payload)}');
+      debugPrint(
+        'EDIT serviço: oldImageUrl=$originalImageUrl newImageUrl=${payload['imageUrl']} removeImage=$imageRemoved',
+      );
       setState(() => saving = true);
       try {
         await _api(context).saveService(widget.id, payload);
@@ -418,10 +512,7 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
         decoration: const InputDecoration(labelText: 'Preço a partir de'),
       ),
       const SizedBox(height: 12),
-      TextField(
-        controller: imageUrl,
-        decoration: const InputDecoration(labelText: 'URL da imagem'),
-      ),
+      _buildImageField(),
       if (widget.id != null)
         SwitchListTile(
           value: active,
@@ -430,6 +521,139 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
         ),
     ],
   );
+
+  Widget _buildImageField() {
+    final resolvedImageUrl = resolveMediaUrl(imageUrl.text);
+    final hasImage = imagePreviewBytes != null || resolvedImageUrl.isNotEmpty;
+
+    return AdminMobileCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Foto do serviço',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (uploading)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    color: AppColors.gold,
+                    strokeWidth: 2,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          AspectRatio(
+            aspectRatio: 16 / 10,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  border: Border.all(color: AppColors.border, width: .6),
+                ),
+                child: imagePreviewBytes != null
+                    ? Image.memory(imagePreviewBytes!, fit: BoxFit.cover)
+                    : resolvedImageUrl.isNotEmpty
+                    ? Image.network(
+                        resolvedImageUrl,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) {
+                            return child;
+                          }
+
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.gold,
+                              strokeWidth: 2,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          debugPrint(
+                            'Erro ao carregar imagem do serviço: $resolvedImageUrl | $error',
+                          );
+                          return const _ServiceImagePlaceholder();
+                        },
+                      )
+                    : const _ServiceImagePlaceholder(),
+              ),
+            ),
+          ),
+          if (imagePreviewName.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              imagePreviewName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: uploading
+                    ? null
+                    : () => _pickImage(ImageSource.camera),
+                icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                label: const Text('Foto/Câmera'),
+              ),
+              OutlinedButton.icon(
+                onPressed: uploading
+                    ? null
+                    : () => _pickImage(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library_outlined, size: 18),
+                label: const Text('Galeria'),
+              ),
+              if (hasImage)
+                TextButton.icon(
+                  onPressed: uploading ? null : _removeImage,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Remover foto'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _validateImage(String fileName, int sizeBytes) {
+    final normalized = fileName.toLowerCase();
+    final hasAllowedExtension = const [
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.webp',
+    ].any((extension) => normalized.endsWith(extension));
+
+    if (!hasAllowedExtension) {
+      return 'Arquivo inválido.';
+    }
+
+    if (sizeBytes > 10 * 1024 * 1024) {
+      return 'Imagem muito grande.';
+    }
+
+    return '';
+  }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(
@@ -479,6 +703,33 @@ class _AdminServiceFormScreenState extends State<AdminServiceFormScreen> {
       return error.error! as ApiException;
     }
     return null;
+  }
+}
+
+class _ServiceImagePlaceholder extends StatelessWidget {
+  const _ServiceImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.surfaceElevated,
+      alignment: Alignment.center,
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.spa_rounded, color: AppColors.gold, size: 32),
+          SizedBox(height: 8),
+          Text(
+            'Sem foto',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -728,8 +979,9 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
   String serviceId = '';
   bool active = true, saving = false, uploading = false;
   Uint8List? mediaPreviewBytes;
-  String mediaPreviewName = '';
+  String mediaPreviewName = '', originalMediaUrl = '';
   bool mediaPreviewIsVideo = false;
+  bool mediaRemoved = false;
   @override
   void initState() {
     super.initState();
@@ -746,6 +998,7 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
       mediaUrl.text = _text(x, 'mediaUrl').isEmpty
           ? _text(x, 'imageUrl')
           : _text(x, 'mediaUrl');
+      originalMediaUrl = mediaUrl.text.trim();
       order.text = _text(x, 'displayOrder');
       serviceId = _text(x, 'serviceId');
       active = _flag(x, 'isActive', true);
@@ -774,12 +1027,16 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         );
       }
 
+      debugPrint(
+        'UPLOAD story: oldImageUrl=$originalMediaUrl newImageUrl=$uploadedUrl storageProvider=${result['storageProvider']}',
+      );
       if (!mounted) return;
       setState(() {
         mediaUrl.text = uploadedUrl;
         mediaPreviewBytes = bytes;
         mediaPreviewName = file.name;
         mediaPreviewIsVideo = video;
+        mediaRemoved = false;
       });
     } catch (error) {
       if (!mounted) return;
@@ -789,6 +1046,21 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         setState(() => uploading = false);
       }
     }
+  }
+
+  void _removeMedia() {
+    if (uploading) {
+      return;
+    }
+
+    setState(() {
+      mediaUrl.clear();
+      mediaPreviewBytes = null;
+      mediaPreviewName = '';
+      mediaPreviewIsVideo = false;
+      mediaRemoved = true;
+    });
+    debugPrint('EDIT story: remoção explícita oldImageUrl=$originalMediaUrl');
   }
 
   @override
@@ -805,6 +1077,11 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
     title: widget.id == null ? 'Novo story' : 'Editar story',
     saving: saving,
     onSave: () async {
+      if (uploading) {
+        _showMessage('Aguarde o upload terminar antes de salvar.');
+        return;
+      }
+
       final uploadedUrl = mediaUrl.text.trim();
       if (uploadedUrl.startsWith('blob:')) {
         _showMessage(
@@ -820,15 +1097,19 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         return;
       }
 
+      final nextImageUrl = uploadedUrl.isEmpty ? null : uploadedUrl;
       final payload = {
         'title': title.text,
         'subtitle': subtitle.text,
-        'imageUrl': uploadedUrl,
+        'imageUrl': nextImageUrl,
+        'removeImage': mediaRemoved,
         'serviceId': serviceId.isEmpty ? null : serviceId,
         'displayOrder': int.tryParse(order.text) ?? 0,
         'isActive': active,
       };
-      debugPrint('Payload Story: $payload');
+      debugPrint(
+        'EDIT story: oldImageUrl=$originalMediaUrl newImageUrl=$nextImageUrl removeImage=$mediaRemoved',
+      );
 
       setState(() => saving = true);
       try {
@@ -856,6 +1137,14 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
       const SizedBox(height: 12),
       TextField(
         controller: mediaUrl,
+        onChanged: (value) {
+          if (mediaRemoved && value.trim().isNotEmpty) {
+            setState(() => mediaRemoved = false);
+            return;
+          }
+
+          setState(() {});
+        },
         decoration: const InputDecoration(labelText: 'URL da mídia'),
       ),
       const SizedBox(height: 10),
@@ -906,25 +1195,39 @@ class _AdminStoryFormScreenState extends State<AdminStoryFormScreen> {
         runSpacing: 8,
         children: [
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.camera, video: false),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.camera, video: false),
             icon: const Icon(Icons.photo_camera),
             label: const Text('Foto'),
           ),
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.gallery, video: false),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.gallery, video: false),
             icon: const Icon(Icons.photo_library),
             label: const Text('Galeria'),
           ),
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.camera, video: true),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.camera, video: true),
             icon: const Icon(Icons.videocam),
             label: const Text('Gravar vídeo'),
           ),
           OutlinedButton.icon(
-            onPressed: () => _pick(ImageSource.gallery, video: true),
+            onPressed: uploading
+                ? null
+                : () => _pick(ImageSource.gallery, video: true),
             icon: const Icon(Icons.video_library),
             label: const Text('Vídeo'),
           ),
+          if (mediaUrl.text.trim().isNotEmpty || mediaPreviewBytes != null)
+            TextButton.icon(
+              onPressed: uploading ? null : _removeMedia,
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Remover mídia'),
+            ),
         ],
       ),
       const SizedBox(height: 12),
@@ -1044,7 +1347,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   Future<void> _load() async {
     final x = await _api(context).getSettings();
     for (final e in fields.entries) {
-      e.value.text = _text(x, e.key);
+      e.value.text = _settingsDisplayText(x, e.key);
     }
     active = _flag(x, 'isActive', true);
     if (mounted) setState(() {});
@@ -1092,6 +1395,22 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     ],
   );
 }
+
+String _settingsDisplayText(Map<String, dynamic> item, String key) {
+  final value = _text(item, key);
+  return _settingsBrandTextFields.contains(key)
+      ? value.replaceAll('Jhonny', 'Johnny')
+      : value;
+}
+
+const _settingsBrandTextFields = {
+  'studioName',
+  'subtitle',
+  'slogan',
+  'welcomeTitle',
+  'welcomeMessage',
+  'supportMessage',
+};
 
 const _settingsLabels = {
   'studioName': 'Nome do estúdio',
@@ -1464,7 +1783,7 @@ class _AdminNavigationPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Jhonny ERP',
+                    'Johnny ERP',
                     style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 20,

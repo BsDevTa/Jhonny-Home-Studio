@@ -139,7 +139,7 @@ class _DesktopFooter extends StatelessWidget {
         ),
       ),
       child: const Text(
-        'Jhonny Home Studio | Sistema web premium',
+        'Johnny Home Studio | Sistema web premium',
         style: TextStyle(
           color: AppColors.textMuted,
           fontSize: 11,
@@ -204,7 +204,7 @@ class _DesktopInsightPanel extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             const Text(
-              'Jhonny Home Studio',
+              'Johnny Home Studio',
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 11,

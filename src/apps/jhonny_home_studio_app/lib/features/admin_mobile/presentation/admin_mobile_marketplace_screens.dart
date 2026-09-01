@@ -195,6 +195,8 @@ class _AdminMarketplaceProductFormScreenState
   bool featured = false;
   bool saving = false;
   bool uploading = false;
+  bool imageRemoved = false;
+  String originalImageUrl = '';
 
   @override
   void initState() {
@@ -213,6 +215,7 @@ class _AdminMarketplaceProductFormScreenState
         price.text = _text(product, 'price');
         promotionalPrice.text = _text(product, 'promotionalPrice');
         imageUrl.text = _text(product, 'mainImageUrl');
+        originalImageUrl = imageUrl.text.trim();
         active = _flag(product, 'isActive');
         featured = _flag(product, 'isFeatured');
       } catch (error) {
@@ -235,9 +238,20 @@ class _AdminMarketplaceProductFormScreenState
         bytes,
         fileName: file.name,
       );
+      final uploadedUrl = readUploadUrl(result);
+      if (uploadedUrl.isEmpty) {
+        throw ApiException(
+          message: 'Upload concluído, mas a API não retornou a URL da imagem.',
+        );
+      }
+
+      debugPrint(
+        'UPLOAD produto marketplace: oldImageUrl=$originalImageUrl newImageUrl=$uploadedUrl storageProvider=${result['storageProvider']}',
+      );
       if (!mounted) return;
       setState(() {
-        imageUrl.text = _text(result, 'imageUrl');
+        imageUrl.text = uploadedUrl;
+        imageRemoved = false;
       });
     } catch (error) {
       if (!mounted) return;
@@ -250,33 +264,37 @@ class _AdminMarketplaceProductFormScreenState
   }
 
   Future<void> _save() async {
+    if (uploading) {
+      _showMessage('Aguarde o upload terminar antes de salvar.');
+      return;
+    }
+
     setState(() => saving = true);
 
+    final uploadedUrl = imageUrl.text.trim();
+    final hasImage = uploadedUrl.isNotEmpty && !imageRemoved;
     final payload = {
       'name': name.text.trim(),
       'shortDescription': shortDescription.text.trim(),
       'description': description.text.trim(),
       'price': _parseMoney(price.text) ?? 0,
       'promotionalPrice': _parseMoney(promotionalPrice.text),
-      'mainImageUrl': imageUrl.text.trim().isEmpty
-          ? null
-          : imageUrl.text.trim(),
+      'mainImageUrl': hasImage ? uploadedUrl : null,
+      'removeImage': imageRemoved,
       'isActive': active,
       'isFeatured': featured,
       'displayOrder': 0,
       'stockQuantity': null,
-      'images': imageUrl.text.trim().isEmpty
-          ? []
-          : [
-              {
-                'imageUrl': imageUrl.text.trim(),
-                'displayOrder': 0,
-                'isMain': true,
-              },
-            ],
+      'images': hasImage
+          ? [
+              {'imageUrl': uploadedUrl, 'displayOrder': 0, 'isMain': true},
+            ]
+          : [],
     };
 
-    debugPrint('Payload produto marketplace: $payload');
+    debugPrint(
+      'EDIT produto marketplace: oldImageUrl=$originalImageUrl newImageUrl=${payload['mainImageUrl']} removeImage=$imageRemoved',
+    );
 
     try {
       await _api(context).saveMarketplaceProduct(widget.id, payload);
@@ -291,6 +309,20 @@ class _AdminMarketplaceProductFormScreenState
         setState(() => saving = false);
       }
     }
+  }
+
+  void _removeImage() {
+    if (uploading) {
+      return;
+    }
+
+    setState(() {
+      imageUrl.clear();
+      imageRemoved = true;
+    });
+    debugPrint(
+      'EDIT produto marketplace: remoção explícita oldImageUrl=$originalImageUrl',
+    );
   }
 
   double? _parseMoney(String value) {
@@ -363,6 +395,8 @@ class _AdminMarketplaceProductFormScreenState
 
   @override
   Widget build(BuildContext context) {
+    final currentImageUrl = imageUrl.text.trim();
+
     return AdminScaffold(
       title: widget.id == null ? 'Novo produto' : 'Editar produto',
       child: ListView(
@@ -399,23 +433,61 @@ class _AdminMarketplaceProductFormScreenState
           const SizedBox(height: 12),
           TextField(
             controller: imageUrl,
+            onChanged: (value) {
+              if (imageRemoved && value.trim().isNotEmpty) {
+                setState(() => imageRemoved = false);
+                return;
+              }
+
+              setState(() {});
+            },
             decoration: const InputDecoration(labelText: 'Imagem principal'),
           ),
+          if (currentImageUrl.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                currentImageUrl,
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint(
+                    'Erro ao carregar imagem do produto admin: $currentImageUrl | $error',
+                  );
+                  return const AdminMobileCard(
+                    child: Text(
+                      'Não foi possível carregar a imagem.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           if (uploading) const LinearProgressIndicator(color: AppColors.gold),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [
               OutlinedButton.icon(
-                onPressed: () => _pick(ImageSource.camera),
+                onPressed: uploading ? null : () => _pick(ImageSource.camera),
                 icon: const Icon(Icons.photo_camera),
                 label: const Text('Câmera'),
               ),
               OutlinedButton.icon(
-                onPressed: () => _pick(ImageSource.gallery),
+                onPressed: uploading ? null : () => _pick(ImageSource.gallery),
                 icon: const Icon(Icons.photo_library),
                 label: const Text('Galeria'),
               ),
+              if (currentImageUrl.isNotEmpty)
+                TextButton.icon(
+                  onPressed: uploading ? null : _removeImage,
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text('Remover foto'),
+                ),
             ],
           ),
           SwitchListTile(

@@ -1,6 +1,6 @@
 using JhonnyHomeStudio.Api.Extensions;
+using JhonnyHomeStudio.Api.Helpers;
 using JhonnyHomeStudio.Application.Common.Dtos.Stories;
-using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Responses;
 using JhonnyHomeStudio.Application.Common.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,33 +12,17 @@ namespace JhonnyHomeStudio.Api.Controllers;
 [Route("api/stories")]
 public sealed class StoriesController : ControllerBase
 {
-    private const long MaxImageSizeBytes = 5 * 1024 * 1024;
-    private const long MaxMediaSizeBytes = 50 * 1024 * 1024;
-    private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".webp"
-    };
-    private static readonly HashSet<string> AllowedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".mp4",
-        ".mov",
-        ".webm"
-    };
-
     private readonly IStoryService _storyService;
-    private readonly IFileStorageService _fileStorage;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<StoriesController> _logger;
 
     public StoriesController(
         IStoryService storyService,
-        IFileStorageService fileStorage,
+        IServiceProvider serviceProvider,
         ILogger<StoriesController> logger)
     {
         _storyService = storyService;
-        _fileStorage = fileStorage;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
 
@@ -84,89 +68,76 @@ public sealed class StoriesController : ControllerBase
 
     [HttpPost("/api/admin/stories/upload-image")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UploadImage([FromForm] IFormFile? file)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadImage([FromForm] IFormFile? file, CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
-        {
-            throw new ValidationAppException("Arquivo não enviado.");
-        }
+        LogUploadEndpointStarted("stories", file);
+        var fileStorage = ResolveFileStorage("stories");
+        var response = await MediaUploadHelper.SaveAsync(
+            file,
+            MediaUploadHelper.StoryImage,
+            fileStorage,
+            GetPublicOrigin(),
+            _logger,
+            cancellationToken);
 
-        if (file.Length > MaxImageSizeBytes)
-        {
-            throw new ValidationAppException("Imagem muito grande. O limite é 5MB.");
-        }
-
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!AllowedImageExtensions.Contains(extension))
-        {
-            throw new ValidationAppException("Formato de imagem não permitido.");
-        }
-
-        try
-        {
-            await using var stream = file.OpenReadStream();
-            var storedFile = await _fileStorage.SaveAsync(
-                stream,
-                file.FileName,
-                file.ContentType,
-                "uploads/stories",
-                "story",
-                GetPublicOrigin());
-
-            return Ok(ApiResponse<object>.SuccessResponse(
-                "Imagem enviada com sucesso.",
-                BuildUploadResponse(storedFile, "Image")));
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Falha ao salvar imagem do story. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
-            throw new ValidationAppException("Não foi possível enviar a imagem.");
-        }
+        _logger.LogInformation("Upload endpoint returning success. Folder={Folder}; TraceId={TraceId}", "stories", HttpContext.TraceIdentifier);
+        return Ok(response);
     }
 
     [HttpPost("/api/admin/stories/upload-media")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> UploadMedia([FromForm] IFormFile? file)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadMedia(
+        [FromForm] IFormFile? file,
+        [FromForm] string? folder,
+        CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
-        {
-            throw new ValidationAppException("Arquivo não enviado.");
-        }
+        LogUploadEndpointStarted(folder, file);
+        var target = MediaUploadHelper.ResolveTarget(folder);
+        _logger.LogInformation(
+            "Upload endpoint target resolved. RequestedFolder={RequestedFolder}; TargetFolder={TargetFolder}; TraceId={TraceId}",
+            folder,
+            target.RelativeFolder,
+            HttpContext.TraceIdentifier);
+        var fileStorage = ResolveFileStorage(target.FormValue);
 
-        if (file.Length > MaxMediaSizeBytes)
-        {
-            throw new ValidationAppException("Mídia muito grande. O limite é 50MB.");
-        }
+        var response = await MediaUploadHelper.SaveAsync(
+            file,
+            target,
+            fileStorage,
+            GetPublicOrigin(),
+            _logger,
+            cancellationToken);
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var isImage = AllowedImageExtensions.Contains(extension);
-        var isVideo = AllowedVideoExtensions.Contains(extension);
-        if (!isImage && !isVideo)
-        {
-            throw new ValidationAppException("Formato de mídia não permitido.");
-        }
+        _logger.LogInformation("Upload endpoint returning success. Folder={Folder}; TraceId={TraceId}", target.FormValue, HttpContext.TraceIdentifier);
+        return Ok(response);
+    }
 
-        try
-        {
-            await using var stream = file.OpenReadStream();
-            var storedFile = await _fileStorage.SaveAsync(
-                stream,
-                file.FileName,
-                file.ContentType,
-                "uploads/stories",
-                "story",
-                GetPublicOrigin());
+    private void LogUploadEndpointStarted(string? folder, IFormFile? file)
+    {
+        _logger.LogInformation(
+            "Upload endpoint started. Path={Path}; RequestedFolder={RequestedFolder}; HasFile={HasFile}; FileName={FileName}; ContentType={ContentType}; Length={Length}; RequestContentLength={RequestContentLength}; TraceId={TraceId}",
+            Request.Path,
+            folder,
+            file is not null,
+            file?.FileName,
+            file?.ContentType,
+            file?.Length,
+            Request.ContentLength,
+            HttpContext.TraceIdentifier);
+    }
 
-            var mediaType = isVideo ? "Video" : "Image";
-            return Ok(ApiResponse<object>.SuccessResponse(
-                "Mídia enviada com sucesso.",
-                BuildUploadResponse(storedFile, mediaType)));
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Falha ao salvar mídia do story. FileName={FileName}; ContentType={ContentType}; Length={Length}", file.FileName, file.ContentType, file.Length);
-            throw new ValidationAppException("Não foi possível enviar a mídia.");
-        }
+    private IFileStorageService ResolveFileStorage(string folder)
+    {
+        _logger.LogInformation("Resolving file storage. Folder={Folder}; TraceId={TraceId}", folder, HttpContext.TraceIdentifier);
+        var fileStorage = _serviceProvider.GetRequiredService<IFileStorageService>();
+        _logger.LogInformation(
+            "Resolved storage implementation: {StorageType}. Folder={Folder}; TraceId={TraceId}",
+            fileStorage.GetType().Name,
+            folder,
+            HttpContext.TraceIdentifier);
+        return fileStorage;
     }
 
     [HttpPost("/api/admin/stories")]
@@ -240,20 +211,4 @@ public sealed class StoriesController : ControllerBase
         return new Uri(GetPublicOrigin(), path).ToString();
     }
 
-    private static object BuildUploadResponse(StoredFileResponse storedFile, string mediaType)
-    {
-        return new
-        {
-            success = storedFile.Exists,
-            url = storedFile.PublicUrl,
-            imageUrl = storedFile.PublicUrl,
-            mediaUrl = storedFile.PublicUrl,
-            relativePath = storedFile.RelativePath,
-            fileName = storedFile.FileName,
-            contentType = storedFile.ContentType,
-            sizeBytes = storedFile.SizeBytes,
-            mediaType,
-            storageProvider = storedFile.StorageProvider
-        };
-    }
 }

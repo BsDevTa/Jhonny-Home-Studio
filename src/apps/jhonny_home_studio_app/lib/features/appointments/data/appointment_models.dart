@@ -3,12 +3,14 @@ class CreateAppointmentRequest {
     required this.serviceId,
     required this.addressId,
     required this.scheduledAt,
+    required this.scheduledEndAt,
     required this.customerNotes,
   });
 
   final String serviceId;
   final String addressId;
   final DateTime scheduledAt;
+  final DateTime scheduledEndAt;
   final String customerNotes;
 
   Map<String, dynamic> toJson() {
@@ -16,6 +18,7 @@ class CreateAppointmentRequest {
       'serviceId': serviceId,
       'addressId': addressId,
       'scheduledAt': scheduledAt.toIso8601String(),
+      'scheduledEndAt': scheduledEndAt.toIso8601String(),
       'customerNotes': customerNotes.trim().isEmpty
           ? null
           : customerNotes.trim(),
@@ -25,17 +28,20 @@ class CreateAppointmentRequest {
 
 class AvailableSlotModel {
   AvailableSlotModel({
+    required this.name,
     required this.startAt,
     required this.endAt,
     required this.isAvailable,
   });
 
+  final String name;
   final DateTime? startAt;
   final DateTime? endAt;
   final bool isAvailable;
 
   factory AvailableSlotModel.fromJson(Map<String, dynamic> json) {
     return AvailableSlotModel(
+      name: _readString(json, 'name'),
       startAt: _readDate(json, 'startAt'),
       endAt: _readDate(json, 'endAt'),
       isAvailable: _readBool(json, 'isAvailable'),

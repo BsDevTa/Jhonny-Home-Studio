@@ -25,6 +25,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
   readonly error = signal('');
   readonly selectedFileName = signal('');
   readonly imagePreviewUrl = signal('');
+  readonly imageRemoved = signal(false);
   readonly services = signal<StudioService[]>([]);
   readonly form;
   private localPreviewUrl = '';
@@ -114,6 +115,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
       next: ({ imageUrl }) => {
         console.debug('URL definitiva recebida:', imageUrl);
         this.form.controls.imageUrl.setValue(imageUrl);
+        this.imageRemoved.set(false);
         this.revokeLocalPreview();
         this.imagePreviewUrl.set(imageUrl);
         this.uploadingImage.set(false);
@@ -126,6 +128,19 @@ export class StoryFormComponent implements OnInit, OnDestroy {
         this.uploadingImage.set(false);
       },
     });
+  }
+
+  removeImage(): void {
+    if (this.uploadingImage()) {
+      return;
+    }
+
+    this.revokeLocalPreview();
+    this.form.controls.imageUrl.setValue('');
+    this.imagePreviewUrl.set('');
+    this.selectedFileName.set('');
+    this.imageRemoved.set(true);
+    this.error.set('');
   }
 
   submit(): void {
@@ -161,6 +176,7 @@ export class StoryFormComponent implements OnInit, OnDestroy {
       title: value.title.trim(),
       subtitle: value.subtitle.trim() || null,
       imageUrl: uploadedUrl || null,
+      removeImage: this.imageRemoved(),
       serviceId: value.serviceId || null,
       displayOrder: Number(value.displayOrder),
       startsAt: this.toIsoOrNull(value.startsAt),

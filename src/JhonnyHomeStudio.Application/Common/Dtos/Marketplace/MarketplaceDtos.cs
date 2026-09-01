@@ -40,6 +40,7 @@ public sealed class UpsertProductRequest
     public bool IsFeatured { get; set; }
     public int DisplayOrder { get; set; }
     public int? StockQuantity { get; set; }
+    public bool RemoveImage { get; set; }
     public IEnumerable<UpsertProductImageRequest> Images { get; set; } = Array.Empty<UpsertProductImageRequest>();
 }
 

@@ -1,16 +1,21 @@
 using System.Net;
 using JhonnyHomeStudio.Application.Common.Exceptions;
 using JhonnyHomeStudio.Application.Common.Responses;
+using Microsoft.AspNetCore.Mvc;
 
 namespace JhonnyHomeStudio.Api.Middleware;
 
 public sealed class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
-    public ExceptionHandlingMiddleware(RequestDelegate next)
+    public ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -21,14 +26,32 @@ public sealed class ExceptionHandlingMiddleware
         }
         catch (Exception exception)
         {
-            await HandleExceptionAsync(context, exception);
+            await HandleExceptionAsync(context, exception, _logger);
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static async Task HandleExceptionAsync(
+        HttpContext context,
+        Exception exception,
+        ILogger logger)
     {
-        var (statusCode, response) = exception switch
+        if (context.Response.HasStarted)
         {
+            throw exception;
+        }
+
+        (HttpStatusCode StatusCode, object Response) exceptionResult = exception switch
+        {
+            PayloadTooLargeAppException payloadTooLargeException =>
+                (HttpStatusCode.RequestEntityTooLarge, ApiResponse<object>.FailureResponse(payloadTooLargeException.Message, payloadTooLargeException.Errors)),
+            UnsupportedMediaTypeAppException unsupportedMediaTypeException =>
+                (HttpStatusCode.UnsupportedMediaType, ApiResponse<object>.FailureResponse(unsupportedMediaTypeException.Message, unsupportedMediaTypeException.Errors)),
+            StorageUnavailableAppException storageUnavailableException =>
+                (HttpStatusCode.ServiceUnavailable, BuildStorageUnavailableProblem(storageUnavailableException, context)),
+            StorageTimeoutAppException storageTimeoutException =>
+                (HttpStatusCode.GatewayTimeout, ApiResponse<object>.FailureResponse(storageTimeoutException.Message, storageTimeoutException.Errors)),
+            BadHttpRequestException badRequestException when badRequestException.StatusCode == StatusCodes.Status413PayloadTooLarge =>
+                (HttpStatusCode.RequestEntityTooLarge, ApiResponse<object>.FailureResponse("Falha no upload: arquivo muito grande.", new[] { "O arquivo excede o limite permitido." })),
             ValidationAppException validationException =>
                 (HttpStatusCode.BadRequest, ApiResponse<object>.FailureResponse(validationException.Message, validationException.Errors)),
             ConflictAppException conflictException =>
@@ -42,9 +65,35 @@ public sealed class ExceptionHandlingMiddleware
             _ =>
                 (HttpStatusCode.InternalServerError, ApiResponse<object>.FailureResponse("Erro interno ao processar a requisição."))
         };
+        var statusCode = exceptionResult.StatusCode;
+        var response = exceptionResult.Response;
+
+        if ((int)statusCode >= StatusCodes.Status500InternalServerError)
+        {
+            logger.LogError(exception, "Unhandled API exception. StatusCode={StatusCode}; Path={Path}", (int)statusCode, context.Request.Path);
+        }
+        else
+        {
+            logger.LogWarning(exception, "Handled API exception. StatusCode={StatusCode}; Path={Path}", (int)statusCode, context.Request.Path);
+        }
 
         context.Response.StatusCode = (int)statusCode;
-        context.Response.ContentType = "application/json";
+        context.Response.ContentType = response is ProblemDetails
+            ? "application/problem+json"
+            : "application/json";
         await context.Response.WriteAsJsonAsync(response);
+    }
+
+    private static ProblemDetails BuildStorageUnavailableProblem(
+        StorageUnavailableAppException exception,
+        HttpContext context)
+    {
+        return new ProblemDetails
+        {
+            Title = "Upload temporariamente indisponível",
+            Detail = exception.Message,
+            Status = StatusCodes.Status503ServiceUnavailable,
+            Instance = context.Request.Path
+        };
     }
 }
