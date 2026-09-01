@@ -40,12 +40,17 @@ public sealed class S3FileStorageService : IFileStorageService
         var region = ReadOptional(configuration, "Storage:S3:Region", "REGION", "AWS_REGION") ?? "auto";
         _forcePathStyle = ResolveForcePathStyle(configuration, _storageProvider);
 
+        // AmazonS3Client resolve a URL de cada requisição combinando ServiceURL + chave do objeto
+        // como URI relativa (RFC 3986): sem a barra final, o último segmento do path customizado
+        // (ex.: "/storage/v1/s3" do gateway S3 do Supabase) é descartado em vez de preservado.
+        var serviceUrl = $"{endpoint}/";
+
         var config = new AmazonS3Config
         {
-            ServiceURL = endpoint,
+            ServiceURL = serviceUrl,
             AuthenticationRegion = region,
             ForcePathStyle = _forcePathStyle,
-            UseHttp = endpoint.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
+            UseHttp = serviceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
             Timeout = StorageOperationTimeout
         };
 
