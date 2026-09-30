@@ -7,12 +7,18 @@ using JhonnyHomeStudio.Application.Common.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 
 namespace JhonnyHomeStudio.Infrastructure.Services;
 
 public sealed class S3FileStorageService : IFileStorageService
 {
     private static readonly TimeSpan StorageOperationTimeout = TimeSpan.FromSeconds(30);
+    private static readonly HttpClient StorageApiClient = new()
+    {
+        Timeout = StorageOperationTimeout
+    };
 
     private readonly IAmazonS3 _client;
     private readonly ILogger<S3FileStorageService> _logger;
@@ -24,6 +30,8 @@ public sealed class S3FileStorageService : IFileStorageService
     private readonly bool _forcePathStyle;
     private readonly string? _publicBaseUrl;
 
+    internal string? SupabaseServiceKey { get; }
+
     public S3FileStorageService(
         IConfiguration configuration,
         ILogger<S3FileStorageService> logger)
@@ -31,6 +39,7 @@ public sealed class S3FileStorageService : IFileStorageService
         _logger = logger;
         _bucketName = ReadRequired(configuration, "Storage:S3:BucketName", "BUCKET");
         _publicBaseUrl = ReadOptional(configuration, "Storage:S3:PublicBaseUrl", "STORAGE_PUBLIC_BASE_URL");
+        SupabaseServiceKey = ReadOptional(configuration, "Storage:SupabaseServiceKey");
         _storageProvider = ReadOptional(configuration, "STORAGE_PROVIDER", "Storage:Provider") ?? "S3";
 
         var accessKey = ReadRequired(configuration, "Storage:S3:AccessKeyId", "ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID");
@@ -82,46 +91,62 @@ public sealed class S3FileStorageService : IFileStorageService
         var objectKey = NormalizeObjectKey(relativePath);
 
         var normalizedContentType = NormalizeContentType(contentType, extension);
-        var putRequest = new PutObjectRequest
-        {
-            BucketName = _bucketName,
-            Key = objectKey,
-            InputStream = content,
-            ContentType = normalizedContentType,
-            AutoCloseStream = false,
-            UseChunkEncoding = false
-        };
-
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            if (string.IsNullOrWhiteSpace(SupabaseServiceKey))
+            {
+                throw new StorageUnavailableAppException(
+                    "Configuração de autenticação do Supabase Storage ausente.",
+                    new[] { "Informe a variável Storage__SupabaseServiceKey." });
+            }
+
+            var projectUrl = DeriveSupabaseProjectUrl(_endpoint);
+            var objectUrl = BuildStorageObjectUrl(projectUrl, _bucketName, objectKey);
+
             _logger.LogInformation(
-                "Storage upload started. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; UseChunkEncoding={UseChunkEncoding}; ForcePathStyle={ForcePathStyle}; TimeoutSeconds={TimeoutSeconds}",
+                "Supabase Storage HTTP upload started. Provider={StorageProvider}; ProjectUrl={ProjectUrl}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; TimeoutSeconds={TimeoutSeconds}",
                 _storageProvider,
-                _endpoint,
-                putRequest.BucketName,
-                putRequest.Key,
-                putRequest.ContentType,
-                "null",
-                putRequest.UseChunkEncoding,
-                _forcePathStyle,
+                projectUrl.GetLeftPart(UriPartial.Authority),
+                _bucketName,
+                objectKey,
+                normalizedContentType,
                 StorageOperationTimeout.TotalSeconds);
 
             _logger.LogInformation(
-                "S3 operation. Operation={Operation}; Provider={Provider}; ServiceURL={ServiceURL}; AuthenticationRegion={AuthenticationRegion}; ForcePathStyle={ForcePathStyle}; Bucket={Bucket}",
-                "PutObject",
-                _storageProvider,
-                _serviceUrl,
-                _authenticationRegion,
-                _forcePathStyle,
+                "Supabase Storage HTTP operation. Method={Method}; ProjectUrl={ProjectUrl}; Bucket={Bucket}",
+                HttpMethod.Post,
+                projectUrl.GetLeftPart(UriPartial.Authority),
                 _bucketName);
 
-            await _client.PutObjectAsync(putRequest, cancellationToken);
-            var metadata = await _client.GetObjectMetadataAsync(_bucketName, objectKey, cancellationToken);
-
-            if (metadata.ContentLength <= 0)
+            var uploadStream = new CountingLeaveOpenStream(content);
+            using (var request = new HttpRequestMessage(HttpMethod.Post, objectUrl))
             {
-                throw new IOException($"Objeto S3 {objectKey} foi criado sem conteúdo.");
+                AddSupabaseStorageAuthentication(request);
+                request.Content = new StreamContent(uploadStream);
+                request.Content.Headers.ContentType = MediaTypeHeaderValue.Parse(normalizedContentType);
+
+                using var response = await StorageApiClient.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                    LogStorageApiFailure(response.StatusCode, errorBody);
+                    throw new HttpRequestException(
+                        $"Supabase Storage upload returned HTTP {(int)response.StatusCode}.",
+                        null,
+                        response.StatusCode);
+                }
+            }
+
+            var sizeBytes = uploadStream.BytesRead;
+
+            if (sizeBytes <= 0)
+            {
+                throw new IOException($"Objeto Supabase Storage {objectKey} foi criado sem conteúdo.");
             }
 
             var publicUrl = BuildPublicUrl(publicOrigin, relativePath, objectKey);
@@ -134,7 +159,7 @@ public sealed class S3FileStorageService : IFileStorageService
                 objectKey,
                 publicUrl,
                 true,
-                metadata.ContentLength,
+                sizeBytes,
                 stopwatch.ElapsedMilliseconds);
 
             return new StoredFileResponse
@@ -143,7 +168,7 @@ public sealed class S3FileStorageService : IFileStorageService
                 RelativePath = relativePath,
                 PublicUrl = publicUrl,
                 ContentType = normalizedContentType,
-                SizeBytes = metadata.ContentLength,
+                SizeBytes = sizeBytes,
                 Exists = true,
                 PhysicalPath = $"s3://{_bucketName}/{objectKey}",
                 StorageProvider = _storageProvider
@@ -167,8 +192,7 @@ public sealed class S3FileStorageService : IFileStorageService
         }
         catch (Exception exception) when (exception is AmazonS3Exception or HttpRequestException or IOException)
         {
-            var s3Exception = exception as AmazonS3Exception;
-            if (s3Exception is not null)
+            if (exception is AmazonS3Exception s3Exception)
             {
                 _logger.LogError(
                     "S3 upload failed. ExceptionType={ExceptionType}; ErrorCode={ErrorCode}; StatusCode={StatusCode}; Message={Message}; RequestId={RequestId}; AmazonId2={AmazonId2}",
@@ -183,14 +207,12 @@ public sealed class S3FileStorageService : IFileStorageService
             {
                 _logger.LogError(
                     exception,
-                    "Storage upload failed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; UseChunkEncoding={UseChunkEncoding}; ElapsedMs={ElapsedMs}; ErrorType={ErrorType}",
+                    "Storage upload failed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ElapsedMs={ElapsedMs}; ErrorType={ErrorType}",
                     _storageProvider,
                     _endpoint,
-                    putRequest.BucketName,
-                    putRequest.Key,
-                    putRequest.ContentType,
-                    "null",
-                    putRequest.UseChunkEncoding,
+                    _bucketName,
+                    objectKey,
+                    normalizedContentType,
                     stopwatch.ElapsedMilliseconds,
                     exception.GetType().Name);
             }
@@ -198,60 +220,6 @@ public sealed class S3FileStorageService : IFileStorageService
             throw new StorageUnavailableAppException(
                 "Storage de mídia indisponível.",
                 new[] { "Não foi possível gravar o arquivo no storage persistente." });
-        }
-    }
-
-    // Temporarily callable diagnostic. This is never invoked by application startup or SaveAsync.
-    public async Task RunMinimalPutDiagnosticAsync(CancellationToken cancellationToken = default)
-    {
-        const string diagnosticKey = "diagnostic/sdk-dotnet-test.txt";
-        using var content = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("sdk-dotnet-test"));
-        var request = new PutObjectRequest
-        {
-            BucketName = _bucketName,
-            Key = diagnosticKey,
-            InputStream = content,
-            ContentType = "text/plain",
-            AutoCloseStream = false,
-            UseChunkEncoding = false
-        };
-
-        _logger.LogInformation(
-            "Starting isolated minimal S3 PutObject diagnostic. Bucket={Bucket}; Key={Key}",
-            _bucketName,
-            diagnosticKey);
-
-        try
-        {
-            await _client.PutObjectAsync(request, cancellationToken);
-            _logger.LogInformation(
-                "Isolated minimal S3 PutObject diagnostic succeeded. Bucket={Bucket}; Key={Key}",
-                _bucketName,
-                diagnosticKey);
-        }
-        catch (AmazonS3Exception exception)
-        {
-            _logger.LogError(
-                "Isolated minimal S3 PutObject diagnostic failed. StatusCode={StatusCode}; ErrorCode={ErrorCode}; Message={Message}; RequestId={RequestId}; AmazonId2={AmazonId2}; ExceptionType={ExceptionType}",
-                exception.StatusCode,
-                exception.ErrorCode,
-                exception.Message,
-                exception.RequestId,
-                exception.AmazonId2,
-                exception.GetType().Name);
-            throw;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(
-                "Isolated minimal S3 PutObject diagnostic failed. StatusCode={StatusCode}; ErrorCode={ErrorCode}; Message={Message}; RequestId={RequestId}; AmazonId2={AmazonId2}; ExceptionType={ExceptionType}",
-                null,
-                null,
-                exception.Message,
-                null,
-                null,
-                exception.GetType().Name);
-            throw;
         }
     }
 
@@ -306,6 +274,136 @@ public sealed class S3FileStorageService : IFileStorageService
         }
 
         return new Uri(publicOrigin, relativePath).ToString();
+    }
+
+    private void AddSupabaseStorageAuthentication(HttpRequestMessage request)
+    {
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", SupabaseServiceKey);
+        request.Headers.Add("apikey", SupabaseServiceKey);
+    }
+
+    private void LogStorageApiFailure(System.Net.HttpStatusCode statusCode, string responseBody)
+    {
+        var safeBody = SanitizeStorageErrorBody(responseBody, SupabaseServiceKey);
+        _logger.LogError(
+            "Supabase Storage HTTP request failed. StatusCode={StatusCode}; ErrorBody={ErrorBody}",
+            (int)statusCode,
+            safeBody);
+    }
+
+    private static string SanitizeStorageErrorBody(string responseBody, string? serviceKey)
+    {
+        var safeBody = responseBody;
+        if (!string.IsNullOrEmpty(serviceKey))
+        {
+            safeBody = safeBody.Replace(serviceKey, "[REDACTED]", StringComparison.Ordinal);
+        }
+
+        safeBody = Regex.Replace(
+            safeBody,
+            @"(?i)(bearer\s+)[A-Za-z0-9._~+/=-]+",
+            "$1[REDACTED]");
+        safeBody = Regex.Replace(
+            safeBody,
+            @"(?i)(authorization|apikey|access[_-]?key|secret[_-]?key|token|signature)(""?\s*[:=]\s*""?)[^""\s,}]+",
+            "$1$2[REDACTED]");
+
+        return safeBody.Length <= 1024 ? safeBody : safeBody[..1024];
+    }
+
+    private static Uri DeriveSupabaseProjectUrl(string storageEndpoint)
+    {
+        if (!Uri.TryCreate(storageEndpoint, UriKind.Absolute, out var endpointUri) ||
+            !endpointUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new StorageUnavailableAppException(
+                "Endpoint do Supabase Storage inválido.",
+                new[] { "O endpoint configurado deve usar HTTPS e o domínio S3 do Supabase." });
+        }
+
+        const string storageDomainSuffix = ".storage.supabase.co";
+        var endpointHost = endpointUri.IdnHost;
+        if (!endpointHost.EndsWith(storageDomainSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new StorageUnavailableAppException(
+                "Não foi possível derivar a URL do projeto Supabase.",
+                new[] { "Configure o endpoint S3 no formato https://{project-ref}.storage.supabase.co." });
+        }
+
+        var projectRef = endpointHost[..^storageDomainSuffix.Length];
+        if (string.IsNullOrWhiteSpace(projectRef) ||
+            projectRef.Any(character => !char.IsAsciiLetterOrDigit(character) && character != '-'))
+        {
+            throw new StorageUnavailableAppException(
+                "Não foi possível derivar a URL do projeto Supabase.",
+                new[] { "O host do endpoint S3 não contém um identificador de projeto Supabase válido." });
+        }
+
+        return new Uri($"https://{projectRef}.supabase.co/");
+    }
+
+    private static Uri BuildStorageObjectUrl(Uri projectUrl, string bucketName, string objectKey)
+    {
+        var escapedBucket = Uri.EscapeDataString(bucketName);
+        var escapedKey = string.Join(
+            '/',
+            objectKey.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Select(Uri.EscapeDataString));
+
+        return new Uri(projectUrl, $"storage/v1/object/{escapedBucket}/{escapedKey}");
+    }
+
+    private sealed class CountingLeaveOpenStream(Stream innerStream) : Stream
+    {
+        private long _bytesRead;
+
+        public long BytesRead => Interlocked.Read(ref _bytesRead);
+        public override bool CanRead => innerStream.CanRead;
+        public override bool CanSeek => innerStream.CanSeek;
+        public override bool CanWrite => false;
+        public override long Length => innerStream.Length;
+        public override long Position
+        {
+            get => innerStream.Position;
+            set => innerStream.Position = value;
+        }
+
+        public override void Flush() => innerStream.Flush();
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var bytesRead = innerStream.Read(buffer, offset, count);
+            Interlocked.Add(ref _bytesRead, bytesRead);
+            return bytesRead;
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            var bytesRead = innerStream.Read(buffer);
+            Interlocked.Add(ref _bytesRead, bytesRead);
+            return bytesRead;
+        }
+
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            var bytesRead = await innerStream.ReadAsync(buffer, cancellationToken);
+            Interlocked.Add(ref _bytesRead, bytesRead);
+            return bytesRead;
+        }
+
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            var bytesRead = await innerStream.ReadAsync(buffer, offset, count, cancellationToken);
+            Interlocked.Add(ref _bytesRead, bytesRead);
+            return bytesRead;
+        }
+        public override long Seek(long offset, SeekOrigin origin) => innerStream.Seek(offset, origin);
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+        }
     }
 
     private static string NormalizeObjectKey(string relativePath)
