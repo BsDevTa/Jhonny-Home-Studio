@@ -168,25 +168,90 @@ public sealed class S3FileStorageService : IFileStorageService
         catch (Exception exception) when (exception is AmazonS3Exception or HttpRequestException or IOException)
         {
             var s3Exception = exception as AmazonS3Exception;
-            _logger.LogError(
-                exception,
-                "Storage upload failed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; UseChunkEncoding={UseChunkEncoding}; ElapsedMs={ElapsedMs}; ErrorType={ErrorType}; StatusCode={StatusCode}; S3ErrorCode={S3ErrorCode}; RequestId={RequestId}",
-                _storageProvider,
-                _endpoint,
-                putRequest.BucketName,
-                putRequest.Key,
-                putRequest.ContentType,
-                "null",
-                putRequest.UseChunkEncoding,
-                stopwatch.ElapsedMilliseconds,
-                exception.GetType().Name,
-                s3Exception?.StatusCode,
-                s3Exception?.ErrorCode,
-                s3Exception?.RequestId);
+            if (s3Exception is not null)
+            {
+                _logger.LogError(
+                    "S3 upload failed. ExceptionType={ExceptionType}; ErrorCode={ErrorCode}; StatusCode={StatusCode}; Message={Message}; RequestId={RequestId}; AmazonId2={AmazonId2}",
+                    s3Exception.GetType().Name,
+                    s3Exception.ErrorCode,
+                    s3Exception.StatusCode,
+                    s3Exception.Message,
+                    s3Exception.RequestId,
+                    s3Exception.AmazonId2);
+            }
+            else
+            {
+                _logger.LogError(
+                    exception,
+                    "Storage upload failed. Provider={StorageProvider}; Endpoint={Endpoint}; Bucket={Bucket}; Key={Key}; ContentType={ContentType}; ContentEncoding={ContentEncoding}; UseChunkEncoding={UseChunkEncoding}; ElapsedMs={ElapsedMs}; ErrorType={ErrorType}",
+                    _storageProvider,
+                    _endpoint,
+                    putRequest.BucketName,
+                    putRequest.Key,
+                    putRequest.ContentType,
+                    "null",
+                    putRequest.UseChunkEncoding,
+                    stopwatch.ElapsedMilliseconds,
+                    exception.GetType().Name);
+            }
 
             throw new StorageUnavailableAppException(
                 "Storage de mídia indisponível.",
                 new[] { "Não foi possível gravar o arquivo no storage persistente." });
+        }
+    }
+
+    // Temporarily callable diagnostic. This is never invoked by application startup or SaveAsync.
+    public async Task RunMinimalPutDiagnosticAsync(CancellationToken cancellationToken = default)
+    {
+        const string diagnosticKey = "diagnostic/sdk-dotnet-test.txt";
+        using var content = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("sdk-dotnet-test"));
+        var request = new PutObjectRequest
+        {
+            BucketName = _bucketName,
+            Key = diagnosticKey,
+            InputStream = content,
+            ContentType = "text/plain",
+            AutoCloseStream = false,
+            UseChunkEncoding = false
+        };
+
+        _logger.LogInformation(
+            "Starting isolated minimal S3 PutObject diagnostic. Bucket={Bucket}; Key={Key}",
+            _bucketName,
+            diagnosticKey);
+
+        try
+        {
+            await _client.PutObjectAsync(request, cancellationToken);
+            _logger.LogInformation(
+                "Isolated minimal S3 PutObject diagnostic succeeded. Bucket={Bucket}; Key={Key}",
+                _bucketName,
+                diagnosticKey);
+        }
+        catch (AmazonS3Exception exception)
+        {
+            _logger.LogError(
+                "Isolated minimal S3 PutObject diagnostic failed. StatusCode={StatusCode}; ErrorCode={ErrorCode}; Message={Message}; RequestId={RequestId}; AmazonId2={AmazonId2}; ExceptionType={ExceptionType}",
+                exception.StatusCode,
+                exception.ErrorCode,
+                exception.Message,
+                exception.RequestId,
+                exception.AmazonId2,
+                exception.GetType().Name);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                "Isolated minimal S3 PutObject diagnostic failed. StatusCode={StatusCode}; ErrorCode={ErrorCode}; Message={Message}; RequestId={RequestId}; AmazonId2={AmazonId2}; ExceptionType={ExceptionType}",
+                null,
+                null,
+                exception.Message,
+                null,
+                null,
+                exception.GetType().Name);
+            throw;
         }
     }
 
