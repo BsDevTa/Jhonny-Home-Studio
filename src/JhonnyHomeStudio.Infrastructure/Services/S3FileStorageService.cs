@@ -18,6 +18,8 @@ public sealed class S3FileStorageService : IFileStorageService
     private readonly ILogger<S3FileStorageService> _logger;
     private readonly string _bucketName;
     private readonly string _endpoint;
+    private readonly string _serviceUrl;
+    private readonly string _authenticationRegion;
     private readonly string _storageProvider;
     private readonly bool _forcePathStyle;
     private readonly string? _publicBaseUrl;
@@ -36,24 +38,32 @@ public sealed class S3FileStorageService : IFileStorageService
         _endpoint = ReadRequired(configuration, "Storage:S3:Endpoint", "ENDPOINT", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL")
             .Trim()
             .TrimEnd('/');
-        var region = ReadOptional(configuration, "Storage:S3:Region", "REGION", "AWS_REGION") ?? "auto";
+        _authenticationRegion = ReadOptional(configuration, "Storage:S3:Region", "REGION", "AWS_REGION") ?? "auto";
         _forcePathStyle = ResolveForcePathStyle(configuration, _storageProvider);
 
         // AmazonS3Client resolve a URL de cada requisição combinando ServiceURL + chave do objeto
         // como URI relativa (RFC 3986): sem a barra final, o último segmento do path customizado
         // (ex.: "/storage/v1/s3" do gateway S3 do Supabase) é descartado em vez de preservado.
-        var serviceUrl = $"{_endpoint}/";
+        _serviceUrl = $"{_endpoint}/";
 
         var config = new AmazonS3Config
         {
-            ServiceURL = serviceUrl,
-            AuthenticationRegion = region,
+            ServiceURL = _serviceUrl,
+            AuthenticationRegion = _authenticationRegion,
             ForcePathStyle = _forcePathStyle,
-            UseHttp = serviceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
+            UseHttp = _serviceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
             Timeout = StorageOperationTimeout
         };
 
         _client = new AmazonS3Client(new BasicAWSCredentials(accessKey, secretKey), config);
+
+        _logger.LogInformation(
+            "S3 client configuration. Provider={Provider}; ServiceURL={ServiceURL}; AuthenticationRegion={AuthenticationRegion}; ForcePathStyle={ForcePathStyle}; Bucket={Bucket}",
+            _storageProvider,
+            config.ServiceURL,
+            config.AuthenticationRegion,
+            config.ForcePathStyle,
+            _bucketName);
     }
 
     public async Task<StoredFileResponse> SaveAsync(
@@ -96,6 +106,15 @@ public sealed class S3FileStorageService : IFileStorageService
                 putRequest.UseChunkEncoding,
                 _forcePathStyle,
                 StorageOperationTimeout.TotalSeconds);
+
+            _logger.LogInformation(
+                "S3 operation. Operation={Operation}; Provider={Provider}; ServiceURL={ServiceURL}; AuthenticationRegion={AuthenticationRegion}; ForcePathStyle={ForcePathStyle}; Bucket={Bucket}",
+                "PutObject",
+                _storageProvider,
+                _serviceUrl,
+                _authenticationRegion,
+                _forcePathStyle,
+                _bucketName);
 
             await _client.PutObjectAsync(putRequest, cancellationToken);
             var metadata = await _client.GetObjectMetadataAsync(_bucketName, objectKey, cancellationToken);
