@@ -51,6 +51,7 @@ public sealed class S3FileStorageService : IFileStorageService
             ServiceURL = _serviceUrl,
             AuthenticationRegion = _authenticationRegion,
             ForcePathStyle = _forcePathStyle,
+            RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
             UseHttp = _serviceUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
             Timeout = StorageOperationTimeout
         };
