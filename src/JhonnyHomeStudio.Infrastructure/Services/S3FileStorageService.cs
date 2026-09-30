@@ -33,17 +33,16 @@ public sealed class S3FileStorageService : IFileStorageService
 
         var accessKey = ReadRequired(configuration, "Storage:S3:AccessKeyId", "ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID");
         var secretKey = ReadRequired(configuration, "Storage:S3:SecretAccessKey", "SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY");
-        var endpoint = ReadRequired(configuration, "Storage:S3:Endpoint", "ENDPOINT", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL")
+        _endpoint = ReadRequired(configuration, "Storage:S3:Endpoint", "ENDPOINT", "AWS_ENDPOINT_URL_S3", "AWS_ENDPOINT_URL")
             .Trim()
             .TrimEnd('/');
-        _endpoint = SanitizeEndpoint(endpoint);
         var region = ReadOptional(configuration, "Storage:S3:Region", "REGION", "AWS_REGION") ?? "auto";
         _forcePathStyle = ResolveForcePathStyle(configuration, _storageProvider);
 
         // AmazonS3Client resolve a URL de cada requisição combinando ServiceURL + chave do objeto
         // como URI relativa (RFC 3986): sem a barra final, o último segmento do path customizado
         // (ex.: "/storage/v1/s3" do gateway S3 do Supabase) é descartado em vez de preservado.
-        var serviceUrl = $"{endpoint}/";
+        var serviceUrl = $"{_endpoint}/";
 
         var config = new AmazonS3Config
         {
@@ -318,13 +317,4 @@ public sealed class S3FileStorageService : IFileStorageService
             !string.IsNullOrWhiteSpace(configuration["BUCKET"]);
     }
 
-    private static string SanitizeEndpoint(string endpoint)
-    {
-        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri))
-        {
-            return "<invalid-endpoint>";
-        }
-
-        return uri.GetLeftPart(UriPartial.Authority);
-    }
 }
